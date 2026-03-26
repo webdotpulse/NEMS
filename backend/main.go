@@ -161,6 +161,8 @@ func main() {
 		}
 	})
 
+	mux.HandleFunc("/api/history", handleHistory)
+
 	mux.HandleFunc("/api/devices/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		if r.Method == "DELETE" {
