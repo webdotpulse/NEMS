@@ -9,7 +9,7 @@
       <div v-if="state" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
 
         <!-- Grid Power Card -->
-        <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
+        <div v-if="state.grid_power_w !== null" class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
           <div class="p-5">
             <div class="flex items-center">
               <div class="flex-shrink-0">
@@ -35,7 +35,7 @@
         </div>
 
         <!-- Solar Power Card -->
-        <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
+        <div v-if="state.solar_power_w !== null" class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
           <div class="p-5">
             <div class="flex items-center">
               <div class="flex-shrink-0">
@@ -59,7 +59,7 @@
         </div>
 
         <!-- Battery Power Card -->
-        <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
+        <div v-if="state.battery_power_w !== null" class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
           <div class="p-5">
             <div class="flex items-center">
               <div class="flex-shrink-0">
@@ -85,7 +85,7 @@
         </div>
 
         <!-- Total Load Card -->
-        <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
+        <div v-if="state.total_load_w !== null" class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
           <div class="p-5">
             <div class="flex items-center">
               <div class="flex-shrink-0">
@@ -130,11 +130,12 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import PowerFlow from './PowerFlow.vue'
 
 interface SiteState {
-  grid_power_w: number
-  solar_power_w: number
-  battery_power_w: number
-  total_load_w: number
-  ev_charger_power_w: number
+  grid_power_w: number | null
+  solar_power_w: number | null
+  battery_power_w: number | null
+  total_load_w: number | null
+  ev_charger_power_w: number | null
+  device_health?: Record<number, string>
 }
 
 const state = ref<SiteState | null>(null)
@@ -152,7 +153,7 @@ onMounted(() => {
     try {
       const data = JSON.parse(event.data)
       // Check if it's actual state data and not just an empty connection message
-      if (data.grid_power_w !== undefined) {
+      if (data.grid_power_w !== undefined || data.total_load_w !== undefined) {
         state.value = data as SiteState
       }
     } catch (e) {
