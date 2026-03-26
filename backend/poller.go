@@ -373,8 +373,6 @@ func (pm *PollerManager) flushBuffer() {
 	err = tx.Commit()
 	if err != nil {
 		log.Printf("PollerManager DB Flush: Error committing transaction: %v", err)
-	} else {
-		log.Printf("PollerManager DB Flush: Flushed %d aggregated measurements to DB", len(agg))
 	}
 }
 

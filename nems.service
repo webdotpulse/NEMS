@@ -1,0 +1,20 @@
+[Unit]
+Description=NEMS Energy Management System
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=nems
+Group=nems
+WorkingDirectory=/opt/nems
+ExecStart=/opt/nems/nems-server
+Restart=always
+RestartSec=5
+# Adjust these based on the security context
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=full
+
+[Install]
+WantedBy=multi-user.target

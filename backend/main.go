@@ -57,7 +57,15 @@ func main() {
 	if err != nil {
 		log.Fatal("Failed to set WAL mode:", err)
 	}
-	log.Println("SQLite WAL mode enabled")
+	_, err = db.Exec("PRAGMA synchronous=NORMAL;")
+	if err != nil {
+		log.Fatal("Failed to set synchronous mode:", err)
+	}
+	_, err = db.Exec("PRAGMA temp_store=MEMORY;")
+	if err != nil {
+		log.Fatal("Failed to set temp_store:", err)
+	}
+	log.Println("SQLite WAL mode, synchronous=NORMAL, and temp_store=MEMORY enabled for SD card optimization")
 
 	// Create measurements table
 	createMeasurementsSQL := `
@@ -189,6 +197,18 @@ func main() {
 		} else {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
+	})
+
+	// Serve frontend SPA
+	fs := http.FileServer(http.Dir("./dist"))
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		// Check if file exists in the static directory
+		if _, err := http.Dir("./dist").Open(r.URL.Path); err != nil {
+			// Fallback to index.html for SPA routing if file not found
+			http.ServeFile(w, r, "./dist/index.html")
+			return
+		}
+		fs.ServeHTTP(w, r)
 	})
 
 	// Initialize PollerManager
