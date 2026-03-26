@@ -2,8 +2,10 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import NavBar from './components/NavBar.vue'
 import Dashboard from './components/Dashboard.vue'
+import Settings from './components/Settings.vue'
 
 const isConnected = ref(false)
+const currentView = ref('dashboard') // 'dashboard' | 'settings'
 let pollingInterval: number | undefined
 
 const checkConnection = async () => {
@@ -32,12 +34,17 @@ onUnmounted(() => {
     clearInterval(pollingInterval)
   }
 })
+
+const setView = (view: string) => {
+  currentView.value = view
+}
 </script>
 
 <template>
   <div class="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-    <NavBar :connected="isConnected" />
-    <Dashboard />
+    <NavBar :connected="isConnected" :currentView="currentView" @navigate="setView" />
+    <Dashboard v-if="currentView === 'dashboard'" />
+    <Settings v-if="currentView === 'settings'" />
   </div>
 </template>
 
