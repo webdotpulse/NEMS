@@ -241,6 +241,7 @@ func (pm *PollerManager) Start() {
 				var totalGrid float64
 				var totalSolar float64
 				var totalBattery float64
+				var totalEvCharger float64
 
 				for id, poller := range pm.pollers {
 					powerW, batteryPowerW, energyKwh, err := poller.Poll()
@@ -256,6 +257,8 @@ func (pm *PollerManager) Start() {
 						totalBattery += batteryPowerW
 					case "huawei_dongle":
 						totalGrid += powerW
+					case "raedian_charger":
+						totalEvCharger += powerW
 					}
 
 					// Buffer measurement
@@ -279,10 +282,11 @@ func (pm *PollerManager) Start() {
 				totalLoad := totalGrid + totalSolar + totalBattery
 
 				state := SiteState{
-					GridPowerW:    totalGrid,
-					SolarPowerW:   totalSolar,
-					BatteryPowerW: totalBattery,
-					TotalLoadW:    totalLoad,
+					GridPowerW:      totalGrid,
+					SolarPowerW:     totalSolar,
+					BatteryPowerW:   totalBattery,
+					TotalLoadW:      totalLoad,
+					EvChargerPowerW: totalEvCharger,
 				}
 
 				GlobalStateDispatcher.Broadcast(state)
