@@ -20,6 +20,8 @@ type Device struct {
 	Host     string `json:"host"`
 	Port     int    `json:"port"`
 	ModbusID int    `json:"modbus_id"`
+	Username string `json:"username,omitempty"`
+	Password string `json:"password,omitempty"`
 	Status   string `json:"status"`
 }
 
@@ -90,13 +92,20 @@ func main() {
 		template TEXT NOT NULL,
 		host TEXT NOT NULL,
 		port INTEGER NOT NULL,
-		modbus_id INTEGER NOT NULL
+		modbus_id INTEGER NOT NULL,
+		username TEXT DEFAULT '',
+		password TEXT DEFAULT ''
 	);
 	`
 	_, err = db.Exec(createDevicesSQL)
 	if err != nil {
 		log.Fatal("Failed to create devices table:", err)
 	}
+
+	// Add new columns if they don't exist (for existing databases)
+	_, _ = db.Exec("ALTER TABLE devices ADD COLUMN username TEXT DEFAULT ''")
+	_, _ = db.Exec("ALTER TABLE devices ADD COLUMN password TEXT DEFAULT ''")
+
 	log.Println("Database schema initialized")
 
 	mux := http.NewServeMux()
@@ -111,13 +120,27 @@ func main() {
 
 	mux.HandleFunc("/api/templates", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
+		// type indicates required fields:
+		// "modbus" (requires host, port, modbus_id)
+		// "rest" (requires host, port)
+		// "cloud" (requires username, password)
+		// "cloud_rest" (requires username, password, host, port)
+		// "demo" (no specific requirements)
 		templates := []map[string]string{
-			{"id": "huawei_inverter", "name": "Huawei Hybrid Inverter"},
-			{"id": "huawei_dongle", "name": "Huawei Dongle Power Sensor"},
-			{"id": "raedian_charger", "name": "Raedian EV Charger"},
-			{"id": "demo_inverter", "name": "Demo Inverter"},
-			{"id": "demo_dongle", "name": "Demo Grid Meter"},
-			{"id": "demo_charger", "name": "Demo EV Charger"},
+			{"id": "huawei_inverter", "name": "Huawei Hybrid Inverter", "type": "modbus"},
+			{"id": "huawei_dongle", "name": "Huawei Dongle Power Sensor", "type": "modbus"},
+			{"id": "raedian_charger", "name": "Raedian EV Charger", "type": "modbus"},
+			{"id": "solis_inverter", "name": "Solis Inverter", "type": "modbus"},
+			{"id": "sma_inverter", "name": "SMA Inverter", "type": "modbus"},
+			{"id": "alfen_charger", "name": "Alfen Charger", "type": "modbus"},
+			{"id": "bender_charger", "name": "Bender Charger", "type": "modbus"},
+			{"id": "phoenix_charger", "name": "Phoenix Contact Charx Charger", "type": "modbus"},
+			{"id": "easee_charger", "name": "Easee Charger", "type": "cloud"},
+			{"id": "peblar_charger", "name": "Peblar Charger", "type": "rest"},
+			{"id": "homewizard_meter", "name": "HomeWizard Meter", "type": "rest"},
+			{"id": "demo_inverter", "name": "Demo Inverter", "type": "demo"},
+			{"id": "demo_dongle", "name": "Demo Grid Meter", "type": "demo"},
+			{"id": "demo_charger", "name": "Demo EV Charger", "type": "demo"},
 		}
 		json.NewEncoder(w).Encode(templates)
 	})
@@ -125,7 +148,7 @@ func main() {
 	mux.HandleFunc("/api/devices", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		if r.Method == "GET" {
-			rows, err := db.Query("SELECT id, name, template, host, port, modbus_id FROM devices")
+			rows, err := db.Query("SELECT id, name, template, host, port, modbus_id, username, password FROM devices")
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
@@ -135,9 +158,17 @@ func main() {
 			var devices []Device
 			for rows.Next() {
 				var d Device
-				if err := rows.Scan(&d.ID, &d.Name, &d.Template, &d.Host, &d.Port, &d.ModbusID); err != nil {
+				var username sql.NullString
+				var password sql.NullString
+				if err := rows.Scan(&d.ID, &d.Name, &d.Template, &d.Host, &d.Port, &d.ModbusID, &username, &password); err != nil {
 					http.Error(w, err.Error(), http.StatusInternalServerError)
 					return
+				}
+				if username.Valid {
+					d.Username = username.String
+				}
+				if password.Valid {
+					d.Password = password.String
 				}
 
 				// Set dynamic status if poller exists
@@ -164,7 +195,7 @@ func main() {
 				return
 			}
 
-			result, err := db.Exec("INSERT INTO devices (name, template, host, port, modbus_id) VALUES (?, ?, ?, ?, ?)", d.Name, d.Template, d.Host, d.Port, d.ModbusID)
+			result, err := db.Exec("INSERT INTO devices (name, template, host, port, modbus_id, username, password) VALUES (?, ?, ?, ?, ?, ?, ?)", d.Name, d.Template, d.Host, d.Port, d.ModbusID, d.Username, d.Password)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
@@ -217,8 +248,8 @@ func main() {
 				return
 			}
 
-			_, err = db.Exec("UPDATE devices SET name = ?, template = ?, host = ?, port = ?, modbus_id = ? WHERE id = ?",
-				d.Name, d.Template, d.Host, d.Port, d.ModbusID, id)
+			_, err = db.Exec("UPDATE devices SET name = ?, template = ?, host = ?, port = ?, modbus_id = ?, username = ?, password = ? WHERE id = ?",
+				d.Name, d.Template, d.Host, d.Port, d.ModbusID, d.Username, d.Password, id)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return

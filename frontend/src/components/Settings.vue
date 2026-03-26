@@ -73,26 +73,42 @@
                 </div>
               </div>
 
-              <div class="sm:col-span-2">
+              <div v-if="!['cloud', 'demo'].includes(templates.find(t => t.id === editForm.template)?.type || '')" class="sm:col-span-2">
                 <label for="edit_host" class="block text-sm font-medium text-gray-700 dark:text-gray-300">IP Address</label>
                 <div class="mt-1">
-                  <input type="text" id="edit_host" v-model="editForm.host" required
+                  <input type="text" id="edit_host" v-model="editForm.host"
                          class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                 </div>
               </div>
 
-              <div class="sm:col-span-2">
+              <div v-if="!['cloud', 'demo'].includes(templates.find(t => t.id === editForm.template)?.type || '')" class="sm:col-span-2">
                 <label for="edit_port" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Port</label>
                 <div class="mt-1">
-                  <input type="number" id="edit_port" v-model.number="editForm.port" required
+                  <input type="number" id="edit_port" v-model.number="editForm.port"
                          class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                 </div>
               </div>
 
-              <div class="sm:col-span-2">
+              <div v-if="['modbus'].includes(templates.find(t => t.id === editForm.template)?.type || '')" class="sm:col-span-2">
                 <label for="edit_modbus_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Modbus ID</label>
                 <div class="mt-1">
-                  <input type="number" id="edit_modbus_id" v-model.number="editForm.modbus_id" required
+                  <input type="number" id="edit_modbus_id" v-model.number="editForm.modbus_id"
+                         class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                </div>
+              </div>
+
+              <div v-if="['cloud', 'cloud_rest'].includes(templates.find(t => t.id === editForm.template)?.type || '')" class="sm:col-span-3">
+                <label for="edit_username" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Username</label>
+                <div class="mt-1">
+                  <input type="text" id="edit_username" v-model="editForm.username"
+                         class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                </div>
+              </div>
+
+              <div v-if="['cloud', 'cloud_rest'].includes(templates.find(t => t.id === editForm.template)?.type || '')" class="sm:col-span-3">
+                <label for="edit_password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
+                <div class="mt-1">
+                  <input type="password" id="edit_password" v-model="editForm.password"
                          class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                 </div>
               </div>
@@ -144,29 +160,46 @@
                   </div>
                 </div>
 
-                <div class="sm:col-span-2">
+                <div v-if="!['cloud', 'demo'].includes(templates.find(t => t.id === form.template)?.type || '')" class="sm:col-span-2">
                   <label for="host" class="block text-sm font-medium text-gray-700 dark:text-gray-300">IP Address</label>
                   <div class="mt-1">
-                    <input type="text" id="host" v-model="form.host" required
+                    <input type="text" id="host" v-model="form.host"
                            class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                   </div>
                 </div>
 
-                <div class="sm:col-span-2">
+                <div v-if="!['cloud', 'demo'].includes(templates.find(t => t.id === form.template)?.type || '')" class="sm:col-span-2">
                   <label for="port" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Port</label>
                   <div class="mt-1">
-                    <input type="number" id="port" v-model.number="form.port" required
+                    <input type="number" id="port" v-model.number="form.port"
                            class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                   </div>
                 </div>
 
-                <div class="sm:col-span-2">
+                <div v-if="['modbus'].includes(templates.find(t => t.id === form.template)?.type || '')" class="sm:col-span-2">
                   <label for="modbus_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Modbus ID</label>
                   <div class="mt-1">
-                    <input type="number" id="modbus_id" v-model.number="form.modbus_id" required
+                    <input type="number" id="modbus_id" v-model.number="form.modbus_id"
                            class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                   </div>
                 </div>
+
+                <div v-if="['cloud', 'cloud_rest'].includes(templates.find(t => t.id === form.template)?.type || '')" class="sm:col-span-3">
+                  <label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Username</label>
+                  <div class="mt-1">
+                    <input type="text" id="username" v-model="form.username"
+                           class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                  </div>
+                </div>
+
+                <div v-if="['cloud', 'cloud_rest'].includes(templates.find(t => t.id === form.template)?.type || '')" class="sm:col-span-3">
+                  <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
+                  <div class="mt-1">
+                    <input type="password" id="password" v-model="form.password"
+                           class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                  </div>
+                </div>
+
               </div>
 
               <div class="pt-5">
@@ -192,6 +225,7 @@ import { ref, onMounted } from 'vue'
 interface Template {
   id: string;
   name: string;
+  type: string;
 }
 
 interface Device {
@@ -201,6 +235,8 @@ interface Device {
   host: string;
   port: number;
   modbus_id: number;
+  username?: string;
+  password?: string;
   status?: string;
 }
 
@@ -212,7 +248,9 @@ const form = ref({
   template: '',
   host: '',
   port: 502,
-  modbus_id: 1
+  modbus_id: 1,
+  username: '',
+  password: ''
 })
 
 const editingDevice = ref<Device | null>(null)
@@ -222,7 +260,9 @@ const editForm = ref({
   template: '',
   host: '',
   port: 502,
-  modbus_id: 1
+  modbus_id: 1,
+  username: '',
+  password: ''
 })
 
 const fetchTemplates = async () => {
@@ -268,7 +308,9 @@ const addDevice = async () => {
         template: '',
         host: '',
         port: 502,
-        modbus_id: 1
+        modbus_id: 1,
+        username: '',
+        password: ''
       }
       await fetchDevices()
     }
@@ -280,6 +322,8 @@ const addDevice = async () => {
 const editDevice = (device: Device) => {
   editingDevice.value = device
   editForm.value = { ...device }
+  if (!editForm.value.username) editForm.value.username = ''
+  if (!editForm.value.password) editForm.value.password = ''
 }
 
 const closeEdit = () => {
