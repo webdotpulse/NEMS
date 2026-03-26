@@ -117,13 +117,13 @@ func handleHistory(w http.ResponseWriter, r *http.Request) {
 	whereClause := ""
 	switch node {
 	case "grid":
-		whereClause = "template = 'huawei_dongle'"
+		whereClause = "(template = 'huawei_dongle' OR template = 'demo_dongle')"
 	case "solar":
-		whereClause = "template = 'huawei_inverter' AND name NOT LIKE '%battery%'"
+		whereClause = "((template = 'huawei_inverter' OR template = 'demo_inverter') AND name NOT LIKE '%battery%')"
 	case "battery":
-		whereClause = "template = 'huawei_inverter' AND name LIKE '%battery%'"
+		whereClause = "((template = 'huawei_inverter' OR template = 'demo_inverter') AND name LIKE '%battery%')"
 	case "ev_charger":
-		whereClause = "template = 'raedian_charger'"
+		whereClause = "(template = 'raedian_charger' OR template = 'demo_charger')"
 	default:
 		http.Error(w, "Invalid node", http.StatusBadRequest)
 		return

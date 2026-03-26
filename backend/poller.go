@@ -173,6 +173,92 @@ func (p *RaedianChargerPoller) Close() error {
 }
 
 // ---------------------------------------------------------
+// Demo Devices
+// ---------------------------------------------------------
+
+type DemoInverterPoller struct {
+	Device Device
+}
+
+func (p *DemoInverterPoller) Connect() error {
+	return nil // No connection needed
+}
+
+func (p *DemoInverterPoller) Status() string {
+	return "online"
+}
+
+func (p *DemoInverterPoller) Poll() (float64, float64, float64, error) {
+	powerW := 1000.0 + rand.Float64()*3000.0
+	batteryPowerW := -2000.0 + rand.Float64()*4000.0
+	energyKwh := powerW * (5.0 / 3600.0) / 1000.0
+	return powerW, batteryPowerW, energyKwh, nil
+}
+
+func (p *DemoInverterPoller) GetDevice() Device {
+	return p.Device
+}
+
+func (p *DemoInverterPoller) Close() error {
+	return nil
+}
+
+type DemoDonglePoller struct {
+	Device Device
+}
+
+func (p *DemoDonglePoller) Connect() error {
+	return nil
+}
+
+func (p *DemoDonglePoller) Status() string {
+	return "online"
+}
+
+func (p *DemoDonglePoller) Poll() (float64, float64, float64, error) {
+	powerW := -2000.0 + rand.Float64()*4000.0
+	energyKwh := powerW * (5.0 / 3600.0) / 1000.0
+	return powerW, 0, energyKwh, nil
+}
+
+func (p *DemoDonglePoller) GetDevice() Device {
+	return p.Device
+}
+
+func (p *DemoDonglePoller) Close() error {
+	return nil
+}
+
+type DemoChargerPoller struct {
+	Device Device
+}
+
+func (p *DemoChargerPoller) Connect() error {
+	return nil
+}
+
+func (p *DemoChargerPoller) Status() string {
+	return "online"
+}
+
+func (p *DemoChargerPoller) Poll() (float64, float64, float64, error) {
+	powerW := 0.0
+	if rand.Float32() > 0.5 {
+		powerW = 11000.0
+	}
+	energyKwh := powerW * (5.0 / 3600.0) / 1000.0
+	return powerW, 0, energyKwh, nil
+}
+
+func (p *DemoChargerPoller) GetDevice() Device {
+	return p.Device
+}
+
+func (p *DemoChargerPoller) Close() error {
+	return nil
+}
+
+// ---------------------------------------------------------
 // Poller Manager
 // ---------------------------------------------------------
 
@@ -235,6 +321,12 @@ func (pm *PollerManager) SyncDevices() {
 				poller = &HuaweiDonglePoller{Device: d}
 			case "raedian_charger":
 				poller = &RaedianChargerPoller{Device: d}
+			case "demo_inverter":
+				poller = &DemoInverterPoller{Device: d}
+			case "demo_dongle":
+				poller = &DemoDonglePoller{Device: d}
+			case "demo_charger":
+				poller = &DemoChargerPoller{Device: d}
 			default:
 				log.Printf("PollerManager: Unknown template %s for device %d", d.Template, d.ID)
 				continue
@@ -287,7 +379,7 @@ func (pm *PollerManager) Start() {
 
 					device := poller.GetDevice()
 					switch device.Template {
-					case "huawei_inverter":
+					case "huawei_inverter", "demo_inverter":
 						if totalSolar == nil {
 							v := 0.0
 							totalSolar = &v
@@ -299,13 +391,13 @@ func (pm *PollerManager) Start() {
 							totalBattery = &v
 						}
 						*totalBattery += batteryPowerW
-					case "huawei_dongle":
+					case "huawei_dongle", "demo_dongle":
 						if totalGrid == nil {
 							v := 0.0
 							totalGrid = &v
 						}
 						*totalGrid += powerW
-					case "raedian_charger":
+					case "raedian_charger", "demo_charger":
 						if totalEvCharger == nil {
 							v := 0.0
 							totalEvCharger = &v

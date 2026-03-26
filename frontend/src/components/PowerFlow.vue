@@ -227,14 +227,17 @@ onMounted(() => {
   fetchDevices()
 })
 
-const hasGrid = computed(() => devices.value.some(d => d.template === 'huawei_dongle'))
-const hasSolar = computed(() => devices.value.some(d => d.template === 'huawei_inverter'))
-const hasBattery = computed(() => devices.value.some(d => d.template === 'huawei_inverter' && d.name.toLowerCase().includes('battery')))
-const hasEvCharger = computed(() => devices.value.some(d => d.template === 'raedian_charger'))
+const hasGrid = computed(() => devices.value.some(d => d.template === 'huawei_dongle' || d.template === 'demo_dongle'))
+const hasSolar = computed(() => devices.value.some(d => d.template === 'huawei_inverter' || d.template === 'demo_inverter'))
+const hasBattery = computed(() => devices.value.some(d => (d.template === 'huawei_inverter' || d.template === 'demo_inverter') && d.name.toLowerCase().includes('battery')))
+const hasEvCharger = computed(() => devices.value.some(d => d.template === 'raedian_charger' || d.template === 'demo_charger'))
 
 const getNodeHealth = (template: string, isBattery?: boolean) => {
   const d = devices.value.find(d => {
-    if (d.template !== template) return false
+    // Check if the template matches the requested template OR its demo equivalent
+    const isMatch = d.template === template || d.template === `demo_${template.split('_')[1]}`
+    if (!isMatch) return false
+
     if (isBattery === true) return d.name.toLowerCase().includes('battery')
     if (isBattery === false) return !d.name.toLowerCase().includes('battery')
     return true
