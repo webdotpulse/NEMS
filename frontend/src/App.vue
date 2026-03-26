@@ -10,7 +10,8 @@ let pollingInterval: number | undefined
 
 const checkConnection = async () => {
   try {
-    const response = await fetch('http://localhost:8080/api/status')
+    const host = window.location.hostname
+    const response = await fetch(`http://${host}:8080/api/status`)
     if (response.ok) {
       const data = await response.json()
       isConnected.value = data.status === 'ok'

@@ -98,6 +98,8 @@ func main() {
 		w.Write([]byte(`{"status": "ok"}`))
 	})
 
+	mux.HandleFunc("/api/live", handleLiveStream)
+
 	mux.HandleFunc("/api/templates", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		templates := []map[string]string{
