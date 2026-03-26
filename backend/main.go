@@ -2,13 +2,40 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"log"
 	"net/http"
+	"strconv"
+	"strings"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
 var db *sql.DB
+
+type Device struct {
+	ID       int    `json:"id"`
+	Name     string `json:"name"`
+	Template string `json:"template"`
+	Host     string `json:"host"`
+	Port     int    `json:"port"`
+	ModbusID int    `json:"modbus_id"`
+}
+
+func enableCORS(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
 
 func main() {
 	var err error
@@ -33,7 +60,7 @@ func main() {
 	log.Println("SQLite WAL mode enabled")
 
 	// Create measurements table
-	createTableSQL := `
+	createMeasurementsSQL := `
 	CREATE TABLE IF NOT EXISTS measurements (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -42,24 +69,134 @@ func main() {
 		energy_kwh REAL NOT NULL
 	);
 	`
-	_, err = db.Exec(createTableSQL)
+	_, err = db.Exec(createMeasurementsSQL)
 	if err != nil {
-		log.Fatal("Failed to create table:", err)
+		log.Fatal("Failed to create measurements table:", err)
+	}
+
+	createDevicesSQL := `
+	CREATE TABLE IF NOT EXISTS devices (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		name TEXT NOT NULL,
+		template TEXT NOT NULL,
+		host TEXT NOT NULL,
+		port INTEGER NOT NULL,
+		modbus_id INTEGER NOT NULL
+	);
+	`
+	_, err = db.Exec(createDevicesSQL)
+	if err != nil {
+		log.Fatal("Failed to create devices table:", err)
 	}
 	log.Println("Database schema initialized")
 
-	http.HandleFunc("/api/status", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		// CORS headers
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET")
+	mux := http.NewServeMux()
 
+	mux.HandleFunc("/api/status", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"status": "ok"}`))
 	})
 
+	mux.HandleFunc("/api/templates", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		templates := []map[string]string{
+			{"id": "huawei_inverter", "name": "Huawei Hybrid Inverter"},
+			{"id": "huawei_dongle", "name": "Huawei Dongle Power Sensor"},
+			{"id": "raedian_charger", "name": "Raedian EV Charger"},
+		}
+		json.NewEncoder(w).Encode(templates)
+	})
+
+	mux.HandleFunc("/api/devices", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if r.Method == "GET" {
+			rows, err := db.Query("SELECT id, name, template, host, port, modbus_id FROM devices")
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			defer rows.Close()
+
+			var devices []Device
+			for rows.Next() {
+				var d Device
+				if err := rows.Scan(&d.ID, &d.Name, &d.Template, &d.Host, &d.Port, &d.ModbusID); err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
+				devices = append(devices, d)
+			}
+			// ensure non-nil slice in json
+			if devices == nil {
+				devices = []Device{}
+			}
+			json.NewEncoder(w).Encode(devices)
+		} else if r.Method == "POST" {
+			var d Device
+			if err := json.NewDecoder(r.Body).Decode(&d); err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+
+			result, err := db.Exec("INSERT INTO devices (name, template, host, port, modbus_id) VALUES (?, ?, ?, ?, ?)", d.Name, d.Template, d.Host, d.Port, d.ModbusID)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			id, _ := result.LastInsertId()
+			d.ID = int(id)
+
+			// Notify poller manager
+			if PollerMgr != nil {
+				PollerMgr.SyncDevices()
+			}
+
+			w.WriteHeader(http.StatusCreated)
+			json.NewEncoder(w).Encode(d)
+		} else {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+
+	mux.HandleFunc("/api/devices/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if r.Method == "DELETE" {
+			idStr := strings.TrimPrefix(r.URL.Path, "/api/devices/")
+			id, err := strconv.Atoi(idStr)
+			if err != nil {
+				http.Error(w, "Invalid device ID", http.StatusBadRequest)
+				return
+			}
+
+			_, err = db.Exec("DELETE FROM devices WHERE id = ?", id)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			// Notify poller manager
+			if PollerMgr != nil {
+				PollerMgr.SyncDevices()
+			}
+
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(`{"status": "deleted"}`))
+		} else {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+
+	// Initialize PollerManager
+	InitPollerManager()
+	if PollerMgr != nil {
+		PollerMgr.SyncDevices()
+		PollerMgr.Start()
+	}
+
 	log.Println("Server listening on :8080")
-	err = http.ListenAndServe(":8080", nil)
+	handler := enableCORS(mux)
+	err = http.ListenAndServe(":8080", handler)
 	if err != nil {
 		log.Fatal(err)
 	}
