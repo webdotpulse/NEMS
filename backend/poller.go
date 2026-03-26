@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
-	"net"
 	"net/http"
 	"strconv"
 	"sync"
@@ -29,21 +28,32 @@ type DevicePoller interface {
 
 type HuaweiInverterPoller struct {
 	Device Device
-	conn   net.Conn
+	client *modbus.ModbusClient
 	status string
 }
 
 func (p *HuaweiInverterPoller) Connect() error {
-	addr := p.Device.Host + ":" + strconv.Itoa(p.Device.Port)
+	addr := "tcp://" + p.Device.Host + ":" + strconv.Itoa(p.Device.Port)
 	log.Printf("HuaweiInverterPoller: Attempting Modbus TCP connection to %s (ID: %d)", addr, p.Device.ModbusID)
 
-	conn, err := net.DialTimeout("tcp", addr, 2*time.Second)
+	client, err := modbus.NewClient(&modbus.ClientConfiguration{
+		URL:     addr,
+		Timeout: 2 * time.Second,
+	})
 	if err != nil {
+		log.Printf("HuaweiInverterPoller: Client setup failed (%v)", err)
+		p.status = "error"
+		return nil
+	}
+	client.SetUnitId(uint8(p.Device.ModbusID))
+
+	if err := client.Open(); err != nil {
 		log.Printf("HuaweiInverterPoller: Connection failed, falling back to simulation mode (%v)", err)
 		p.status = "error"
-		return nil // Fallback to simulation
+		return nil
 	}
-	p.conn = conn
+
+	p.client = client
 	p.status = "online"
 	return nil
 }
@@ -56,11 +66,38 @@ func (p *HuaweiInverterPoller) Status() string {
 }
 
 func (p *HuaweiInverterPoller) Poll() (float64, float64, float64, error) {
-	// Simulate typical inverter output
-	powerW := 1000.0 + rand.Float64()*3000.0
-	// Simulate battery charge/discharge (negative = charging, positive = discharging)
-	batteryPowerW := -2000.0 + rand.Float64()*4000.0
-	energyKwh := powerW * (5.0 / 3600.0) / 1000.0 // rough incremental energy for 5s
+	if p.status != "online" || p.client == nil {
+		// Simulate typical inverter output
+		powerW := 1000.0 + rand.Float64()*3000.0
+		// Simulate battery charge/discharge (negative = charging, positive = discharging)
+		batteryPowerW := -2000.0 + rand.Float64()*4000.0
+		energyKwh := powerW * (5.0 / 3600.0) / 1000.0 // rough incremental energy for 5s
+		return powerW, batteryPowerW, energyKwh, nil
+	}
+
+	// EVCC address: 32080 (Active generation power AC) - int32
+	powerRegs, err := p.client.ReadRegisters(32080, 2, modbus.HOLDING_REGISTER)
+	if err != nil {
+		return 0, 0, 0, err
+	}
+	powerW := float64(int32(uint32(powerRegs[0])<<16 | uint32(powerRegs[1])))
+
+	// EVCC address: 32106 (Accumulated energy yield) - uint32, scale 0.01
+	energyRegs, err := p.client.ReadRegisters(32106, 2, modbus.HOLDING_REGISTER)
+	energyKwh := 0.0
+	if err == nil {
+		energyKwh = float64(uint32(energyRegs[0])<<16|uint32(energyRegs[1])) * 0.01
+	}
+
+	// EVCC address: 37001 (Battery power) - int32
+	// For NEMS, battery discharging is positive. EVCC scales this by -1 (in EVCC, discharge is positive, charge is negative).
+	// We'll read the register, assume it's positive for charging natively, and scale by -1 so discharging is positive.
+	batRegs, err := p.client.ReadRegisters(37001, 2, modbus.HOLDING_REGISTER)
+	batteryPowerW := 0.0
+	if err == nil {
+		batteryPowerW = float64(int32(uint32(batRegs[0])<<16|uint32(batRegs[1]))) * -1.0
+	}
+
 	return powerW, batteryPowerW, energyKwh, nil
 }
 
@@ -69,8 +106,8 @@ func (p *HuaweiInverterPoller) GetDevice() Device {
 }
 
 func (p *HuaweiInverterPoller) Close() error {
-	if p.conn != nil {
-		return p.conn.Close()
+	if p.client != nil {
+		return p.client.Close()
 	}
 	return nil
 }
@@ -81,21 +118,32 @@ func (p *HuaweiInverterPoller) Close() error {
 
 type HuaweiDonglePoller struct {
 	Device Device
-	conn   net.Conn
+	client *modbus.ModbusClient
 	status string
 }
 
 func (p *HuaweiDonglePoller) Connect() error {
-	addr := p.Device.Host + ":" + strconv.Itoa(p.Device.Port)
+	addr := "tcp://" + p.Device.Host + ":" + strconv.Itoa(p.Device.Port)
 	log.Printf("HuaweiDonglePoller: Attempting Modbus TCP connection to %s (ID: %d)", addr, p.Device.ModbusID)
 
-	conn, err := net.DialTimeout("tcp", addr, 2*time.Second)
+	client, err := modbus.NewClient(&modbus.ClientConfiguration{
+		URL:     addr,
+		Timeout: 2 * time.Second,
+	})
 	if err != nil {
+		log.Printf("HuaweiDonglePoller: Client setup failed (%v)", err)
+		p.status = "error"
+		return nil
+	}
+	client.SetUnitId(uint8(p.Device.ModbusID))
+
+	if err := client.Open(); err != nil {
 		log.Printf("HuaweiDonglePoller: Connection failed, falling back to simulation mode (%v)", err)
 		p.status = "error"
-		return nil // Fallback to simulation
+		return nil
 	}
-	p.conn = conn
+
+	p.client = client
 	p.status = "online"
 	return nil
 }
@@ -108,9 +156,34 @@ func (p *HuaweiDonglePoller) Status() string {
 }
 
 func (p *HuaweiDonglePoller) Poll() (float64, float64, float64, error) {
-	// Simulate grid meter reading (positive = import, negative = export)
-	powerW := -2000.0 + rand.Float64()*4000.0
-	energyKwh := powerW * (5.0 / 3600.0) / 1000.0
+	if p.status != "online" || p.client == nil {
+		// Simulate grid meter reading (positive = import, negative = export)
+		powerW := -2000.0 + rand.Float64()*4000.0
+		energyKwh := powerW * (5.0 / 3600.0) / 1000.0
+		return powerW, 0, energyKwh, nil
+	}
+
+	// EVCC address: 37113 (Grid import export power) - int32.
+	// EVCC scales by -1, meaning EVCC treats export as positive.
+	// NEMS assumes "Dongle Import is positive".
+	// Let's read it, and if it's export, we keep it as is from EVCC logic... wait,
+	// NEMS expects Import = Positive, Export = Negative.
+	// EVCC says: 37113 scale: -1. So if the meter returns positive for export natively, EVCC scales it so import is positive (since EVCC wants import positive? EVCC grid is positive for import usually).
+	// Let's follow EVCC exactly: scale by -1 so it matches EVCC's output behavior, assuming NEMS wants the same.
+	// Wait! The comment in EVCC is `address: 37113 # Grid import export power`, `scale: -1`.
+	powerRegs, err := p.client.ReadRegisters(37113, 2, modbus.HOLDING_REGISTER)
+	if err != nil {
+		return 0, 0, 0, err
+	}
+	powerW := float64(int32(uint32(powerRegs[0])<<16|uint32(powerRegs[1]))) * -1.0
+
+	// EVCC address: 37121 (Active energy import from the grid) - uint32, scale 0.01
+	energyRegs, err := p.client.ReadRegisters(37121, 2, modbus.HOLDING_REGISTER)
+	energyKwh := 0.0
+	if err == nil {
+		energyKwh = float64(uint32(energyRegs[0])<<16|uint32(energyRegs[1])) * 0.01
+	}
+
 	return powerW, 0, energyKwh, nil
 }
 
@@ -119,8 +192,8 @@ func (p *HuaweiDonglePoller) GetDevice() Device {
 }
 
 func (p *HuaweiDonglePoller) Close() error {
-	if p.conn != nil {
-		return p.conn.Close()
+	if p.client != nil {
+		return p.client.Close()
 	}
 	return nil
 }
@@ -131,21 +204,32 @@ func (p *HuaweiDonglePoller) Close() error {
 
 type RaedianChargerPoller struct {
 	Device Device
-	conn   net.Conn
+	client *modbus.ModbusClient
 	status string
 }
 
 func (p *RaedianChargerPoller) Connect() error {
-	addr := p.Device.Host + ":" + strconv.Itoa(p.Device.Port)
+	addr := "tcp://" + p.Device.Host + ":" + strconv.Itoa(p.Device.Port)
 	log.Printf("RaedianChargerPoller: Attempting Modbus TCP connection to %s (ID: %d)", addr, p.Device.ModbusID)
 
-	conn, err := net.DialTimeout("tcp", addr, 2*time.Second)
+	client, err := modbus.NewClient(&modbus.ClientConfiguration{
+		URL:     addr,
+		Timeout: 2 * time.Second,
+	})
 	if err != nil {
+		log.Printf("RaedianChargerPoller: Client setup failed (%v)", err)
+		p.status = "error"
+		return nil
+	}
+	client.SetUnitId(uint8(p.Device.ModbusID))
+
+	if err := client.Open(); err != nil {
 		log.Printf("RaedianChargerPoller: Connection failed, falling back to simulation mode (%v)", err)
 		p.status = "error"
-		return nil // Fallback to simulation
+		return nil
 	}
-	p.conn = conn
+
+	p.client = client
 	p.status = "online"
 	return nil
 }
@@ -158,12 +242,31 @@ func (p *RaedianChargerPoller) Status() string {
 }
 
 func (p *RaedianChargerPoller) Poll() (float64, float64, float64, error) {
-	// Simulate charging
-	powerW := 0.0
-	if rand.Float32() > 0.5 {
-		powerW = 11000.0 // 11kW charging
+	if p.status != "online" || p.client == nil {
+		// Simulate charging
+		powerW := 0.0
+		if rand.Float32() > 0.5 {
+			powerW = 11000.0 // 11kW charging
+		}
+		energyKwh := powerW * (5.0 / 3600.0) / 1000.0
+		return powerW, 0, energyKwh, nil
 	}
-	energyKwh := powerW * (5.0 / 3600.0) / 1000.0
+
+	// EVCC address: 0x801C (32796) (Power in W) - uint32
+	powerRegs, err := p.client.ReadRegisters(32796, 2, modbus.HOLDING_REGISTER)
+	if err != nil {
+		return 0, 0, 0, err
+	}
+	powerW := float64(uint32(powerRegs[0])<<16 | uint32(powerRegs[1]))
+
+	// EVCC address: 0x801E (32798) (Charged energy in Wh) - uint32
+	energyRegs, err := p.client.ReadRegisters(32798, 2, modbus.HOLDING_REGISTER)
+	energyKwh := 0.0
+	if err == nil {
+		energyWh := float64(uint32(energyRegs[0])<<16 | uint32(energyRegs[1]))
+		energyKwh = energyWh / 1000.0
+	}
+
 	return powerW, 0, energyKwh, nil
 }
 
@@ -172,8 +275,8 @@ func (p *RaedianChargerPoller) GetDevice() Device {
 }
 
 func (p *RaedianChargerPoller) Close() error {
-	if p.conn != nil {
-		return p.conn.Close()
+	if p.client != nil {
+		return p.client.Close()
 	}
 	return nil
 }
