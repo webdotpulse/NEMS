@@ -13,6 +13,7 @@ type DevicePoller interface {
 	Connect() error
 	Poll() (powerW float64, batteryPowerW float64, energyKwh float64, err error)
 	GetDevice() Device
+	Status() string
 	Close() error
 }
 
@@ -23,6 +24,7 @@ type DevicePoller interface {
 type HuaweiInverterPoller struct {
 	Device Device
 	conn   net.Conn
+	status string
 }
 
 func (p *HuaweiInverterPoller) Connect() error {
@@ -32,10 +34,19 @@ func (p *HuaweiInverterPoller) Connect() error {
 	conn, err := net.DialTimeout("tcp", addr, 2*time.Second)
 	if err != nil {
 		log.Printf("HuaweiInverterPoller: Connection failed, falling back to simulation mode (%v)", err)
+		p.status = "error"
 		return nil // Fallback to simulation
 	}
 	p.conn = conn
+	p.status = "online"
 	return nil
+}
+
+func (p *HuaweiInverterPoller) Status() string {
+	if p.status == "" {
+		return "offline"
+	}
+	return p.status
 }
 
 func (p *HuaweiInverterPoller) Poll() (float64, float64, float64, error) {
@@ -65,6 +76,7 @@ func (p *HuaweiInverterPoller) Close() error {
 type HuaweiDonglePoller struct {
 	Device Device
 	conn   net.Conn
+	status string
 }
 
 func (p *HuaweiDonglePoller) Connect() error {
@@ -74,10 +86,19 @@ func (p *HuaweiDonglePoller) Connect() error {
 	conn, err := net.DialTimeout("tcp", addr, 2*time.Second)
 	if err != nil {
 		log.Printf("HuaweiDonglePoller: Connection failed, falling back to simulation mode (%v)", err)
+		p.status = "error"
 		return nil // Fallback to simulation
 	}
 	p.conn = conn
+	p.status = "online"
 	return nil
+}
+
+func (p *HuaweiDonglePoller) Status() string {
+	if p.status == "" {
+		return "offline"
+	}
+	return p.status
 }
 
 func (p *HuaweiDonglePoller) Poll() (float64, float64, float64, error) {
@@ -105,6 +126,7 @@ func (p *HuaweiDonglePoller) Close() error {
 type RaedianChargerPoller struct {
 	Device Device
 	conn   net.Conn
+	status string
 }
 
 func (p *RaedianChargerPoller) Connect() error {
@@ -114,10 +136,19 @@ func (p *RaedianChargerPoller) Connect() error {
 	conn, err := net.DialTimeout("tcp", addr, 2*time.Second)
 	if err != nil {
 		log.Printf("RaedianChargerPoller: Connection failed, falling back to simulation mode (%v)", err)
+		p.status = "error"
 		return nil // Fallback to simulation
 	}
 	p.conn = conn
+	p.status = "online"
 	return nil
+}
+
+func (p *RaedianChargerPoller) Status() string {
+	if p.status == "" {
+		return "offline"
+	}
+	return p.status
 }
 
 func (p *RaedianChargerPoller) Poll() (float64, float64, float64, error) {
@@ -238,12 +269,16 @@ func (pm *PollerManager) Start() {
 			case <-ticker.C:
 				pm.mu.Lock()
 
-				var totalGrid float64
-				var totalSolar float64
-				var totalBattery float64
-				var totalEvCharger float64
+				var totalGrid *float64
+				var totalSolar *float64
+				var totalBattery *float64
+				var totalEvCharger *float64
+
+				deviceHealth := make(map[int]string)
 
 				for id, poller := range pm.pollers {
+					deviceHealth[id] = poller.Status()
+
 					powerW, batteryPowerW, energyKwh, err := poller.Poll()
 					if err != nil {
 						log.Printf("PollerManager: Error polling device %d: %v", id, err)
@@ -253,12 +288,29 @@ func (pm *PollerManager) Start() {
 					device := poller.GetDevice()
 					switch device.Template {
 					case "huawei_inverter":
-						totalSolar += powerW
-						totalBattery += batteryPowerW
+						if totalSolar == nil {
+							v := 0.0
+							totalSolar = &v
+						}
+						*totalSolar += powerW
+
+						if totalBattery == nil {
+							v := 0.0
+							totalBattery = &v
+						}
+						*totalBattery += batteryPowerW
 					case "huawei_dongle":
-						totalGrid += powerW
+						if totalGrid == nil {
+							v := 0.0
+							totalGrid = &v
+						}
+						*totalGrid += powerW
 					case "raedian_charger":
-						totalEvCharger += powerW
+						if totalEvCharger == nil {
+							v := 0.0
+							totalEvCharger = &v
+						}
+						*totalEvCharger += powerW
 					}
 
 					// Buffer measurement
@@ -279,7 +331,16 @@ func (pm *PollerManager) Start() {
 				// This assumes powerW from Dongle is positive for IMPORT and negative for EXPORT.
 				// Wait, the Dongle simulation says "positive = import, negative = export".
 
-				totalLoad := totalGrid + totalSolar + totalBattery
+				var totalLoad *float64
+
+				// Calculate total load only if we have at least one valid measurement
+				if totalGrid != nil || totalSolar != nil || totalBattery != nil {
+					v := 0.0
+					if totalGrid != nil { v += *totalGrid }
+					if totalSolar != nil { v += *totalSolar }
+					if totalBattery != nil { v += *totalBattery }
+					totalLoad = &v
+				}
 
 				state := SiteState{
 					GridPowerW:      totalGrid,
@@ -287,6 +348,7 @@ func (pm *PollerManager) Start() {
 					BatteryPowerW:   totalBattery,
 					TotalLoadW:      totalLoad,
 					EvChargerPowerW: totalEvCharger,
+					DeviceHealth:    deviceHealth,
 				}
 
 				GlobalStateDispatcher.Broadcast(state)

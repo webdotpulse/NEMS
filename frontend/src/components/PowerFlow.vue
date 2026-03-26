@@ -10,7 +10,7 @@
         vector-effect="non-scaling-stroke"
       />
       <path
-        v-if="hasGrid && state?.grid_power_w !== 0"
+        v-if="hasGrid && state?.grid_power_w !== null && state?.grid_power_w !== 0"
         d="M 20 50 L 50 50"
         class="stroke-blue-500 stroke-2 fill-none flow-path"
         vector-effect="non-scaling-stroke"
@@ -25,7 +25,7 @@
         vector-effect="non-scaling-stroke"
       />
       <path
-        v-if="hasSolar && (state?.solar_power_w || 0) > 0"
+        v-if="hasSolar && state?.solar_power_w !== null && state!.solar_power_w! > 0"
         d="M 50 20 L 50 50"
         class="stroke-yellow-400 stroke-2 fill-none flow-path"
         vector-effect="non-scaling-stroke"
@@ -40,7 +40,7 @@
         vector-effect="non-scaling-stroke"
       />
       <path
-        v-if="hasBattery && state?.battery_power_w !== 0"
+        v-if="hasBattery && state?.battery_power_w !== null && state?.battery_power_w !== 0"
         d="M 50 80 L 50 50"
         class="stroke-green-400 stroke-2 fill-none flow-path"
         vector-effect="non-scaling-stroke"
@@ -55,7 +55,7 @@
         vector-effect="non-scaling-stroke"
       />
       <path
-        v-if="hasEvCharger && (state?.ev_charger_power_w || 0) > 0"
+        v-if="hasEvCharger && state?.ev_charger_power_w !== null && state!.ev_charger_power_w! > 0"
         d="M 50 50 L 80 50"
         class="stroke-purple-500 stroke-2 fill-none flow-path"
         vector-effect="non-scaling-stroke"
@@ -66,50 +66,66 @@
     <!-- Node UI Elements -->
 
     <!-- Grid Node -->
-    <div v-if="hasGrid" @click="openChart('grid')" class="absolute top-[50%] left-[20%] -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center justify-center w-24 h-24 bg-white dark:bg-gray-800 rounded-full border-4 border-blue-500 shadow-md cursor-pointer hover:scale-105 transition-transform">
+    <div v-if="hasGrid" @click="openChart('grid')" class="absolute top-[50%] left-[20%] -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center justify-center w-24 h-24 bg-white dark:bg-gray-800 rounded-full border-4 border-blue-500 shadow-md cursor-pointer hover:scale-105 transition-transform relative">
+      <span v-if="getNodeHealth('huawei_dongle') === 'online'" class="absolute top-1 right-2 flex w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-gray-800" title="Online"></span>
+      <span v-else-if="getNodeHealth('huawei_dongle') === 'error'" class="absolute top-1 right-2 flex w-3 h-3 bg-red-500 rounded-full border-2 border-white dark:border-gray-800" title="Error"></span>
+      <span v-else class="absolute top-1 right-2 flex w-3 h-3 bg-gray-400 rounded-full border-2 border-white dark:border-gray-800" title="Offline"></span>
+
       <svg class="h-8 w-8 text-blue-500 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
       </svg>
       <div class="text-xs font-semibold text-gray-700 dark:text-gray-200">Grid</div>
-      <div class="text-xs text-gray-500 dark:text-gray-400">{{ Math.abs(state?.grid_power_w || 0).toFixed(0) }}W</div>
+      <div class="text-xs text-gray-500 dark:text-gray-400">{{ state?.grid_power_w !== null && state?.grid_power_w !== undefined ? Math.abs(state.grid_power_w).toFixed(0) + 'W' : '--' }}</div>
     </div>
 
     <!-- Solar Node -->
-    <div v-if="hasSolar" @click="openChart('solar')" class="absolute top-[20%] left-[50%] -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center justify-center w-24 h-24 bg-white dark:bg-gray-800 rounded-full border-4 border-yellow-400 shadow-md cursor-pointer hover:scale-105 transition-transform">
+    <div v-if="hasSolar" @click="openChart('solar')" class="absolute top-[20%] left-[50%] -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center justify-center w-24 h-24 bg-white dark:bg-gray-800 rounded-full border-4 border-yellow-400 shadow-md cursor-pointer hover:scale-105 transition-transform relative">
+      <span v-if="getNodeHealth('huawei_inverter', false) === 'online'" class="absolute top-1 right-2 flex w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-gray-800" title="Online"></span>
+      <span v-else-if="getNodeHealth('huawei_inverter', false) === 'error'" class="absolute top-1 right-2 flex w-3 h-3 bg-red-500 rounded-full border-2 border-white dark:border-gray-800" title="Error"></span>
+      <span v-else class="absolute top-1 right-2 flex w-3 h-3 bg-gray-400 rounded-full border-2 border-white dark:border-gray-800" title="Offline"></span>
+
       <svg class="h-8 w-8 text-yellow-400 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
       </svg>
       <div class="text-xs font-semibold text-gray-700 dark:text-gray-200">Solar</div>
-      <div class="text-xs text-gray-500 dark:text-gray-400">{{ (state?.solar_power_w || 0).toFixed(0) }}W</div>
+      <div class="text-xs text-gray-500 dark:text-gray-400">{{ state?.solar_power_w !== null && state?.solar_power_w !== undefined ? state.solar_power_w.toFixed(0) + 'W' : '--' }}</div>
     </div>
 
     <!-- Battery Node -->
-    <div v-if="hasBattery" @click="openChart('battery')" class="absolute top-[80%] left-[50%] -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center justify-center w-24 h-24 bg-white dark:bg-gray-800 rounded-full border-4 border-green-400 shadow-md cursor-pointer hover:scale-105 transition-transform">
+    <div v-if="hasBattery" @click="openChart('battery')" class="absolute top-[80%] left-[50%] -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center justify-center w-24 h-24 bg-white dark:bg-gray-800 rounded-full border-4 border-green-400 shadow-md cursor-pointer hover:scale-105 transition-transform relative">
+      <span v-if="getNodeHealth('huawei_inverter', true) === 'online'" class="absolute top-1 right-2 flex w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-gray-800" title="Online"></span>
+      <span v-else-if="getNodeHealth('huawei_inverter', true) === 'error'" class="absolute top-1 right-2 flex w-3 h-3 bg-red-500 rounded-full border-2 border-white dark:border-gray-800" title="Error"></span>
+      <span v-else class="absolute top-1 right-2 flex w-3 h-3 bg-gray-400 rounded-full border-2 border-white dark:border-gray-800" title="Offline"></span>
+
       <svg class="h-8 w-8 text-green-400 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
       </svg>
       <div class="text-xs font-semibold text-gray-700 dark:text-gray-200">Battery</div>
-      <div class="text-xs text-gray-500 dark:text-gray-400">{{ Math.abs(state?.battery_power_w || 0).toFixed(0) }}W</div>
+      <div class="text-xs text-gray-500 dark:text-gray-400">{{ state?.battery_power_w !== null && state?.battery_power_w !== undefined ? Math.abs(state.battery_power_w).toFixed(0) + 'W' : '--' }}</div>
     </div>
 
     <!-- Home Load Node (Center) -->
-    <div class="absolute top-[50%] left-[50%] -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center justify-center w-28 h-28 bg-white dark:bg-gray-800 rounded-full border-4 border-indigo-500 shadow-md">
+    <div class="absolute top-[50%] left-[50%] -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center justify-center w-28 h-28 bg-white dark:bg-gray-800 rounded-full border-4 border-indigo-500 shadow-md relative">
       <svg class="h-10 w-10 text-indigo-500 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
       </svg>
       <div class="text-sm font-bold text-gray-700 dark:text-gray-200">Home</div>
-      <div class="text-sm text-gray-500 dark:text-gray-400">{{ Math.max(0, homeLoad).toFixed(0) }}W</div>
+      <div class="text-sm text-gray-500 dark:text-gray-400">{{ state?.total_load_w !== null && state?.total_load_w !== undefined ? Math.max(0, homeLoad).toFixed(0) + 'W' : '--' }}</div>
     </div>
 
     <!-- EV Charger Node -->
-    <div v-if="hasEvCharger" @click="openChart('ev_charger')" class="absolute top-[50%] left-[80%] -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center justify-center w-24 h-24 bg-white dark:bg-gray-800 rounded-full border-4 border-purple-500 shadow-md cursor-pointer hover:scale-105 transition-transform">
+    <div v-if="hasEvCharger" @click="openChart('ev_charger')" class="absolute top-[50%] left-[80%] -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center justify-center w-24 h-24 bg-white dark:bg-gray-800 rounded-full border-4 border-purple-500 shadow-md cursor-pointer hover:scale-105 transition-transform relative">
+      <span v-if="getNodeHealth('raedian_charger') === 'online'" class="absolute top-1 right-2 flex w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-gray-800" title="Online"></span>
+      <span v-else-if="getNodeHealth('raedian_charger') === 'error'" class="absolute top-1 right-2 flex w-3 h-3 bg-red-500 rounded-full border-2 border-white dark:border-gray-800" title="Error"></span>
+      <span v-else class="absolute top-1 right-2 flex w-3 h-3 bg-gray-400 rounded-full border-2 border-white dark:border-gray-800" title="Offline"></span>
+
       <svg class="h-8 w-8 text-purple-500 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
         <!-- using a generic power icon for now as EV might be missing from tailwind generic set, it's just a demo representation -->
         <circle cx="12" cy="12" r="3" fill="currentColor"/>
       </svg>
       <div class="text-xs font-semibold text-gray-700 dark:text-gray-200">EV</div>
-      <div class="text-xs text-gray-500 dark:text-gray-400">{{ (state?.ev_charger_power_w || 0).toFixed(0) }}W</div>
+      <div class="text-xs text-gray-500 dark:text-gray-400">{{ state?.ev_charger_power_w !== null && state?.ev_charger_power_w !== undefined ? state.ev_charger_power_w.toFixed(0) + 'W' : '--' }}</div>
     </div>
   </div>
 
@@ -175,11 +191,12 @@ ChartJS.register(
 )
 
 interface SiteState {
-  grid_power_w: number
-  solar_power_w: number
-  battery_power_w: number
-  total_load_w: number
-  ev_charger_power_w: number
+  grid_power_w: number | null
+  solar_power_w: number | null
+  battery_power_w: number | null
+  total_load_w: number | null
+  ev_charger_power_w: number | null
+  device_health?: Record<number, string>
 }
 
 interface Device {
@@ -215,8 +232,21 @@ const hasSolar = computed(() => devices.value.some(d => d.template === 'huawei_i
 const hasBattery = computed(() => devices.value.some(d => d.template === 'huawei_inverter' && d.name.toLowerCase().includes('battery')))
 const hasEvCharger = computed(() => devices.value.some(d => d.template === 'raedian_charger'))
 
+const getNodeHealth = (template: string, isBattery?: boolean) => {
+  const d = devices.value.find(d => {
+    if (d.template !== template) return false
+    if (isBattery === true) return d.name.toLowerCase().includes('battery')
+    if (isBattery === false) return !d.name.toLowerCase().includes('battery')
+    return true
+  })
+  if (d && props.state?.device_health && props.state.device_health[d.id]) {
+    return props.state.device_health[d.id]
+  }
+  return 'offline'
+}
+
 const homeLoad = computed(() => {
-  if (!props.state) return 0
+  if (!props.state || props.state.total_load_w === null || props.state.total_load_w === undefined) return 0
   return props.state.total_load_w - (props.state.ev_charger_power_w || 0)
 })
 

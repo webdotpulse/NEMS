@@ -20,6 +20,7 @@ type Device struct {
 	Host     string `json:"host"`
 	Port     int    `json:"port"`
 	ModbusID int    `json:"modbus_id"`
+	Status   string `json:"status"`
 }
 
 func enableCORS(next http.Handler) http.Handler {
@@ -135,6 +136,17 @@ func main() {
 					http.Error(w, err.Error(), http.StatusInternalServerError)
 					return
 				}
+
+				// Set dynamic status if poller exists
+				d.Status = "offline"
+				if PollerMgr != nil {
+					PollerMgr.mu.Lock()
+					if poller, ok := PollerMgr.pollers[d.ID]; ok {
+						d.Status = poller.Status()
+					}
+					PollerMgr.mu.Unlock()
+				}
+
 				devices = append(devices, d)
 			}
 			// ensure non-nil slice in json
@@ -173,14 +185,15 @@ func main() {
 
 	mux.HandleFunc("/api/devices/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		if r.Method == "DELETE" {
-			idStr := strings.TrimPrefix(r.URL.Path, "/api/devices/")
-			id, err := strconv.Atoi(idStr)
-			if err != nil {
-				http.Error(w, "Invalid device ID", http.StatusBadRequest)
-				return
-			}
 
+		idStr := strings.TrimPrefix(r.URL.Path, "/api/devices/")
+		id, err := strconv.Atoi(idStr)
+		if err != nil {
+			http.Error(w, "Invalid device ID", http.StatusBadRequest)
+			return
+		}
+
+		if r.Method == "DELETE" {
 			_, err = db.Exec("DELETE FROM devices WHERE id = ?", id)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -194,6 +207,29 @@ func main() {
 
 			w.WriteHeader(http.StatusOK)
 			w.Write([]byte(`{"status": "deleted"}`))
+		} else if r.Method == "PUT" {
+			var d Device
+			if err := json.NewDecoder(r.Body).Decode(&d); err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+
+			_, err = db.Exec("UPDATE devices SET name = ?, template = ?, host = ?, port = ?, modbus_id = ? WHERE id = ?",
+				d.Name, d.Template, d.Host, d.Port, d.ModbusID, id)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			d.ID = id
+
+			// Notify poller manager
+			if PollerMgr != nil {
+				PollerMgr.SyncDevices()
+			}
+
+			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(d)
 		} else {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
