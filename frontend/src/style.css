@@ -1,0 +1,8 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary-500: #3b82f6;
+}
+
+/* Enable manual dark mode via class */
+@custom-variant dark (&:is(.dark *));
