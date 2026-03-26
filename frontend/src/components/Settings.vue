@@ -138,7 +138,8 @@ const form = ref({
 
 const fetchTemplates = async () => {
   try {
-    const res = await fetch('http://localhost:8080/api/templates')
+    const host = window.location.hostname
+    const res = await fetch(`http://${host}:8080/api/templates`)
     templates.value = await res.json()
   } catch (e) {
     console.error("Failed to fetch templates:", e)
@@ -147,7 +148,8 @@ const fetchTemplates = async () => {
 
 const fetchDevices = async () => {
   try {
-    const res = await fetch('http://localhost:8080/api/devices')
+    const host = window.location.hostname
+    const res = await fetch(`http://${host}:8080/api/devices`)
     devices.value = await res.json() || []
   } catch (e) {
     console.error("Failed to fetch devices:", e)
@@ -161,7 +163,8 @@ const getTemplateName = (id: string) => {
 
 const addDevice = async () => {
   try {
-    const res = await fetch('http://localhost:8080/api/devices', {
+    const host = window.location.hostname
+    const res = await fetch(`http://${host}:8080/api/devices`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -187,7 +190,8 @@ const addDevice = async () => {
 
 const deleteDevice = async (id: number) => {
   try {
-    const res = await fetch(`http://localhost:8080/api/devices/${id}`, {
+    const host = window.location.hostname
+    const res = await fetch(`http://${host}:8080/api/devices/${id}`, {
       method: 'DELETE'
     })
 

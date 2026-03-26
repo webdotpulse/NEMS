@@ -11,7 +11,8 @@ import (
 
 type DevicePoller interface {
 	Connect() error
-	Poll() (powerW float64, energyKwh float64, err error)
+	Poll() (powerW float64, batteryPowerW float64, energyKwh float64, err error)
+	GetDevice() Device
 	Close() error
 }
 
@@ -37,11 +38,17 @@ func (p *HuaweiInverterPoller) Connect() error {
 	return nil
 }
 
-func (p *HuaweiInverterPoller) Poll() (float64, float64, error) {
+func (p *HuaweiInverterPoller) Poll() (float64, float64, float64, error) {
 	// Simulate typical inverter output
 	powerW := 1000.0 + rand.Float64()*3000.0
+	// Simulate battery charge/discharge (negative = charging, positive = discharging)
+	batteryPowerW := -2000.0 + rand.Float64()*4000.0
 	energyKwh := powerW * (5.0 / 3600.0) / 1000.0 // rough incremental energy for 5s
-	return powerW, energyKwh, nil
+	return powerW, batteryPowerW, energyKwh, nil
+}
+
+func (p *HuaweiInverterPoller) GetDevice() Device {
+	return p.Device
 }
 
 func (p *HuaweiInverterPoller) Close() error {
@@ -73,11 +80,15 @@ func (p *HuaweiDonglePoller) Connect() error {
 	return nil
 }
 
-func (p *HuaweiDonglePoller) Poll() (float64, float64, error) {
+func (p *HuaweiDonglePoller) Poll() (float64, float64, float64, error) {
 	// Simulate grid meter reading (positive = import, negative = export)
 	powerW := -2000.0 + rand.Float64()*4000.0
 	energyKwh := powerW * (5.0 / 3600.0) / 1000.0
-	return powerW, energyKwh, nil
+	return powerW, 0, energyKwh, nil
+}
+
+func (p *HuaweiDonglePoller) GetDevice() Device {
+	return p.Device
 }
 
 func (p *HuaweiDonglePoller) Close() error {
@@ -109,14 +120,18 @@ func (p *RaedianChargerPoller) Connect() error {
 	return nil
 }
 
-func (p *RaedianChargerPoller) Poll() (float64, float64, error) {
+func (p *RaedianChargerPoller) Poll() (float64, float64, float64, error) {
 	// Simulate charging
 	powerW := 0.0
 	if rand.Float32() > 0.5 {
 		powerW = 11000.0 // 11kW charging
 	}
 	energyKwh := powerW * (5.0 / 3600.0) / 1000.0
-	return powerW, energyKwh, nil
+	return powerW, 0, energyKwh, nil
+}
+
+func (p *RaedianChargerPoller) GetDevice() Device {
+	return p.Device
 }
 
 func (p *RaedianChargerPoller) Close() error {
@@ -130,10 +145,19 @@ func (p *RaedianChargerPoller) Close() error {
 // Poller Manager
 // ---------------------------------------------------------
 
+type BufferedMeasurement struct {
+	DeviceID  int
+	PowerW    float64
+	EnergyKwh float64
+}
+
 type PollerManager struct {
 	pollers map[int]DevicePoller
 	mu      sync.Mutex
 	stopCh  chan struct{}
+
+	bufferMu sync.Mutex
+	buffer   []BufferedMeasurement
 }
 
 var PollerMgr *PollerManager
@@ -142,6 +166,7 @@ func InitPollerManager() {
 	PollerMgr = &PollerManager{
 		pollers: make(map[int]DevicePoller),
 		stopCh:  make(chan struct{}),
+		buffer:  make([]BufferedMeasurement, 0),
 	}
 }
 
@@ -212,26 +237,141 @@ func (pm *PollerManager) Start() {
 			select {
 			case <-ticker.C:
 				pm.mu.Lock()
+
+				var totalGrid float64
+				var totalSolar float64
+				var totalBattery float64
+
 				for id, poller := range pm.pollers {
-					powerW, energyKwh, err := poller.Poll()
+					powerW, batteryPowerW, energyKwh, err := poller.Poll()
 					if err != nil {
 						log.Printf("PollerManager: Error polling device %d: %v", id, err)
 						continue
 					}
 
-					// Save to db
-					_, err = db.Exec("INSERT INTO measurements (device_id, power_w, energy_kwh) VALUES (?, ?, ?)", id, powerW, energyKwh)
-					if err != nil {
-						log.Printf("PollerManager: Error saving measurement for device %d: %v", id, err)
+					device := poller.GetDevice()
+					switch device.Template {
+					case "huawei_inverter":
+						totalSolar += powerW
+						totalBattery += batteryPowerW
+					case "huawei_dongle":
+						totalGrid += powerW
 					}
+
+					// Buffer measurement
+					pm.bufferMu.Lock()
+					pm.buffer = append(pm.buffer, BufferedMeasurement{
+						DeviceID:  id,
+						PowerW:    powerW,
+						EnergyKwh: energyKwh,
+					})
+					pm.bufferMu.Unlock()
 				}
 				pm.mu.Unlock()
+
+				// Total Load = Grid Power (imported positive) + Solar + Battery (discharging positive)
+				// Dongle Import is positive.
+				// Inverter Solar is positive.
+				// Inverter Battery Discharging is positive.
+				// This assumes powerW from Dongle is positive for IMPORT and negative for EXPORT.
+				// Wait, the Dongle simulation says "positive = import, negative = export".
+
+				totalLoad := totalGrid + totalSolar + totalBattery
+
+				state := SiteState{
+					GridPowerW:    totalGrid,
+					SolarPowerW:   totalSolar,
+					BatteryPowerW: totalBattery,
+					TotalLoadW:    totalLoad,
+				}
+
+				GlobalStateDispatcher.Broadcast(state)
+
 			case <-pm.stopCh:
-				log.Println("PollerManager: Stopped")
+				log.Println("PollerManager: Polling stopped")
 				return
 			}
 		}
 	}()
+
+	// Start flush loop
+	go func() {
+		flushTicker := time.NewTicker(1 * time.Minute)
+		defer flushTicker.Stop()
+
+		for {
+			select {
+			case <-flushTicker.C:
+				pm.flushBuffer()
+			case <-pm.stopCh:
+				log.Println("PollerManager: DB Flush stopped")
+				return
+			}
+		}
+	}()
+}
+
+func (pm *PollerManager) flushBuffer() {
+	pm.bufferMu.Lock()
+	if len(pm.buffer) == 0 {
+		pm.bufferMu.Unlock()
+		return
+	}
+
+	// Make a copy and clear buffer
+	currentBuffer := make([]BufferedMeasurement, len(pm.buffer))
+	copy(currentBuffer, pm.buffer)
+	pm.buffer = make([]BufferedMeasurement, 0)
+	pm.bufferMu.Unlock()
+
+	// Aggregate averages by device ID
+	type sumCount struct {
+		SumPowerW float64
+		SumEnergy float64
+		Count     int
+	}
+	agg := make(map[int]*sumCount)
+
+	for _, m := range currentBuffer {
+		if _, ok := agg[m.DeviceID]; !ok {
+			agg[m.DeviceID] = &sumCount{}
+		}
+		agg[m.DeviceID].SumPowerW += m.PowerW
+		agg[m.DeviceID].SumEnergy += m.EnergyKwh
+		agg[m.DeviceID].Count++
+	}
+
+	// Transactional insert to limit SD card I/O
+	tx, err := db.Begin()
+	if err != nil {
+		log.Printf("PollerManager DB Flush: Error starting transaction: %v", err)
+		return
+	}
+
+	stmt, err := tx.Prepare("INSERT INTO measurements (device_id, power_w, energy_kwh) VALUES (?, ?, ?)")
+	if err != nil {
+		tx.Rollback()
+		log.Printf("PollerManager DB Flush: Error preparing statement: %v", err)
+		return
+	}
+	defer stmt.Close()
+
+	for id, data := range agg {
+		avgPower := data.SumPowerW / float64(data.Count)
+		totalEnergy := data.SumEnergy // energy is incremental, we just sum it for the minute interval
+
+		_, err := stmt.Exec(id, avgPower, totalEnergy)
+		if err != nil {
+			log.Printf("PollerManager DB Flush: Error executing statement for device %d: %v", id, err)
+		}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		log.Printf("PollerManager DB Flush: Error committing transaction: %v", err)
+	} else {
+		log.Printf("PollerManager DB Flush: Flushed %d aggregated measurements to DB", len(agg))
+	}
 }
 
 func (pm *PollerManager) Stop() {
