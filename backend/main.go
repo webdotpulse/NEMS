@@ -115,6 +115,9 @@ func main() {
 			{"id": "huawei_inverter", "name": "Huawei Hybrid Inverter"},
 			{"id": "huawei_dongle", "name": "Huawei Dongle Power Sensor"},
 			{"id": "raedian_charger", "name": "Raedian EV Charger"},
+			{"id": "demo_inverter", "name": "Demo Inverter"},
+			{"id": "demo_dongle", "name": "Demo Grid Meter"},
+			{"id": "demo_charger", "name": "Demo EV Charger"},
 		}
 		json.NewEncoder(w).Encode(templates)
 	})
