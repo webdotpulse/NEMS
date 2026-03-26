@@ -1,0 +1,105 @@
+name: Release Build
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    name: Build & Package DEB
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build Vue Frontend
+        working-directory: ./frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24.x'
+          cache-dependency-path: backend/go.sum
+
+      - name: Install ARM64 Cross Compiler
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu libc6-dev-arm64-cross
+
+      - name: Build Go Backend for linux/arm64
+        working-directory: ./backend
+        env:
+          GOOS: linux
+          GOARCH: arm64
+          CGO_ENABLED: 1
+          CC: aarch64-linux-gnu-gcc
+        run: |
+          go build -o ../build/nems-server *.go
+
+      - name: Create DEB Package Structure
+        run: |
+          mkdir -p build/deb/opt/nems/dist
+          mkdir -p build/deb/DEBIAN
+          mkdir -p build/deb/etc/systemd/system
+
+          # Copy files
+          cp build/nems-server build/deb/opt/nems/
+          cp -r frontend/dist/* build/deb/opt/nems/dist/
+          cp nems.service build/deb/etc/systemd/system/
+
+      - name: Create DEB Control Files
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+
+          # DEB control file
+          cat <<EOF > build/deb/DEBIAN/control
+          Package: nems
+          Version: ${VERSION}
+          Architecture: arm64
+          Maintainer: NEMS Team <team@nems.local>
+          Description: NEMS Energy Management System
+           A complete energy management system for Raspberry Pi.
+          EOF
+
+          # postinst script
+          cat <<'EOF' > build/deb/DEBIAN/postinst
+          #!/bin/sh
+          set -e
+          if ! id -u nems >/dev/null 2>&1; then
+              useradd -r -s /bin/false nems
+          fi
+          chown -R nems:nems /opt/nems
+          systemctl daemon-reload
+          systemctl enable nems.service
+          systemctl restart nems.service
+          EOF
+          chmod +x build/deb/DEBIAN/postinst
+
+          # prerm script
+          cat <<'EOF' > build/deb/DEBIAN/prerm
+          #!/bin/sh
+          set -e
+          systemctl stop nems.service || true
+          systemctl disable nems.service || true
+          EOF
+          chmod +x build/deb/DEBIAN/prerm
+
+      - name: Build DEB Package
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          dpkg-deb --build build/deb build/nems_${VERSION}_arm64.deb
+
+      - name: Upload Release Asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/nems_*_arm64.deb
