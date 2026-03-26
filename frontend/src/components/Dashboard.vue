@@ -1,6 +1,11 @@
 <template>
   <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
     <div class="px-4 py-6 sm:px-0">
+
+      <div v-if="state" class="mb-8">
+        <PowerFlow :state="state" />
+      </div>
+
       <div v-if="state" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
 
         <!-- Grid Power Card -->
@@ -122,12 +127,14 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
+import PowerFlow from './PowerFlow.vue'
 
 interface SiteState {
   grid_power_w: number
   solar_power_w: number
   battery_power_w: number
   total_load_w: number
+  ev_charger_power_w: number
 }
 
 const state = ref<SiteState | null>(null)

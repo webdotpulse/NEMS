@@ -9,10 +9,11 @@ import (
 )
 
 type SiteState struct {
-	GridPowerW    float64 `json:"grid_power_w"`
-	SolarPowerW   float64 `json:"solar_power_w"`
-	BatteryPowerW float64 `json:"battery_power_w"`
-	TotalLoadW    float64 `json:"total_load_w"`
+	GridPowerW      float64 `json:"grid_power_w"`
+	SolarPowerW     float64 `json:"solar_power_w"`
+	BatteryPowerW   float64 `json:"battery_power_w"`
+	TotalLoadW      float64 `json:"total_load_w"`
+	EvChargerPowerW float64 `json:"ev_charger_power_w"`
 }
 
 type StateDispatcher struct {
