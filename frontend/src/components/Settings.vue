@@ -321,9 +321,11 @@ const addDevice = async () => {
 
 const editDevice = (device: Device) => {
   editingDevice.value = device
-  editForm.value = { ...device }
-  if (!editForm.value.username) editForm.value.username = ''
-  if (!editForm.value.password) editForm.value.password = ''
+  editForm.value = {
+    ...device,
+    username: device.username || '',
+    password: device.password || ''
+  }
 }
 
 const closeEdit = () => {
