@@ -103,6 +103,21 @@ func main() {
 	_, _ = db.Exec("ALTER TABLE devices ADD COLUMN has_battery BOOLEAN DEFAULT 0")
 	_, _ = db.Exec("ALTER TABLE devices ADD COLUMN battery_capacity REAL DEFAULT 0")
 
+	createSettingsSQL := `
+	CREATE TABLE IF NOT EXISTS site_settings (
+		id INTEGER PRIMARY KEY CHECK (id = 1),
+		strategy_mode TEXT DEFAULT 'eco',
+		capacity_peak_limit_kw REAL DEFAULT 2.5,
+		active_inverter_curtailment BOOLEAN DEFAULT 0
+	);
+	`
+	_, err = db.Exec(createSettingsSQL)
+	if err != nil {
+		log.Fatal("Failed to create site_settings table:", err)
+	}
+	// Insert default if not exists
+	_, _ = db.Exec("INSERT OR IGNORE INTO site_settings (id, strategy_mode, capacity_peak_limit_kw, active_inverter_curtailment) VALUES (1, 'eco', 2.5, 0)")
+
 	log.Println("Database schema initialized")
 
 	mux := http.NewServeMux()
@@ -114,6 +129,48 @@ func main() {
 	})
 
 	mux.HandleFunc("/api/live", handleLiveStream)
+
+	mux.HandleFunc("/api/settings", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if r.Method == "GET" {
+			row := db.QueryRow("SELECT strategy_mode, capacity_peak_limit_kw, active_inverter_curtailment FROM site_settings WHERE id = 1")
+			var settings models.SiteSettings
+			err := row.Scan(&settings.StrategyMode, &settings.CapacityPeakLimitKw, &settings.ActiveInverterCurtailment)
+			if err != nil {
+				if err == sql.ErrNoRows {
+					// Fallback
+					settings = models.SiteSettings{
+						StrategyMode: "eco",
+						CapacityPeakLimitKw: 2.5,
+						ActiveInverterCurtailment: false,
+					}
+					json.NewEncoder(w).Encode(settings)
+					return
+				}
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			json.NewEncoder(w).Encode(settings)
+		} else if r.Method == "PUT" {
+			var settings models.SiteSettings
+			if err := json.NewDecoder(r.Body).Decode(&settings); err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+
+			_, err = db.Exec("UPDATE site_settings SET strategy_mode = ?, capacity_peak_limit_kw = ?, active_inverter_curtailment = ? WHERE id = 1",
+				settings.StrategyMode, settings.CapacityPeakLimitKw, settings.ActiveInverterCurtailment)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(settings)
+		} else {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
 
 	mux.HandleFunc("/api/templates", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -262,6 +319,12 @@ func main() {
 	if PollerMgr != nil {
 		PollerMgr.SyncDevices()
 		PollerMgr.Start()
+	}
+
+	// Initialize StrategyController
+	InitStrategyController()
+	if StrategyCtrl != nil {
+		StrategyCtrl.Start()
 	}
 
 	log.Println("Server listening on :8080")

@@ -2,6 +2,62 @@
   <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
     <div class="px-4 py-6 sm:px-0">
 
+      <!-- Site Optimization Section -->
+      <div class="mb-8">
+        <h2 class="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:text-3xl sm:truncate mb-4">
+          Site Optimization
+        </h2>
+        <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg">
+          <div class="px-4 py-5 sm:p-6">
+            <form @submit.prevent="saveSiteSettings" class="space-y-6">
+              <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+
+                <div class="sm:col-span-3">
+                  <label for="strategy_mode" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Optimization Strategy</label>
+                  <div class="mt-1">
+                    <select id="strategy_mode" v-model="siteSettings.strategy_mode"
+                            class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                      <option value="eco">Eco (Max Self-Consumption)</option>
+                      <option value="flanders">Flanders Mode (Peak Shaving)</option>
+                      <option value="netherlands">Netherlands Mode (Zero-Export)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div v-if="siteSettings.strategy_mode === 'flanders'" class="sm:col-span-3">
+                  <label for="capacity_peak_limit" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Capacity Peak Limit (kW)</label>
+                  <div class="mt-1">
+                    <input type="number" step="0.1" id="capacity_peak_limit" v-model="siteSettings.capacity_peak_limit_kw"
+                           class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                  </div>
+                </div>
+
+                <div v-if="siteSettings.strategy_mode === 'netherlands'" class="sm:col-span-3 flex items-center pt-6">
+                  <input id="active_inverter_curtailment" type="checkbox" v-model="siteSettings.active_inverter_curtailment"
+                         class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600" />
+                  <label for="active_inverter_curtailment" class="ml-2 block text-sm text-gray-900 dark:text-gray-300">
+                    Active Inverter Curtailment
+                  </label>
+                </div>
+
+              </div>
+
+              <div class="pt-5 border-t border-gray-200 dark:border-gray-700">
+                <div class="flex justify-end">
+                  <button type="submit"
+                          class="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Save Strategy
+                  </button>
+                </div>
+              </div>
+            </form>
+            <div v-if="saveSettingsSuccess" class="mt-4 text-sm text-green-600 dark:text-green-400">
+              Strategy saved successfully!
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Current Devices Section -->
       <div class="mb-8">
         <h2 class="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:text-3xl sm:truncate mb-4">
@@ -286,6 +342,47 @@ const editForm = ref({
   battery_capacity: 0
 })
 
+const siteSettings = ref({
+  strategy_mode: 'eco',
+  capacity_peak_limit_kw: 2.5,
+  active_inverter_curtailment: false
+})
+const saveSettingsSuccess = ref(false)
+
+const fetchSiteSettings = async () => {
+  try {
+    const host = window.location.hostname
+    const res = await fetch(`http://${host}:8080/api/settings`)
+    if (res.ok) {
+      siteSettings.value = await res.json()
+    }
+  } catch (e) {
+    console.error("Failed to fetch site settings:", e)
+  }
+}
+
+const saveSiteSettings = async () => {
+  try {
+    const host = window.location.hostname
+    const res = await fetch(`http://${host}:8080/api/settings`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(siteSettings.value)
+    })
+
+    if (res.ok) {
+      saveSettingsSuccess.value = true
+      setTimeout(() => {
+        saveSettingsSuccess.value = false
+      }, 3000)
+    }
+  } catch (e) {
+    console.error("Failed to save site settings:", e)
+  }
+}
+
 const fetchTemplates = async () => {
   try {
     const host = window.location.hostname
@@ -397,6 +494,7 @@ const deleteDevice = async (id: number) => {
 }
 
 onMounted(() => {
+  fetchSiteSettings()
   fetchTemplates()
   fetchDevices()
 })
