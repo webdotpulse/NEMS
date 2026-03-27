@@ -97,6 +97,11 @@ func (p *SolisInverterPoller) GetDevice() models.Device {
 	return p.Device
 }
 
+func (p *SolisInverterPoller) SetActivePowerLimit(powerW float64) error {
+	log.Printf("SolisInverterPoller: Setting active power limit to %.2f W (Simulated)", powerW)
+	return nil
+}
+
 func (p *SolisInverterPoller) Close() error {
 	if p.client != nil {
 		return p.client.Close()

@@ -35,4 +35,9 @@ type ChargeController interface {
 
 type BatteryController interface {
 	DischargeBattery(powerW float64) error
+	ChargeBattery(powerW float64) error
+}
+
+type InverterController interface {
+	SetActivePowerLimit(powerW float64) error
 }

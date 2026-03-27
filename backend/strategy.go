@@ -50,6 +50,8 @@ func (sc *StrategyController) Start() {
 				}
 				if settings.StrategyMode == "flanders" {
 					sc.applyFlandersMode(settings.CapacityPeakLimitKw)
+				} else if settings.StrategyMode == "netherlands" {
+					sc.applyNetherlandsMode(settings.ActiveInverterCurtailment)
 				}
 			case <-sc.stopCh:
 				log.Println("StrategyController stopped")
@@ -167,6 +169,130 @@ func (sc *StrategyController) applyFlandersMode(capacityPeakLimitKw float64) {
 					log.Printf("Flanders Mode: Ramping up charger %d current from %.1f A to %.1f A", id, currentSetpoint, newSetpoint)
 					charger.SetChargeCurrent(newSetpoint)
 					chargerCurrentSetpoints[id] = newSetpoint
+				}
+			}
+		}
+	}
+}
+
+func (sc *StrategyController) applyNetherlandsMode(activeCurtailment bool) {
+	cache := PollerMgr.GetDeviceCache()
+	pollers := PollerMgr.GetPollers()
+
+	totalGrid := 0.0
+	totalSolar := 0.0
+	totalBattery := 0.0
+	totalEvCharger := 0.0
+
+	for _, data := range cache {
+		if data.Template == "homewizard_meter" || data.Template == "demo_dongle" {
+			totalGrid += data.GridPowerW
+		} else if data.Template == "huawei_inverter" || data.Template == "solis_inverter" || data.Template == "sma_inverter" || data.Template == "demo_inverter" {
+			totalSolar += data.PowerW
+			totalBattery += data.BatteryPowerW
+			if data.Template == "huawei_inverter" && data.HasGridMeter {
+				totalGrid += data.GridPowerW
+			}
+		} else if data.Template == "raedian_charger" || data.Template == "demo_charger" || data.Template == "alfen_charger" || data.Template == "easee_charger" || data.Template == "bender_charger" || data.Template == "peblar_charger" || data.Template == "phoenix_charger" {
+			totalEvCharger += data.PowerW
+		}
+	}
+
+	totalGridExport := 0.0
+	if totalGrid < 0 {
+		totalGridExport = -totalGrid
+	}
+
+	if totalGridExport > 0 {
+		log.Printf("Netherlands Mode: Grid export (%.1f W). Attempting to sink power.", totalGridExport)
+
+		// Action 1: Ramp up EV Chargers
+		for id, poller := range pollers {
+			if charger, ok := poller.(models.ChargeController); ok {
+				currentSetpoint, exists := chargerCurrentSetpoints[id]
+				if !exists {
+					currentSetpoint = 0.0
+				}
+
+				if currentSetpoint < 16.0 {
+					ampsToAdd := totalGridExport / 230.0
+					newSetpoint := currentSetpoint + ampsToAdd
+					if newSetpoint > 16.0 {
+						newSetpoint = 16.0
+					}
+					if newSetpoint > 0 && newSetpoint < 6.0 {
+						newSetpoint = 6.0
+					}
+
+					if newSetpoint > currentSetpoint {
+						log.Printf("Netherlands Mode: Ramping up charger %d current from %.1f A to %.1f A to sink export", id, currentSetpoint, newSetpoint)
+						charger.SetChargeCurrent(newSetpoint)
+						chargerCurrentSetpoints[id] = newSetpoint
+
+						reductionW := (newSetpoint - currentSetpoint) * 230.0
+						totalGridExport -= reductionW
+					}
+				}
+
+				if totalGridExport <= 0 {
+					break
+				}
+			}
+		}
+
+		// Action 2: Charge Home Battery
+		if totalGridExport > 0 {
+			for id, poller := range pollers {
+				if battery, ok := poller.(models.BatteryController); ok {
+					dev := poller.GetDevice()
+					if dev.HasBattery {
+						soc := cache[id].Soc
+						if soc < 100 {
+							log.Printf("Netherlands Mode: Charging battery %d with %.1f W to sink export", id, totalGridExport)
+							battery.ChargeBattery(totalGridExport)
+							totalGridExport = 0
+							break
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// Action 3: Active Curtailment
+	if activeCurtailment {
+		if totalGridExport > 50 {
+			// Check conditions for curtailment: all batteries full and EVs not charging
+			batteriesFull := true
+			for id, poller := range pollers {
+				if _, ok := poller.(models.BatteryController); ok {
+					dev := poller.GetDevice()
+					if dev.HasBattery {
+						soc := cache[id].Soc
+						if soc < 100 {
+							batteriesFull = false
+							break
+						}
+					}
+				}
+			}
+
+			if batteriesFull && totalEvCharger < 100 {
+				totalHouseLoad := totalSolar + totalBattery + totalGrid
+				for _, poller := range pollers {
+					if inverter, ok := poller.(models.InverterController); ok {
+						log.Printf("Netherlands Mode: Actively curtailing inverter. Setting limit to %.1f W", totalHouseLoad)
+						inverter.SetActivePowerLimit(totalHouseLoad)
+					}
+				}
+			}
+		} else if totalGrid > 50 {
+			// Release curtailment. If totalGrid > 50, it means we are importing power from the grid,
+			// which implies the house load has increased beyond our currently curtailed inverter limit.
+			// Release the limit to cover the new load.
+			for _, poller := range pollers {
+				if inverter, ok := poller.(models.InverterController); ok {
+					inverter.SetActivePowerLimit(100000)
 				}
 			}
 		}

@@ -125,6 +125,16 @@ func (p *HuaweiInverterPoller) DischargeBattery(powerW float64) error {
 	return nil
 }
 
+func (p *HuaweiInverterPoller) ChargeBattery(powerW float64) error {
+	log.Printf("HuaweiInverterPoller: Commanding battery charge at %.2f W (Simulated)", powerW)
+	return nil
+}
+
+func (p *HuaweiInverterPoller) SetActivePowerLimit(powerW float64) error {
+	log.Printf("HuaweiInverterPoller: Setting active power limit to %.2f W (Simulated)", powerW)
+	return nil
+}
+
 func (p *HuaweiInverterPoller) Close() error {
 	if p.client != nil {
 		return p.client.Close()
