@@ -47,7 +47,7 @@ func (pm *PollerManager) SyncDevices() {
 	log.Println("PollerManager: Syncing devices...")
 
 	// Fetch current devices from DB
-	rows, err := db.Query("SELECT id, name, template, host, port, modbus_id, username, password FROM devices")
+	rows, err := db.Query("SELECT id, name, template, host, port, modbus_id, username, password, has_grid_meter, has_battery, battery_capacity FROM devices")
 	if err != nil {
 		log.Printf("PollerManager: Error fetching devices: %v", err)
 		return
@@ -60,7 +60,7 @@ func (pm *PollerManager) SyncDevices() {
 		var d models.Device
 		var username sql.NullString
 		var password sql.NullString
-		if err := rows.Scan(&d.ID, &d.Name, &d.Template, &d.Host, &d.Port, &d.ModbusID, &username, &password); err != nil {
+		if err := rows.Scan(&d.ID, &d.Name, &d.Template, &d.Host, &d.Port, &d.ModbusID, &username, &password, &d.HasGridMeter, &d.HasBattery, &d.BatteryCapacity); err != nil {
 			log.Printf("PollerManager: Error scanning device: %v", err)
 			continue
 		}
@@ -119,7 +119,7 @@ func (pm *PollerManager) Start() {
 				for id, poller := range pm.pollers {
 					deviceHealth[id] = poller.Status()
 
-					powerW, batteryPowerW, energyKwh, err := poller.Poll()
+					powerW, batteryPowerW, gridPowerW, energyKwh, _, err := poller.Poll()
 					if err != nil {
 						log.Printf("PollerManager: Error polling device %d: %v", id, err)
 						continue
@@ -139,12 +139,20 @@ func (pm *PollerManager) Start() {
 							totalBattery = &v
 						}
 						*totalBattery += batteryPowerW
-					case "huawei_dongle", "homewizard_meter", "demo_dongle":
+
+						if device.Template == "huawei_inverter" && device.HasGridMeter {
+							if totalGrid == nil {
+								v := 0.0
+								totalGrid = &v
+							}
+							*totalGrid += gridPowerW
+						}
+					case "homewizard_meter", "demo_dongle":
 						if totalGrid == nil {
 							v := 0.0
 							totalGrid = &v
 						}
-						*totalGrid += powerW
+						*totalGrid += gridPowerW
 					case "raedian_charger", "alfen_charger", "bender_charger", "phoenix_charger", "easee_charger", "peblar_charger", "demo_charger":
 						if totalEvCharger == nil {
 							v := 0.0

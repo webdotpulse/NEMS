@@ -85,7 +85,10 @@ func main() {
 		port INTEGER NOT NULL,
 		modbus_id INTEGER NOT NULL,
 		username TEXT DEFAULT '',
-		password TEXT DEFAULT ''
+		password TEXT DEFAULT '',
+		has_grid_meter BOOLEAN DEFAULT 0,
+		has_battery BOOLEAN DEFAULT 0,
+		battery_capacity REAL DEFAULT 0
 	);
 	`
 	_, err = db.Exec(createDevicesSQL)
@@ -96,6 +99,9 @@ func main() {
 	// Add new columns if they don't exist (for existing databases)
 	_, _ = db.Exec("ALTER TABLE devices ADD COLUMN username TEXT DEFAULT ''")
 	_, _ = db.Exec("ALTER TABLE devices ADD COLUMN password TEXT DEFAULT ''")
+	_, _ = db.Exec("ALTER TABLE devices ADD COLUMN has_grid_meter BOOLEAN DEFAULT 0")
+	_, _ = db.Exec("ALTER TABLE devices ADD COLUMN has_battery BOOLEAN DEFAULT 0")
+	_, _ = db.Exec("ALTER TABLE devices ADD COLUMN battery_capacity REAL DEFAULT 0")
 
 	log.Println("Database schema initialized")
 
@@ -118,7 +124,7 @@ func main() {
 	mux.HandleFunc("/api/devices", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		if r.Method == "GET" {
-			rows, err := db.Query("SELECT id, name, template, host, port, modbus_id, username, password FROM devices")
+			rows, err := db.Query("SELECT id, name, template, host, port, modbus_id, username, password, has_grid_meter, has_battery, battery_capacity FROM devices")
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
@@ -130,7 +136,7 @@ func main() {
 				var d models.Device
 				var username sql.NullString
 				var password sql.NullString
-				if err := rows.Scan(&d.ID, &d.Name, &d.Template, &d.Host, &d.Port, &d.ModbusID, &username, &password); err != nil {
+				if err := rows.Scan(&d.ID, &d.Name, &d.Template, &d.Host, &d.Port, &d.ModbusID, &username, &password, &d.HasGridMeter, &d.HasBattery, &d.BatteryCapacity); err != nil {
 					http.Error(w, err.Error(), http.StatusInternalServerError)
 					return
 				}
@@ -165,7 +171,7 @@ func main() {
 				return
 			}
 
-			result, err := db.Exec("INSERT INTO devices (name, template, host, port, modbus_id, username, password) VALUES (?, ?, ?, ?, ?, ?, ?)", d.Name, d.Template, d.Host, d.Port, d.ModbusID, d.Username, d.Password)
+			result, err := db.Exec("INSERT INTO devices (name, template, host, port, modbus_id, username, password, has_grid_meter, has_battery, battery_capacity) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", d.Name, d.Template, d.Host, d.Port, d.ModbusID, d.Username, d.Password, d.HasGridMeter, d.HasBattery, d.BatteryCapacity)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
@@ -218,8 +224,8 @@ func main() {
 				return
 			}
 
-			_, err = db.Exec("UPDATE devices SET name = ?, template = ?, host = ?, port = ?, modbus_id = ?, username = ?, password = ? WHERE id = ?",
-				d.Name, d.Template, d.Host, d.Port, d.ModbusID, d.Username, d.Password, id)
+			_, err = db.Exec("UPDATE devices SET name = ?, template = ?, host = ?, port = ?, modbus_id = ?, username = ?, password = ?, has_grid_meter = ?, has_battery = ?, battery_capacity = ? WHERE id = ?",
+				d.Name, d.Template, d.Host, d.Port, d.ModbusID, d.Username, d.Password, d.HasGridMeter, d.HasBattery, d.BatteryCapacity, id)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return

@@ -63,19 +63,19 @@ func (p *RaedianChargerPoller) Status() string {
 	return p.status
 }
 
-func (p *RaedianChargerPoller) Poll() (float64, float64, float64, error) {
+func (p *RaedianChargerPoller) Poll() (float64, float64, float64, float64, float64, error) {
 	if p.status != "online" || p.client == nil {
 		powerW := 0.0
 		if rand.Float32() > 0.5 {
 			powerW = 11000.0
 		}
 		energyKwh := powerW * (5.0 / 3600.0) / 1000.0
-		return powerW, 0, energyKwh, nil
+		return powerW, 0, 0, energyKwh, 0, nil
 	}
 
 	powerRegs, err := p.client.ReadRegisters(32796, 2, modbus.HOLDING_REGISTER)
 	if err != nil {
-		return 0, 0, 0, err
+		return 0, 0, 0, 0, 0, err
 	}
 	powerW := float64(uint32(powerRegs[0])<<16 | uint32(powerRegs[1]))
 
@@ -86,7 +86,7 @@ func (p *RaedianChargerPoller) Poll() (float64, float64, float64, error) {
 		energyKwh = energyWh / 1000.0
 	}
 
-	return powerW, 0, energyKwh, nil
+	return powerW, 0, 0, energyKwh, 0, nil
 }
 
 func (p *RaedianChargerPoller) GetDevice() models.Device {

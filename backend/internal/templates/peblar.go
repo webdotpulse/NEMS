@@ -54,21 +54,21 @@ func (p *PeblarChargerPoller) Status() string {
 	return p.status
 }
 
-func (p *PeblarChargerPoller) Poll() (float64, float64, float64, error) {
+func (p *PeblarChargerPoller) Poll() (float64, float64, float64, float64, float64, error) {
 	if p.status != "online" {
 		powerW := 0.0
 		if rand.Float32() > 0.5 {
 			powerW = 11000.0
 		}
 		energyKwh := powerW * (5.0 / 3600.0) / 1000.0
-		return powerW, 0, energyKwh, nil
+		return powerW, 0, 0, energyKwh, 0, nil
 	}
 
 	url := fmt.Sprintf("http://%s:%d/api/v1/meter", p.Device.Host, p.Device.Port)
 	client := http.Client{Timeout: 2 * time.Second}
 	resp, err := client.Get(url)
 	if err != nil {
-		return 0, 0, 0, err
+		return 0, 0, 0, 0, 0, err
 	}
 	defer resp.Body.Close()
 
@@ -77,10 +77,10 @@ func (p *PeblarChargerPoller) Poll() (float64, float64, float64, error) {
 		Energy float64 `json:"energy"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
-		return 0, 0, 0, err
+		return 0, 0, 0, 0, 0, err
 	}
 
-	return data.Power, 0, data.Energy, nil
+	return data.Power, 0, 0, data.Energy, 0, nil
 }
 
 func (p *PeblarChargerPoller) GetDevice() models.Device {

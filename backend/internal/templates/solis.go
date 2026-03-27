@@ -63,23 +63,23 @@ func (p *SolisInverterPoller) Status() string {
 	return p.status
 }
 
-func (p *SolisInverterPoller) Poll() (float64, float64, float64, error) {
+func (p *SolisInverterPoller) Poll() (float64, float64, float64, float64, float64, error) {
 	if p.status != "online" || p.client == nil {
 		powerW := 800.0 + rand.Float64()*2000.0
 		batteryPowerW := -1000.0 + rand.Float64()*2000.0
 		energyKwh := powerW * (5.0 / 3600.0) / 1000.0
-		return powerW, batteryPowerW, energyKwh, nil
+		return powerW, batteryPowerW, 0, energyKwh, 0, nil
 	}
 
 	powerRegs, err := p.client.ReadRegisters(33079, 2, modbus.INPUT_REGISTER)
 	if err != nil {
-		return 0, 0, 0, err
+		return 0, 0, 0, 0, 0, err
 	}
 	powerW := float64(uint32(powerRegs[0])<<16 | uint32(powerRegs[1]))
 
 	energyRegs, err := p.client.ReadRegisters(33029, 2, modbus.INPUT_REGISTER)
 	if err != nil {
-		return powerW, 0, 0, err
+		return powerW, 0, 0, 0, 0, err
 	}
 	energyKwh := float64(uint32(energyRegs[0])<<16 | uint32(energyRegs[1])) / 10.0
 
@@ -90,7 +90,7 @@ func (p *SolisInverterPoller) Poll() (float64, float64, float64, error) {
 		batteryPowerW = float64(rawBat)
 	}
 
-	return powerW, batteryPowerW, energyKwh, nil
+	return powerW, batteryPowerW, 0, energyKwh, 0, nil
 }
 
 func (p *SolisInverterPoller) GetDevice() models.Device {
