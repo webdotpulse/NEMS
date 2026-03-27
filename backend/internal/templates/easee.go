@@ -40,13 +40,13 @@ func (p *EaseeChargerPoller) Status() string {
 	return p.status
 }
 
-func (p *EaseeChargerPoller) Poll() (float64, float64, float64, error) {
+func (p *EaseeChargerPoller) Poll() (float64, float64, float64, float64, float64, error) {
 	powerW := 0.0
 	if rand.Float32() > 0.4 {
 		powerW = 22000.0
 	}
 	energyKwh := powerW * (5.0 / 3600.0) / 1000.0
-	return powerW, 0, energyKwh, nil
+	return powerW, 0, 0, energyKwh, 0, nil
 }
 
 func (p *EaseeChargerPoller) GetDevice() models.Device {

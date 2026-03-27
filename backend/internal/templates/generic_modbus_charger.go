@@ -84,24 +84,24 @@ func (p *GenericModbusChargerPoller) Status() string {
 	return p.status
 }
 
-func (p *GenericModbusChargerPoller) Poll() (float64, float64, float64, error) {
+func (p *GenericModbusChargerPoller) Poll() (float64, float64, float64, float64, float64, error) {
 	if p.status != "online" || p.client == nil {
 		powerW := 0.0
 		if rand.Float32() > 0.6 {
 			powerW = 7400.0
 		}
 		energyKwh := powerW * (5.0 / 3600.0) / 1000.0
-		return powerW, 0, energyKwh, nil
+		return powerW, 0, 0, energyKwh, 0, nil
 	}
 
 	powerRegs, err := p.client.ReadRegisters(344, 2, modbus.HOLDING_REGISTER)
 	if err != nil {
-		return 0, 0, 0, err
+		return 0, 0, 0, 0, 0, err
 	}
 
 	powerW := float64(uint32(powerRegs[0])<<16 | uint32(powerRegs[1]))
 	energyKwh := powerW * (5.0 / 3600.0) / 1000.0
-	return powerW, 0, energyKwh, nil
+	return powerW, 0, 0, energyKwh, 0, nil
 }
 
 func (p *GenericModbusChargerPoller) GetDevice() models.Device {

@@ -63,17 +63,17 @@ func (p *SmaInverterPoller) Status() string {
 	return p.status
 }
 
-func (p *SmaInverterPoller) Poll() (float64, float64, float64, error) {
+func (p *SmaInverterPoller) Poll() (float64, float64, float64, float64, float64, error) {
 	if p.status != "online" || p.client == nil {
 		powerW := 1500.0 + rand.Float64()*2500.0
 		batteryPowerW := -500.0 + rand.Float64()*1500.0
 		energyKwh := powerW * (5.0 / 3600.0) / 1000.0
-		return powerW, batteryPowerW, energyKwh, nil
+		return powerW, batteryPowerW, 0, energyKwh, 0, nil
 	}
 
 	powerRegs, err := p.client.ReadRegisters(30775, 2, modbus.HOLDING_REGISTER)
 	if err != nil {
-		return 0, 0, 0, err
+		return 0, 0, 0, 0, 0, err
 	}
 	powerW := float64(int32(uint32(powerRegs[0])<<16 | uint32(powerRegs[1])))
 
@@ -90,7 +90,7 @@ func (p *SmaInverterPoller) Poll() (float64, float64, float64, error) {
 		batteryPowerW = float64(int32(uint32(batRegs[0])<<16 | uint32(batRegs[1])))
 	}
 
-	return powerW, batteryPowerW, energyKwh, nil
+	return powerW, batteryPowerW, 0, energyKwh, 0, nil
 }
 
 func (p *SmaInverterPoller) GetDevice() models.Device {

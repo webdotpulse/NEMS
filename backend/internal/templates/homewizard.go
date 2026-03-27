@@ -57,11 +57,11 @@ func (p *HomeWizardMeterPoller) Status() string {
 	return p.status
 }
 
-func (p *HomeWizardMeterPoller) Poll() (float64, float64, float64, error) {
+func (p *HomeWizardMeterPoller) Poll() (float64, float64, float64, float64, float64, error) {
 	if p.status != "online" {
 		powerW := -1500.0 + rand.Float64()*3500.0
 		energyKwh := powerW * (5.0 / 3600.0) / 1000.0
-		return powerW, 0, energyKwh, nil
+		return 0, 0, powerW, energyKwh, 0, nil
 	}
 
 	addr := p.Device.Host
@@ -72,7 +72,7 @@ func (p *HomeWizardMeterPoller) Poll() (float64, float64, float64, error) {
 	client := http.Client{Timeout: 2 * time.Second}
 	resp, err := client.Get(url)
 	if err != nil {
-		return 0, 0, 0, err
+		return 0, 0, 0, 0, 0, err
 	}
 	defer resp.Body.Close()
 
@@ -82,10 +82,10 @@ func (p *HomeWizardMeterPoller) Poll() (float64, float64, float64, error) {
 		TotalEnergyExportKwh float64 `json:"total_power_export_kwh"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
-		return 0, 0, 0, err
+		return 0, 0, 0, 0, 0, err
 	}
 
-	return data.ActivePowerW, 0, data.TotalEnergyImportKwh - data.TotalEnergyExportKwh, nil
+	return 0, 0, data.ActivePowerW, data.TotalEnergyImportKwh - data.TotalEnergyExportKwh, 0, nil
 }
 
 func (p *HomeWizardMeterPoller) GetDevice() models.Device {

@@ -85,6 +85,37 @@
               <template v-else-if="templates.find(t => t.id === editForm.template)?.type === 'cloud_rest'">
                 <CloudRestTemplate v-model="editForm" prefix="edit_" />
               </template>
+
+              <!-- Conditional Fields for Huawei Hybrid Inverter Combo -->
+              <template v-if="editForm.template === 'huawei_inverter'">
+                <div class="sm:col-span-6 border-t border-gray-200 dark:border-gray-700 pt-4 mt-2">
+                  <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-4">Huawei Inverter Features</h4>
+
+                  <div class="flex items-center mb-4">
+                    <input id="edit_has_grid_meter" type="checkbox" v-model="editForm.has_grid_meter"
+                           class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600" />
+                    <label for="edit_has_grid_meter" class="ml-2 block text-sm text-gray-900 dark:text-gray-300">
+                      Grid Meter Connected?
+                    </label>
+                  </div>
+
+                  <div class="flex items-center mb-4">
+                    <input id="edit_has_battery" type="checkbox" v-model="editForm.has_battery"
+                           class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600" />
+                    <label for="edit_has_battery" class="ml-2 block text-sm text-gray-900 dark:text-gray-300">
+                      Battery Connected?
+                    </label>
+                  </div>
+
+                  <div v-if="editForm.has_battery" class="sm:col-span-3 ml-6">
+                    <label for="edit_battery_capacity" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Battery Capacity (kWh)</label>
+                    <div class="mt-1">
+                      <input type="number" step="0.1" id="edit_battery_capacity" v-model="editForm.battery_capacity"
+                             class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    </div>
+                  </div>
+                </div>
+              </template>
             </div>
 
             <div class="pt-5">
@@ -146,6 +177,37 @@
                   <CloudRestTemplate v-model="form" />
                 </template>
 
+                <!-- Conditional Fields for Huawei Hybrid Inverter Combo -->
+                <template v-if="form.template === 'huawei_inverter'">
+                  <div class="sm:col-span-6 border-t border-gray-200 dark:border-gray-700 pt-4 mt-2">
+                    <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-4">Huawei Inverter Features</h4>
+
+                    <div class="flex items-center mb-4">
+                      <input id="has_grid_meter" type="checkbox" v-model="form.has_grid_meter"
+                             class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600" />
+                      <label for="has_grid_meter" class="ml-2 block text-sm text-gray-900 dark:text-gray-300">
+                        Grid Meter Connected?
+                      </label>
+                    </div>
+
+                    <div class="flex items-center mb-4">
+                      <input id="has_battery" type="checkbox" v-model="form.has_battery"
+                             class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600" />
+                      <label for="has_battery" class="ml-2 block text-sm text-gray-900 dark:text-gray-300">
+                        Battery Connected?
+                      </label>
+                    </div>
+
+                    <div v-if="form.has_battery" class="sm:col-span-3 ml-6">
+                      <label for="battery_capacity" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Battery Capacity (kWh)</label>
+                      <div class="mt-1">
+                        <input type="number" step="0.1" id="battery_capacity" v-model="form.battery_capacity"
+                               class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                      </div>
+                    </div>
+                  </div>
+                </template>
+
               </div>
 
               <div class="pt-5">
@@ -188,6 +250,9 @@ interface Device {
   username?: string;
   password?: string;
   status?: string;
+  has_grid_meter?: boolean;
+  has_battery?: boolean;
+  battery_capacity?: number;
 }
 
 const templates = ref<Template[]>([])
@@ -200,7 +265,10 @@ const form = ref({
   port: 502,
   modbus_id: 1,
   username: '',
-  password: ''
+  password: '',
+  has_grid_meter: false,
+  has_battery: false,
+  battery_capacity: 0
 })
 
 const editingDevice = ref<Device | null>(null)
@@ -212,7 +280,10 @@ const editForm = ref({
   port: 502,
   modbus_id: 1,
   username: '',
-  password: ''
+  password: '',
+  has_grid_meter: false,
+  has_battery: false,
+  battery_capacity: 0
 })
 
 const fetchTemplates = async () => {
@@ -260,7 +331,10 @@ const addDevice = async () => {
         port: 502,
         modbus_id: 1,
         username: '',
-        password: ''
+        password: '',
+        has_grid_meter: false,
+        has_battery: false,
+        battery_capacity: 0
       }
       await fetchDevices()
     }
@@ -274,7 +348,10 @@ const editDevice = (device: Device) => {
   editForm.value = {
     ...device,
     username: device.username || '',
-    password: device.password || ''
+    password: device.password || '',
+    has_grid_meter: device.has_grid_meter || false,
+    has_battery: device.has_battery || false,
+    battery_capacity: device.battery_capacity || 0
   }
 }
 
