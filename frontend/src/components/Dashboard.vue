@@ -150,6 +150,7 @@ interface SiteState {
   grid_power_w: number | null
   solar_power_w: number | null
   battery_power_w: number | null
+  battery_soc: number | null
   total_load_w: number | null
   ev_charger_power_w: number | null
   device_health?: Record<number, string>
