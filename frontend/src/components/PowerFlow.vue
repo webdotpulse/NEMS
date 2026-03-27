@@ -1,35 +1,36 @@
 <template>
   <div class="w-full flex justify-center items-center py-8">
-    <div class="relative w-[340px] h-[460px]">
+    <div class="relative w-full h-[460px] bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
 
       <!-- SVG paths for animated power flow lines -->
-      <svg class="absolute inset-0 w-full h-full z-0 pointer-events-none" viewBox="0 0 340 460" preserveAspectRatio="none">
+      <svg class="absolute inset-0 w-full h-full z-0 pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="none">
 
         <!-- Static Background Lines -->
-        <path v-if="hasSolar" d="M 170 120 L 170 230" stroke-linecap="round" fill="none" stroke="#E5E7EB" stroke-width="6" />
-        <path v-if="hasBattery" d="M 170 230 L 170 330" stroke-linecap="round" fill="none" stroke="#E5E7EB" stroke-width="6" />
-        <path v-if="hasGrid" d="M 100 230 L 170 230" stroke-linecap="round" fill="none" stroke="#E5E7EB" stroke-width="6" />
-        <path d="M 170 230 L 240 230" stroke-linecap="round" fill="none" stroke="#E5E7EB" stroke-width="6" />
-        <path v-if="hasEV" d="M 100 120 Q 100 230 170 230" stroke-linecap="round" fill="none" stroke="#E5E7EB" stroke-width="6" />
+        <path v-if="hasSolar" d="M 50 20 L 50 50" vector-effect="non-scaling-stroke" stroke-linecap="round" fill="none" stroke="#E5E7EB" stroke-width="6" />
+        <path v-if="hasBattery" d="M 50 80 L 50 50" vector-effect="non-scaling-stroke" stroke-linecap="round" fill="none" stroke="#E5E7EB" stroke-width="6" />
+        <path v-if="hasGrid" d="M 20 50 L 50 50" vector-effect="non-scaling-stroke" stroke-linecap="round" fill="none" stroke="#E5E7EB" stroke-width="6" />
+        <path d="M 80 50 L 50 50" vector-effect="non-scaling-stroke" stroke-linecap="round" fill="none" stroke="#E5E7EB" stroke-width="6" />
+        <path v-if="hasEV" d="M 20 20 Q 20 50 50 50" vector-effect="non-scaling-stroke" stroke-linecap="round" fill="none" stroke="#E5E7EB" stroke-width="6" />
 
         <!-- Flow lines -->
         <template v-for="segment in activeSegments" :key="segment.id">
           <!-- Outline/glow -->
           <path :d="segment.path" stroke-linecap="round"
-                fill="none" :stroke="segment.color" stroke-width="8" stroke-opacity="0.2" class="flow-glow" />
+                fill="none" :stroke="segment.color" stroke-width="8" stroke-opacity="0.2" class="flow-glow" vector-effect="non-scaling-stroke" />
           <!-- Animated flow line -->
           <path :d="segment.path" stroke-linecap="round"
                 fill="none" :stroke="segment.color" stroke-width="4" stroke-dasharray="8 8" class="flow-path"
+                vector-effect="non-scaling-stroke"
                 :style="getFlowStyle(segment.power, segment.normalIsPositive)" />
         </template>
 
       </svg>
 
       <!-- Grid Layout for Nodes -->
-      <div class="absolute inset-0 grid grid-cols-3 grid-rows-3 gap-0">
+      <div class="absolute inset-0">
 
         <!-- Top Left: EV Charger -->
-        <div class="col-start-1 row-start-1 flex flex-col items-center justify-end pb-2 pr-4">
+        <div class="absolute flex flex-col items-center justify-center transform -translate-x-1/2 -translate-y-1/2" style="left: 20%; top: 20%;">
           <div v-if="hasEV" @click="openChart('ev_charger')" class="z-10 flex flex-col items-center justify-center w-28 h-28 bg-white dark:bg-gray-800 rounded-full border-[4px] border-[#A855F7] shadow-sm cursor-pointer hover:scale-105 transition-transform mb-2 relative">
             <span class="text-xs font-medium text-gray-500 mb-1 absolute -top-6">EV</span>
             <svg class="h-8 w-8 text-gray-700 dark:text-gray-300 mb-1" viewBox="0 0 24 24" fill="currentColor">
@@ -45,7 +46,7 @@
         </div>
 
         <!-- Top Row: Solar -->
-        <div class="col-start-2 row-start-1 flex flex-col items-center justify-end pb-2">
+        <div class="absolute flex flex-col items-center justify-center transform -translate-x-1/2 -translate-y-1/2" style="left: 50%; top: 20%;">
           <div v-if="hasSolar" @click="openChart('solar')" class="z-10 flex flex-col items-center justify-center w-28 h-28 bg-white dark:bg-gray-800 rounded-full border-[4px] border-[#FBBF24] shadow-sm cursor-pointer hover:scale-105 transition-transform mb-2">
             <span class="text-xs font-medium text-gray-500 mb-1 absolute -top-6">Solar</span>
             <svg class="h-8 w-8 text-gray-700 dark:text-gray-300 mb-1 relative" viewBox="0 0 24 24" fill="currentColor">
@@ -64,7 +65,7 @@
         </div>
 
         <!-- Middle Row: Grid (Left), Junction (Center), Home (Right) -->
-        <div class="col-start-1 row-start-2 flex flex-col items-center justify-center">
+        <div class="absolute flex flex-col items-center justify-center transform -translate-x-1/2 -translate-y-1/2" style="left: 20%; top: 50%;">
           <div v-if="hasGrid" @click="openChart('grid')" class="z-10 flex flex-col items-center justify-center w-28 h-28 bg-white dark:bg-gray-800 rounded-full border-[4px] border-[#3B82F6] shadow-sm cursor-pointer hover:scale-105 transition-transform mb-2 relative">
             <span class="text-xs font-medium text-gray-500 mb-1 absolute -bottom-6">Grid</span>
             <svg class="h-8 w-8 text-gray-700 dark:text-gray-300 mb-1" viewBox="0 0 24 24" fill="currentColor">
@@ -84,14 +85,14 @@
           </div>
         </div>
 
-        <div class="col-start-2 row-start-2 flex items-center justify-center">
+        <div class="absolute flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2" style="left: 50%; top: 50%;">
           <!-- Junction Node -->
           <div class="z-10 flex items-center justify-center w-[2rem] h-[2rem] bg-[#3B82F6] rounded-full shadow-sm">
             <!-- Small dot for junction like in image -->
           </div>
         </div>
 
-        <div class="col-start-3 row-start-2 flex flex-col items-center justify-center">
+        <div class="absolute flex flex-col items-center justify-center transform -translate-x-1/2 -translate-y-1/2" style="left: 80%; top: 50%;">
           <div @click="openChart('home')" class="z-10 flex flex-col items-center justify-center w-28 h-28 bg-white dark:bg-gray-800 rounded-full border-[4px] border-[#10B981] shadow-sm cursor-pointer hover:scale-105 transition-transform mb-2 relative">
              <span class="text-xs font-medium text-gray-500 mb-1 absolute -bottom-6">Home</span>
             <svg class="h-8 w-8 text-gray-700 dark:text-gray-300 mb-1" viewBox="0 0 24 24" fill="currentColor">
@@ -107,7 +108,7 @@
         </div>
 
         <!-- Bottom Row: Battery -->
-        <div class="col-start-2 row-start-3 flex flex-col items-center justify-start pt-2">
+        <div class="absolute flex flex-col items-center justify-center transform -translate-x-1/2 -translate-y-1/2" style="left: 50%; top: 80%;">
           <div v-if="hasBattery" @click="openChart('battery')" class="z-10 flex flex-col items-center justify-center w-28 h-28 bg-white dark:bg-gray-800 rounded-full border-[4px] border-[#EC4899] shadow-sm cursor-pointer hover:scale-105 transition-transform mb-2 relative">
             <span class="text-xs font-medium text-gray-500 mb-1 absolute -bottom-6">Battery</span>
             <svg class="h-8 w-8 text-gray-700 dark:text-gray-300 mb-1" viewBox="0 0 24 24" fill="currentColor">
@@ -232,7 +233,7 @@ onMounted(() => {
   fetchDevices()
 })
 
-const hasGrid = computed(() => devices.value.some(d => d.template === 'huawei_dongle' || d.template === 'demo_dongle'))
+const hasGrid = computed(() => devices.value.some(d => d.template === 'huawei_dongle' || d.template === 'demo_dongle' || (d.template === 'huawei_inverter' && (d as any).has_grid_meter)))
 const hasSolar = computed(() => devices.value.some(d => d.template === 'huawei_inverter' || d.template === 'demo_inverter'))
 const hasBattery = computed(() => devices.value.some(d => (d.template === 'huawei_inverter' || d.template === 'demo_inverter') && d.name.toLowerCase().includes('battery')))
 const hasEV = computed(() => devices.value.some(d => ['raedian_charger', 'demo_charger', 'alfen_charger', 'easee_charger', 'bender_charger', 'peblar_charger', 'phoenix_charger'].includes(d.template)))
@@ -314,7 +315,7 @@ const activeSegments = computed<Segment[]>(() => {
   if (hasSolar.value && Math.abs(solar) >= 10) {
     segments.push({
       id: 'solar-segment',
-      path: 'M 170 120 L 170 230',
+      path: 'M 50 20 L 50 50',
       power: solar,
       color: '#FBBF24',
       normalIsPositive: true
@@ -325,7 +326,7 @@ const activeSegments = computed<Segment[]>(() => {
   if (hasGrid.value && Math.abs(grid) >= 10) {
     segments.push({
       id: 'grid-segment',
-      path: 'M 100 230 L 170 230',
+      path: 'M 20 50 L 50 50',
       power: grid,
       color: '#3B82F6',
       normalIsPositive: true
@@ -336,7 +337,7 @@ const activeSegments = computed<Segment[]>(() => {
   if (Math.abs(home) >= 10) {
     segments.push({
       id: 'home-segment',
-      path: 'M 170 230 L 240 230',
+      path: 'M 50 50 L 80 50',
       power: home,
       color: '#10B981',
       normalIsPositive: true
@@ -347,7 +348,7 @@ const activeSegments = computed<Segment[]>(() => {
   if (hasBattery.value && Math.abs(battery) >= 10) {
     segments.push({
       id: 'battery-segment',
-      path: 'M 170 330 L 170 230',
+      path: 'M 50 80 L 50 50',
       power: battery,
       color: '#EC4899',
       normalIsPositive: true
@@ -359,7 +360,7 @@ const activeSegments = computed<Segment[]>(() => {
   if (hasEV.value && Math.abs(evPower) >= 10) {
     segments.push({
       id: 'ev-segment',
-      path: 'M 100 120 Q 100 230 170 230',
+      path: 'M 20 20 Q 20 50 50 50',
       power: evPower,
       color: '#A855F7',
       normalIsPositive: true

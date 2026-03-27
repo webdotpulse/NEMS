@@ -7,9 +7,11 @@
         <h2 class="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:text-3xl sm:truncate mb-4">
           Site Optimization
         </h2>
-        <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg">
+        <form @submit.prevent="saveSiteSettings" class="space-y-6">
+        <!-- Strategy Settings Card -->
+        <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg mb-6">
           <div class="px-4 py-5 sm:p-6">
-            <form @submit.prevent="saveSiteSettings" class="space-y-6">
+            <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-gray-100 mb-4">Strategy</h3>
               <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
 
                 <div class="sm:col-span-3">
@@ -42,14 +44,20 @@
 
               </div>
 
-              <div class="mt-8 mb-4 border-t border-gray-200 dark:border-gray-700 pt-6">
-                <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-gray-100">
-                  Dynamic Tariffs
-                </h3>
-                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                  Configure rules for dynamic energy pricing.
-                </p>
               </div>
+        </div>
+
+        <!-- Dynamic Tariffs Card -->
+        <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg mb-6">
+          <div class="px-4 py-5 sm:p-6">
+            <div class="mb-4 border-b border-gray-200 dark:border-gray-700 pb-4">
+              <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-gray-100">
+                Dynamic Tariffs
+              </h3>
+              <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                Configure rules for dynamic energy pricing.
+              </p>
+            </div>
 
               <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
                 <div class="sm:col-span-6">
@@ -67,20 +75,23 @@
                 </div>
               </div>
 
-              <div class="pt-5 border-t border-gray-200 dark:border-gray-700">
-                <div class="flex justify-end">
-                  <button type="submit"
-                          class="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    Save Strategy
-                  </button>
-                </div>
               </div>
-            </form>
-            <div v-if="saveSettingsSuccess" class="mt-4 text-sm text-green-600 dark:text-green-400">
+        </div>
+
+        <!-- Save Actions Card -->
+        <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg">
+          <div class="px-4 py-5 sm:p-6 flex items-center justify-between">
+            <div v-if="saveSettingsSuccess" class="text-sm font-medium text-green-600 dark:text-green-400 transition-opacity">
               Strategy saved successfully!
             </div>
+            <div v-else></div>
+            <button type="submit"
+                    class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+              Save Strategy
+            </button>
           </div>
         </div>
+            </form>
       </div>
 
       <!-- Current Devices Section -->
