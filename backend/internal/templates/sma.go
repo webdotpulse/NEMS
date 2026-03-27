@@ -97,6 +97,11 @@ func (p *SmaInverterPoller) GetDevice() models.Device {
 	return p.Device
 }
 
+func (p *SmaInverterPoller) SetActivePowerLimit(powerW float64) error {
+	log.Printf("SmaInverterPoller: Setting active power limit to %.2f W (Simulated)", powerW)
+	return nil
+}
+
 func (p *SmaInverterPoller) Close() error {
 	if p.client != nil {
 		return p.client.Close()

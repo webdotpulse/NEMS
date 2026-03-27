@@ -66,6 +66,14 @@ func (p *DemoInverterPoller) DischargeBattery(powerW float64) error {
 	return nil
 }
 
+func (p *DemoInverterPoller) ChargeBattery(powerW float64) error {
+	return nil
+}
+
+func (p *DemoInverterPoller) SetActivePowerLimit(powerW float64) error {
+	return nil
+}
+
 func (p *DemoInverterPoller) Close() error {
 	return nil
 }

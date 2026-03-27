@@ -20,6 +20,7 @@ type DeviceData struct {
 	BatteryPowerW float64
 	GridPowerW    float64
 	EnergyKwh     float64
+	Soc           float64
 	Status        string
 	Template      string
 	HasGridMeter  bool
@@ -157,7 +158,7 @@ func (pm *PollerManager) Start() {
 					}
 					polledAny = true
 
-					powerW, batteryPowerW, gridPowerW, energyKwh, _, err := poller.Poll()
+					powerW, batteryPowerW, gridPowerW, energyKwh, soc, err := poller.Poll()
 					if err != nil {
 						log.Printf("PollerManager: Error polling device %d: %v", id, err)
 
@@ -167,6 +168,7 @@ func (pm *PollerManager) Start() {
 							BatteryPowerW: 0,
 							GridPowerW:    0,
 							EnergyKwh:     0, // Note: energy is cumulative, but for live display, power is what matters. Energy is only used for history averaging, which we handle by not buffering on error.
+							Soc:           0,
 							Status:        poller.Status(),
 							Template:      device.Template,
 							HasGridMeter:  device.HasGridMeter,
@@ -181,6 +183,7 @@ func (pm *PollerManager) Start() {
 						BatteryPowerW: batteryPowerW,
 						GridPowerW:    gridPowerW,
 						EnergyKwh:     energyKwh,
+						Soc:           soc,
 						Status:        poller.Status(),
 						Template:      device.Template,
 						HasGridMeter:  device.HasGridMeter,
@@ -211,7 +214,7 @@ func (pm *PollerManager) Start() {
 						continue
 					}
 
-					powerW, batteryPowerW, gridPowerW, energyKwh, _, err := poller.Poll()
+					powerW, batteryPowerW, gridPowerW, energyKwh, soc, err := poller.Poll()
 					if err != nil {
 						log.Printf("PollerManager: Error polling device %d: %v", id, err)
 
@@ -221,6 +224,7 @@ func (pm *PollerManager) Start() {
 							BatteryPowerW: 0,
 							GridPowerW:    0,
 							EnergyKwh:     0,
+							Soc:           0,
 							Status:        poller.Status(),
 							Template:      device.Template,
 							HasGridMeter:  device.HasGridMeter,
@@ -235,6 +239,7 @@ func (pm *PollerManager) Start() {
 						BatteryPowerW: batteryPowerW,
 						GridPowerW:    gridPowerW,
 						EnergyKwh:     energyKwh,
+						Soc:           soc,
 						Status:        poller.Status(),
 						Template:      device.Template,
 						HasGridMeter:  device.HasGridMeter,
