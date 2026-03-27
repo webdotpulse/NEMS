@@ -141,7 +141,7 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import PowerFlow from './PowerFlow.vue'
 import { Bar } from 'vue-chartjs'
 import { Chart as ChartJS, Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale } from 'chart.js'
-import { format } from 'date-fns'
+import { format, parseISO } from 'date-fns'
 
 // Register ChartJS components
 ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale)
