@@ -115,53 +115,7 @@ func handleHistory(w http.ResponseWriter, r *http.Request) {
 	// huawei_dongle (for grid)
 	// raedian_charger (for EV charger)
 
-	whereClause := ""
-	switch node {
-	case "grid":
-		whereClause = "(template = 'huawei_dongle' OR template = 'demo_dongle')"
-	case "solar":
-		whereClause = "((template = 'huawei_inverter' OR template = 'demo_inverter') AND name NOT LIKE '%battery%')"
-	case "battery":
-		whereClause = "((template = 'huawei_inverter' OR template = 'demo_inverter') AND name LIKE '%battery%')"
-	case "ev_charger":
-		whereClause = "(template = 'raedian_charger' OR template = 'demo_charger')"
-	default:
-		http.Error(w, "Invalid node", http.StatusBadRequest)
-		return
-	}
-
-	// Fetch applicable device IDs
-	rows, err := db.Query(fmt.Sprintf("SELECT id FROM devices WHERE %s", whereClause))
-	if err != nil {
-		http.Error(w, "Database error", http.StatusInternalServerError)
-		return
-	}
-	defer rows.Close()
-
-	var deviceIDs []int
-	for rows.Next() {
-		var id int
-		if err := rows.Scan(&id); err == nil {
-			deviceIDs = append(deviceIDs, id)
-		}
-	}
-
-	if len(deviceIDs) == 0 {
-		// Return empty array if no devices matched
-		json.NewEncoder(w).Encode([]HistoryDataPoint{})
-		return
-	}
-
-	// Build IN clause for device_id
-	inClause := ""
-	for i, id := range deviceIDs {
-		if i > 0 {
-			inClause += ","
-		}
-		inClause += fmt.Sprintf("%d", id)
-	}
-
-	// 2. Determine time constraint and interval grouping
+	// Determine time constraint and interval grouping
 	// today: >= datetime('now', 'start of day'), 5-minute interval
 	// 24h: >= datetime('now', '-24 hours'), 5-minute interval
 	// 7d: >= datetime('now', '-7 days'), 1-hour interval
@@ -188,15 +142,84 @@ func handleHistory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	query := fmt.Sprintf(`
-		SELECT
-			%s AS ts,
-			AVG(power_w) as avg_power
-		FROM measurements
-		WHERE device_id IN (%s) AND %s
-		GROUP BY ts
-		ORDER BY ts ASC
-	`, groupByClause, inClause, timeConstraint)
+	var query string
+
+	if node == "home" {
+		query = fmt.Sprintf(`
+			SELECT
+				%s AS ts,
+				SUM(
+					CASE
+						WHEN d.template IN ('huawei_dongle', 'demo_dongle', 'homewizard_meter') THEN m.power_w
+						WHEN d.template IN ('huawei_inverter', 'solis_inverter', 'sma_inverter', 'demo_inverter') AND d.name NOT LIKE '%%battery%%' THEN m.power_w
+						WHEN d.template IN ('huawei_inverter', 'demo_inverter') AND d.name LIKE '%%battery%%' THEN m.power_w
+						WHEN d.template IN ('raedian_charger', 'alfen_charger', 'bender_charger', 'phoenix_charger', 'easee_charger', 'peblar_charger', 'demo_charger') THEN -m.power_w
+						ELSE 0
+					END
+				) / COUNT(DISTINCT d.id) as avg_power
+			FROM measurements m
+			JOIN devices d ON m.device_id = d.id
+			WHERE %s
+			GROUP BY ts
+			ORDER BY ts ASC
+		`, groupByClause, timeConstraint)
+	} else {
+		whereClause := ""
+		switch node {
+		case "grid":
+			whereClause = "(template IN ('huawei_dongle', 'demo_dongle', 'homewizard_meter'))"
+		case "solar":
+			whereClause = "(template IN ('huawei_inverter', 'solis_inverter', 'sma_inverter', 'demo_inverter') AND name NOT LIKE '%battery%')"
+		case "battery":
+			whereClause = "(template IN ('huawei_inverter', 'demo_inverter') AND name LIKE '%battery%')"
+		case "ev_charger":
+			whereClause = "(template IN ('raedian_charger', 'alfen_charger', 'bender_charger', 'phoenix_charger', 'easee_charger', 'peblar_charger', 'demo_charger'))"
+		default:
+			http.Error(w, "Invalid node", http.StatusBadRequest)
+			return
+		}
+
+		// Fetch applicable device IDs
+		rows, err := db.Query(fmt.Sprintf("SELECT id FROM devices WHERE %s", whereClause))
+		if err != nil {
+			http.Error(w, "Database error", http.StatusInternalServerError)
+			return
+		}
+		defer rows.Close()
+
+		var deviceIDs []int
+		for rows.Next() {
+			var id int
+			if err := rows.Scan(&id); err == nil {
+				deviceIDs = append(deviceIDs, id)
+			}
+		}
+
+		if len(deviceIDs) == 0 {
+			// Return empty array if no devices matched
+			json.NewEncoder(w).Encode([]HistoryDataPoint{})
+			return
+		}
+
+		// Build IN clause for device_id
+		inClause := ""
+		for i, id := range deviceIDs {
+			if i > 0 {
+				inClause += ","
+			}
+			inClause += fmt.Sprintf("%d", id)
+		}
+
+		query = fmt.Sprintf(`
+			SELECT
+				%s AS ts,
+				AVG(power_w) as avg_power
+			FROM measurements
+			WHERE device_id IN (%s) AND %s
+			GROUP BY ts
+			ORDER BY ts ASC
+		`, groupByClause, inClause, timeConstraint)
+	}
 
 	measurementsRows, err := db.Query(query)
 	if err != nil {

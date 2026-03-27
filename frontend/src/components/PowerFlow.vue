@@ -99,7 +99,7 @@
 
         <!-- Bottom Row: Home -->
         <div class="col-start-2 row-start-3 flex flex-col items-center justify-start pt-2">
-          <div class="z-10 flex items-center justify-center w-24 h-24 bg-white dark:bg-gray-800 rounded-full border-[4px] border-[#A855F7] shadow-sm mb-2">
+          <div @click="openChart('home')" class="z-10 flex items-center justify-center w-24 h-24 bg-white dark:bg-gray-800 rounded-full border-[4px] border-[#A855F7] shadow-sm cursor-pointer hover:scale-105 transition-transform mb-2">
             <!-- Icon -->
             <svg class="h-10 w-10 text-gray-700 dark:text-gray-300" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12 3L4 9v12h16V9l-8-6zm6 16h-3v-4H9v4H6v-9l6-4.5 6 4.5v9z"/>
@@ -118,9 +118,9 @@
     </div>
   </div>
 
-  <!-- Chart Modal -->
-  <div v-if="isModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 transition-opacity">
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-11/12 max-w-4xl p-6 relative">
+  <!-- Context-Sensitive Slide-out Panel -->
+  <div v-if="isModalOpen" class="fixed inset-0 z-50 flex justify-end bg-black bg-opacity-50 transition-opacity" @click.self="closeChart">
+    <div class="w-full max-w-md h-full bg-white dark:bg-gray-800 shadow-xl p-6 relative flex flex-col transform transition-transform duration-300 translate-x-0" @click.stop>
       <button @click="closeChart" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
         <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -129,7 +129,7 @@
 
       <h2 class="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-100 capitalize">{{ selectedNode?.replace('_', ' ') }} History</h2>
 
-      <div class="flex space-x-2 mb-4">
+      <div class="flex flex-wrap gap-2 mb-6">
         <button v-for="range in ranges" :key="range.value"
                 @click="setRange(range.value)"
                 :class="[
@@ -142,7 +142,7 @@
         </button>
       </div>
 
-      <div class="h-[400px] w-full">
+      <div class="flex-grow w-full h-full min-h-[300px]">
         <Line v-if="chartData" :data="chartData" :options="chartOptions" />
         <div v-else-if="isLoading" class="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">Loading data...</div>
         <div v-else class="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">No data available</div>
@@ -253,7 +253,7 @@ const flowPercentage = computed(() => {
   return maxVal;
 });
 
-const getFlowStyle = (power: number | null | undefined, normalIsPositive: boolean = true, baseDuration: number = 2000) => {
+const getFlowStyle = (power: number | null | undefined, normalIsPositive: boolean = true) => {
   if (!power || Math.abs(power) < 10) return { display: 'none' }
   const absPower = Math.abs(power)
 
@@ -446,6 +446,7 @@ const fetchHistory = async () => {
       if (selectedNode.value === 'solar') lineColor = '#FBBF24' // Yellow
       else if (selectedNode.value === 'battery') lineColor = '#34D399' // Green
       else if (selectedNode.value === 'ev_charger') lineColor = '#A855F7' // Purple
+      else if (selectedNode.value === 'home') lineColor = '#A855F7' // Purple
 
       if (data && data.length > 0) {
         chartData.value = {
