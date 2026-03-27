@@ -28,3 +28,11 @@ type DevicePoller interface {
 	Status() string
 	Close() error
 }
+
+type ChargeController interface {
+	SetChargeCurrent(amps float64) error
+}
+
+type BatteryController interface {
+	DischargeBattery(powerW float64) error
+}

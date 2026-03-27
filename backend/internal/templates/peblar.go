@@ -87,6 +87,11 @@ func (p *PeblarChargerPoller) GetDevice() models.Device {
 	return p.Device
 }
 
+func (p *PeblarChargerPoller) SetChargeCurrent(amps float64) error {
+	log.Printf("PeblarChargerPoller: Setting charge current to %.2f A (Simulated)", amps)
+	return nil
+}
+
 func (p *PeblarChargerPoller) Close() error {
 	return nil
 }

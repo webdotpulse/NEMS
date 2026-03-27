@@ -108,6 +108,11 @@ func (p *GenericModbusChargerPoller) GetDevice() models.Device {
 	return p.Device
 }
 
+func (p *GenericModbusChargerPoller) SetChargeCurrent(amps float64) error {
+	log.Printf("%s: Setting charge current to %.2f A (Simulated)", p.Prefix, amps)
+	return nil
+}
+
 func (p *GenericModbusChargerPoller) Close() error {
 	if p.client != nil {
 		return p.client.Close()

@@ -62,6 +62,10 @@ func (p *DemoInverterPoller) GetDevice() models.Device {
 	return p.Device
 }
 
+func (p *DemoInverterPoller) DischargeBattery(powerW float64) error {
+	return nil
+}
+
 func (p *DemoInverterPoller) Close() error {
 	return nil
 }
@@ -115,6 +119,10 @@ func (p *DemoChargerPoller) Poll() (float64, float64, float64, float64, float64,
 
 func (p *DemoChargerPoller) GetDevice() models.Device {
 	return p.Device
+}
+
+func (p *DemoChargerPoller) SetChargeCurrent(amps float64) error {
+	return nil
 }
 
 func (p *DemoChargerPoller) Close() error {

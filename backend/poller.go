@@ -45,6 +45,26 @@ type PollerManager struct {
 
 var PollerMgr *PollerManager
 
+func (pm *PollerManager) GetDeviceCache() map[int]DeviceData {
+	pm.cacheMu.Lock()
+	defer pm.cacheMu.Unlock()
+	copyCache := make(map[int]DeviceData)
+	for k, v := range pm.deviceCache {
+		copyCache[k] = v
+	}
+	return copyCache
+}
+
+func (pm *PollerManager) GetPollers() map[int]models.DevicePoller {
+	pm.mu.Lock()
+	defer pm.mu.Unlock()
+	copyPollers := make(map[int]models.DevicePoller)
+	for k, v := range pm.pollers {
+		copyPollers[k] = v
+	}
+	return copyPollers
+}
+
 func InitPollerManager() {
 	PollerMgr = &PollerManager{
 		pollers: make(map[int]models.DevicePoller),
