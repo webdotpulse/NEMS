@@ -24,6 +24,7 @@ type DeviceData struct {
 	Status        string
 	Template      string
 	HasGridMeter  bool
+	HasBattery    bool
 }
 
 type BufferedMeasurement struct {
@@ -172,6 +173,7 @@ func (pm *PollerManager) Start() {
 							Status:        poller.Status(),
 							Template:      device.Template,
 							HasGridMeter:  device.HasGridMeter,
+							HasBattery:    device.HasBattery,
 						}
 						pm.cacheMu.Unlock()
 						continue
@@ -187,6 +189,7 @@ func (pm *PollerManager) Start() {
 						Status:        poller.Status(),
 						Template:      device.Template,
 						HasGridMeter:  device.HasGridMeter,
+						HasBattery:    device.HasBattery,
 					}
 					pm.cacheMu.Unlock()
 
@@ -228,6 +231,7 @@ func (pm *PollerManager) Start() {
 							Status:        poller.Status(),
 							Template:      device.Template,
 							HasGridMeter:  device.HasGridMeter,
+							HasBattery:    device.HasBattery,
 						}
 						pm.cacheMu.Unlock()
 						continue
@@ -243,6 +247,7 @@ func (pm *PollerManager) Start() {
 						Status:        poller.Status(),
 						Template:      device.Template,
 						HasGridMeter:  device.HasGridMeter,
+						HasBattery:    device.HasBattery,
 					}
 					pm.cacheMu.Unlock()
 
