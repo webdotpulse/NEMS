@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"nems/internal/models"
 	"nems/internal/templates"
@@ -103,6 +104,17 @@ func main() {
 	_, _ = db.Exec("ALTER TABLE devices ADD COLUMN has_battery BOOLEAN DEFAULT 0")
 	_, _ = db.Exec("ALTER TABLE devices ADD COLUMN battery_capacity REAL DEFAULT 0")
 
+	createEpexPricesSQL := `
+	CREATE TABLE IF NOT EXISTS epex_prices (
+		timestamp DATETIME PRIMARY KEY,
+		price_per_kwh REAL NOT NULL
+	);
+	`
+	_, err = db.Exec(createEpexPricesSQL)
+	if err != nil {
+		log.Fatal("Failed to create epex_prices table:", err)
+	}
+
 	createSettingsSQL := `
 	CREATE TABLE IF NOT EXISTS site_settings (
 		id INTEGER PRIMARY KEY CHECK (id = 1),
@@ -129,6 +141,42 @@ func main() {
 	})
 
 	mux.HandleFunc("/api/live", handleLiveStream)
+
+	mux.HandleFunc("/api/tariffs/today", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
+		loc, err := time.LoadLocation("Europe/Amsterdam")
+		if err != nil {
+			loc = time.UTC
+		}
+		now := time.Now().In(loc)
+		startOfToday := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc).UTC()
+		endOfTomorrow := time.Date(now.Year(), now.Month(), now.Day()+2, 0, 0, 0, 0, loc).UTC()
+
+		rows, err := db.Query("SELECT timestamp, price_per_kwh FROM epex_prices WHERE timestamp >= ? AND timestamp < ? ORDER BY timestamp ASC", startOfToday, endOfTomorrow)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer rows.Close()
+
+		var prices []PricePoint
+		for rows.Next() {
+			var p PricePoint
+			var ts time.Time
+			if err := rows.Scan(&ts, &p.PricePerKwh); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			p.Timestamp = ts.In(loc)
+			prices = append(prices, p)
+		}
+
+		if prices == nil {
+			prices = []PricePoint{}
+		}
+		json.NewEncoder(w).Encode(prices)
+	})
 
 	mux.HandleFunc("/api/settings", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -325,6 +373,12 @@ func main() {
 	InitStrategyController()
 	if StrategyCtrl != nil {
 		StrategyCtrl.Start()
+	}
+
+	// Initialize TariffManager
+	InitTariffManager()
+	if TariffMgr != nil {
+		TariffMgr.Start()
 	}
 
 	log.Println("Server listening on :8080")
