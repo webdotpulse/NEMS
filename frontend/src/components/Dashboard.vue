@@ -13,9 +13,7 @@
           <div class="p-5">
             <div class="flex items-center">
               <div class="flex-shrink-0">
-                <svg class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z"/><path d="m13 6-6 7h4v5l6-7h-4z"/></svg>
               </div>
               <div class="ml-5 w-0 flex-1">
                 <dl>
@@ -39,9 +37,7 @@
           <div class="p-5">
             <div class="flex items-center">
               <div class="flex-shrink-0">
-                <svg class="h-6 w-6 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-400" fill="currentColor" viewBox="0 0 24 24"><path d="M6.993 12c0 2.761 2.246 5.007 5.007 5.007s5.007-2.246 5.007-5.007S14.761 6.993 12 6.993 6.993 9.239 6.993 12zM12 8.993c1.658 0 3.007 1.349 3.007 3.007S13.658 15.007 12 15.007 8.993 13.658 8.993 12 10.342 8.993 12 8.993zM10.998 19h2v3h-2zm0-17h2v3h-2zm-9 9h3v2h-3zm17 0h3v2h-3zM4.219 18.363l2.12-2.122 1.415 1.414-2.12 2.122zM16.24 6.344l2.122-2.122 1.414 1.414-2.122 2.122zM6.342 7.759 4.22 5.637l1.415-1.414 2.12 2.122zm13.434 10.605-1.414 1.414-2.122-2.122 1.414-1.414z"/></svg>
               </div>
               <div class="ml-5 w-0 flex-1">
                 <dl>
@@ -63,9 +59,7 @@
           <div class="p-5">
             <div class="flex items-center">
               <div class="flex-shrink-0">
-                <svg class="h-6 w-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
-                </svg>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-400" fill="currentColor" viewBox="0 0 24 24"><path d="M4 18h14c1.103 0 2-.897 2-2v-2h2v-4h-2V8c0-1.103-.897-2-2-2H4c-1.103 0-2 .897-2 2v8c0 1.103.897 2 2 2zM4 8h14l.002 8H4V8z"/></svg>
               </div>
               <div class="ml-5 w-0 flex-1">
                 <dl>
@@ -89,9 +83,7 @@
           <div class="p-5">
             <div class="flex items-center">
               <div class="flex-shrink-0">
-                <svg class="h-6 w-6 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                </svg>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-purple-400" fill="currentColor" viewBox="0 0 24 24"><path d="M3 13h1v7c0 1.103.897 2 2 2h12c1.103 0 2-.897 2-2v-7h1a1 1 0 0 0 .707-1.707l-9-9a.999.999 0 0 0-1.414 0l-9 9A1 1 0 0 0 3 13zm7 7v-5h4v5h-4zm2-15.586 6 6V15l.001 5H16v-5c0-1.103-.897-2-2-2h-4c-1.103 0-2 .897-2 2v5H6v-9.586l6-6z"/></svg>
               </div>
               <div class="ml-5 w-0 flex-1">
                 <dl>
@@ -110,6 +102,43 @@
 
       </div>
 
+      <!-- Daily Aggregates Section -->
+      <div v-if="dailyAggregates" class="mt-8 bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+          <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100 mb-4">Daily Summary</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-md">
+              <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Grid (Today)</dt>
+              <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">
+                <div>Import: {{ dailyAggregates.grid_import_kwh.toFixed(2) }} kWh</div>
+                <div>Export: {{ dailyAggregates.grid_export_kwh.toFixed(2) }} kWh</div>
+              </dd>
+            </div>
+            <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-md">
+              <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Solar Yield (Today)</dt>
+              <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">
+                <div>Production: {{ dailyAggregates.solar_yield_kwh.toFixed(2) }} kWh</div>
+              </dd>
+            </div>
+            <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-md">
+              <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Battery (Today)</dt>
+              <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">
+                <div>Charged: {{ dailyAggregates.battery_charge_kwh.toFixed(2) }} kWh</div>
+                <div class="ml-2 text-xs text-gray-500 dark:text-gray-400">From Solar: {{ dailyAggregates.battery_charge_solar_kwh.toFixed(2) }} kWh</div>
+                <div class="ml-2 text-xs text-gray-500 dark:text-gray-400">From Grid: {{ dailyAggregates.battery_charge_grid_kwh.toFixed(2) }} kWh</div>
+                <div>Discharged: {{ dailyAggregates.battery_discharge_kwh.toFixed(2) }} kWh</div>
+              </dd>
+            </div>
+            <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-md">
+              <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">House (Today)</dt>
+              <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">
+                <div>Consumption: {{ dailyAggregates.house_consumption_kwh.toFixed(2) }} kWh</div>
+              </dd>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div v-else class="border-4 border-dashed border-gray-200 dark:border-gray-700 rounded-lg h-96 flex flex-col items-center justify-center mt-6">
         <div class="text-center">
           <svg class="mx-auto h-12 w-12 text-gray-400 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
@@ -122,16 +151,6 @@
         </div>
       </div>
 
-      <!-- Tariffs Section -->
-      <div class="mt-8 mb-8" v-if="chartData">
-        <h2 class="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:text-3xl sm:truncate mb-4">
-          Tariffs
-        </h2>
-        <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6">
-          <Bar :data="chartData" :options="chartOptions" class="h-64" />
-        </div>
-      </div>
-
     </div>
   </main>
 </template>
@@ -139,12 +158,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import PowerFlow from './PowerFlow.vue'
-import { Bar } from 'vue-chartjs'
-import { Chart as ChartJS, Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale } from 'chart.js'
-import { format } from 'date-fns'
-
-// Register ChartJS components
-ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale)
 
 interface SiteState {
   grid_power_w: number | null
@@ -156,56 +169,20 @@ interface SiteState {
   device_health?: Record<number, string>
 }
 
-interface PricePoint {
-  timestamp: string
-  price_per_kwh: number
+interface DailyAggregates {
+  grid_import_kwh: number
+  grid_export_kwh: number
+  solar_yield_kwh: number
+  battery_charge_kwh: number
+  battery_charge_solar_kwh: number
+  battery_charge_grid_kwh: number
+  battery_discharge_kwh: number
+  house_consumption_kwh: number
 }
 
 const state = ref<SiteState | null>(null)
+const dailyAggregates = ref<DailyAggregates | null>(null)
 let eventSource: EventSource | null = null
-
-const chartData = ref<any>(null)
-const chartOptions = ref<any>({
-  responsive: true,
-  maintainAspectRatio: false,
-  scales: {
-    y: {
-      title: {
-        display: true,
-        text: 'Price (cents/kWh)',
-        color: '#9CA3AF'
-      },
-      grid: {
-        color: '#374151'
-      },
-      ticks: {
-        color: '#9CA3AF'
-      }
-    },
-    x: {
-      grid: {
-        display: false
-      },
-      ticks: {
-        color: '#9CA3AF',
-        maxRotation: 45,
-        minRotation: 45
-      }
-    }
-  },
-  plugins: {
-    legend: {
-      display: false
-    },
-    tooltip: {
-      callbacks: {
-        label: function(context: any) {
-          return `${context.parsed.y.toFixed(2)} cents/kWh`
-        }
-      }
-    }
-  }
-})
 
 onMounted(async () => {
   const host = window.location.hostname
@@ -234,63 +211,16 @@ onMounted(async () => {
     // Don't null out state on every error, wait to see if it reconnects
   }
 
-  // Fetch settings to know thresholds
-  let siteSettings: any = null
+  // Fetch daily aggregates
   try {
-    const res = await fetch(`http://${host}:8080/api/settings`)
+    const res = await fetch(`http://${host}:8080/api/daily`)
     if (res.ok) {
-      siteSettings = await res.json()
+      dailyAggregates.value = await res.json()
     }
   } catch (e) {
-    console.error("Failed to fetch settings:", e)
+    console.error("Failed to fetch daily aggregates:", e)
   }
 
-  // Fetch today's prices
-  try {
-    const res = await fetch(`http://${host}:8080/api/tariffs/today`)
-    if (res.ok) {
-      const prices: PricePoint[] = await res.json()
-      if (prices && prices.length > 0) {
-
-        // Filter strictly to current day's 24 hours (today 00:00 to 23:00)
-        // The API might return more, depending on local time. Just grab the first 24 entries that match today.
-        const labels = prices.slice(0, 24).map(p => {
-          // Try to extract HH:mm from ISO
-          const date = new Date(p.timestamp)
-          return format(date, 'HH:mm')
-        })
-
-        const data = prices.slice(0, 24).map(p => p.price_per_kwh * 100) // Convert to cents
-
-        // Sort prices to find 90th percentile (top 10% most expensive)
-        const sortedData = [...data].sort((a, b) => a - b)
-        const p90Index = Math.floor(sortedData.length * 0.9)
-        const p90Value = sortedData[p90Index]
-
-        const thresholdEuro = siteSettings?.force_charge_below_euro || 0
-        const thresholdCents = thresholdEuro * 100
-
-        const backgroundColors = data.map(price => {
-          if (price < 0 || price < thresholdCents) return 'rgba(34, 197, 94, 0.8)' // Green
-          if (price >= p90Value) return 'rgba(239, 68, 68, 0.8)' // Red
-          return 'rgba(156, 163, 175, 0.8)' // Grey
-        })
-
-        chartData.value = {
-          labels,
-          datasets: [
-            {
-              label: 'Price (cents/kWh)',
-              backgroundColor: backgroundColors,
-              data
-            }
-          ]
-        }
-      }
-    }
-  } catch (e) {
-    console.error("Failed to fetch tariffs:", e)
-  }
 })
 
 onUnmounted(() => {

@@ -144,6 +144,7 @@ func main() {
 	})
 
 	mux.HandleFunc("/api/live", handleLiveStream)
+	mux.HandleFunc("/api/daily", handleDailyAggregates)
 
 	mux.HandleFunc("/api/tariffs/today", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")

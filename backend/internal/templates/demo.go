@@ -41,6 +41,16 @@ func init() {
 			return &DemoChargerPoller{Device: device}
 		},
 	})
+	Register(Template{
+		Metadata: TemplateMetadata{
+			ID:   "demo_battery",
+			Name: "Demo Battery",
+			Type: "demo",
+		},
+		NewPoller: func(device models.Device) models.DevicePoller {
+			return &DemoBatteryPoller{Device: device}
+		},
+	})
 }
 
 func (p *DemoInverterPoller) Connect() error {
@@ -134,5 +144,40 @@ func (p *DemoChargerPoller) SetChargeCurrent(amps float64) error {
 }
 
 func (p *DemoChargerPoller) Close() error {
+	return nil
+}
+
+type DemoBatteryPoller struct {
+	Device models.Device
+}
+
+func (p *DemoBatteryPoller) Connect() error {
+	return nil
+}
+
+func (p *DemoBatteryPoller) Status() string {
+	return "online"
+}
+
+func (p *DemoBatteryPoller) Poll() (float64, float64, float64, float64, float64, error) {
+	batteryPowerW := -2000.0 + rand.Float64()*4000.0
+	energyKwh := batteryPowerW * (5.0 / 3600.0) / 1000.0
+	soc := 20.0 + rand.Float64()*60.0
+	return 0, batteryPowerW, 0, energyKwh, soc, nil
+}
+
+func (p *DemoBatteryPoller) GetDevice() models.Device {
+	return p.Device
+}
+
+func (p *DemoBatteryPoller) DischargeBattery(powerW float64) error {
+	return nil
+}
+
+func (p *DemoBatteryPoller) ChargeBattery(powerW float64) error {
+	return nil
+}
+
+func (p *DemoBatteryPoller) Close() error {
 	return nil
 }

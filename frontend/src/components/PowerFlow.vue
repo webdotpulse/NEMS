@@ -33,9 +33,7 @@
         <div class="absolute flex flex-col items-center justify-center transform -translate-x-1/2 -translate-y-1/2" style="left: 20%; top: 20%;">
           <div v-if="hasEV" @click="openChart('ev_charger')" class="z-10 flex flex-col items-center justify-center w-28 h-28 bg-white dark:bg-gray-800 rounded-full border-[4px] border-[#A855F7] shadow-sm cursor-pointer hover:scale-105 transition-transform mb-2 relative">
             <span class="text-xs font-medium text-gray-500 mb-1 absolute -top-6">EV</span>
-            <svg class="h-8 w-8 text-gray-700 dark:text-gray-300 mb-1" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M19.77 7.23l.01-.01-3.72-3.72L15 4.56l2.11 2.11C16.17 7 15.5 7.93 15.5 9v11h-2V9c0-2.21 1.79-4 4-4h1V3c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v18h12V3h-1.5v6H5V3h8v15c0 1.66 1.34 3 3 3h3.5c1.38 0 2.5-1.12 2.5-2.5v-8.38c0-.7-.3-1.39-.73-1.89zM11 11H7v-2h4v2z"/>
-            </svg>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-700 dark:text-gray-300 mb-1" fill="currentColor" viewBox="0 0 24 24"><path d="m20.772 10.156-1.368-4.105A2.995 2.995 0 0 0 16.559 4H7.441a2.995 2.995 0 0 0-2.845 2.051l-1.368 4.105A2.003 2.003 0 0 0 2 12v5c0 .753.423 1.402 1.039 1.743-.013.066-.039.126-.039.195V21a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-2h12v2a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-2.062c0-.069-.026-.13-.039-.195A1.993 1.993 0 0 0 22 17v-5c0-.829-.508-1.541-1.228-1.844zM4 17v-5h16l.002 5H4zM7.441 6h9.117c.431 0 .813.274.949.684L18.613 10H5.387l1.105-3.316A1 1 0 0 1 7.441 6z"/><circle cx="6.5" cy="14.5" r="1.5"/><circle cx="17.5" cy="14.5" r="1.5"/></svg>
             <div class="text-gray-800 dark:text-gray-200 text-sm font-medium">
               <span v-if="state?.ev_charger_power_w !== null && state?.ev_charger_power_w !== undefined">
                  {{ formatPowerSimple(state.ev_charger_power_w) }}
@@ -49,12 +47,7 @@
         <div class="absolute flex flex-col items-center justify-center transform -translate-x-1/2 -translate-y-1/2" style="left: 50%; top: 20%;">
           <div v-if="hasSolar" @click="openChart('solar')" class="z-10 flex flex-col items-center justify-center w-28 h-28 bg-white dark:bg-gray-800 rounded-full border-[4px] border-[#FBBF24] shadow-sm cursor-pointer hover:scale-105 transition-transform mb-2">
             <span class="text-xs font-medium text-gray-500 mb-1 absolute -top-6">Solar</span>
-            <svg class="h-8 w-8 text-gray-700 dark:text-gray-300 mb-1 relative" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M3 4h18v16H3V4zM5 6v12h14V6H5z"/>
-              <path d="M11 6v12h2V6h-2zM7 6v12h2V6H7zM15 6v12h2V6h-2z"/>
-              <path d="M5 11h14v2H5v-2zM5 15h14v2H5v-2z"/>
-              <circle cx="21" cy="3" r="1.5" />
-            </svg>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-700 dark:text-gray-300 mb-1 relative" fill="currentColor" viewBox="0 0 24 24"><path d="M6.993 12c0 2.761 2.246 5.007 5.007 5.007s5.007-2.246 5.007-5.007S14.761 6.993 12 6.993 6.993 9.239 6.993 12zM12 8.993c1.658 0 3.007 1.349 3.007 3.007S13.658 15.007 12 15.007 8.993 13.658 8.993 12 10.342 8.993 12 8.993zM10.998 19h2v3h-2zm0-17h2v3h-2zm-9 9h3v2h-3zm17 0h3v2h-3zM4.219 18.363l2.12-2.122 1.415 1.414-2.12 2.122zM16.24 6.344l2.122-2.122 1.414 1.414-2.122 2.122zM6.342 7.759 4.22 5.637l1.415-1.414 2.12 2.122zm13.434 10.605-1.414 1.414-2.122-2.122 1.414-1.414z"/></svg>
             <div class="text-gray-800 dark:text-gray-200 text-sm font-medium">
               <span v-if="state?.solar_power_w !== null && state?.solar_power_w !== undefined">
                  {{ formatPowerSimple(state.solar_power_w) }}
@@ -68,9 +61,7 @@
         <div class="absolute flex flex-col items-center justify-center transform -translate-x-1/2 -translate-y-1/2" style="left: 20%; top: 50%;">
           <div v-if="hasGrid" @click="openChart('grid')" class="z-10 flex flex-col items-center justify-center w-28 h-28 bg-white dark:bg-gray-800 rounded-full border-[4px] border-[#3B82F6] shadow-sm cursor-pointer hover:scale-105 transition-transform mb-2 relative">
             <span class="text-xs font-medium text-gray-500 mb-1 absolute -bottom-6">Grid</span>
-            <svg class="h-8 w-8 text-gray-700 dark:text-gray-300 mb-1" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M16,7V3h-2v4h-4V3H8v4H6v7.5L9.5,18v3h5v-3l3.5-3.5V7H16z M14,15.5l-2,2l-2-2V13h4V15.5z M14,11h-4V9h4V11z"/>
-            </svg>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-700 dark:text-gray-300 mb-1" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z"/><path d="m13 6-6 7h4v5l6-7h-4z"/></svg>
             <div class="text-sm font-medium flex flex-col items-center leading-tight">
               <span v-if="state?.grid_power_w !== null && state?.grid_power_w !== undefined" class="text-purple-600 dark:text-purple-400 text-xs">
                 &larr; {{ state.grid_power_w < 0 ? (Math.abs(state.grid_power_w) / 1000).toFixed(1) : '0.0' }} kW
@@ -95,9 +86,7 @@
         <div class="absolute flex flex-col items-center justify-center transform -translate-x-1/2 -translate-y-1/2" style="left: 80%; top: 50%;">
           <div @click="openChart('home')" class="z-10 flex flex-col items-center justify-center w-28 h-28 bg-white dark:bg-gray-800 rounded-full border-[4px] border-[#10B981] shadow-sm cursor-pointer hover:scale-105 transition-transform mb-2 relative">
              <span class="text-xs font-medium text-gray-500 mb-1 absolute -bottom-6">Home</span>
-            <svg class="h-8 w-8 text-gray-700 dark:text-gray-300 mb-1" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 3L4 9v12h16V9l-8-6zm6 16h-3v-4H9v4H6v-9l6-4.5 6 4.5v9z"/>
-            </svg>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-700 dark:text-gray-300 mb-1" fill="currentColor" viewBox="0 0 24 24"><path d="M3 13h1v7c0 1.103.897 2 2 2h12c1.103 0 2-.897 2-2v-7h1a1 1 0 0 0 .707-1.707l-9-9a.999.999 0 0 0-1.414 0l-9 9A1 1 0 0 0 3 13zm7 7v-5h4v5h-4zm2-15.586 6 6V15l.001 5H16v-5c0-1.103-.897-2-2-2h-4c-1.103 0-2 .897-2 2v5H6v-9.586l6-6z"/></svg>
             <div class="text-gray-800 dark:text-gray-200 text-sm font-medium">
               <span v-if="state?.total_load_w !== null && state?.total_load_w !== undefined">
                  {{ formatPowerSimple(homeLoad) }}
@@ -111,9 +100,7 @@
         <div class="absolute flex flex-col items-center justify-center transform -translate-x-1/2 -translate-y-1/2" style="left: 50%; top: 80%;">
           <div v-if="hasBattery" @click="openChart('battery')" class="z-10 flex flex-col items-center justify-center w-28 h-28 bg-white dark:bg-gray-800 rounded-full border-[4px] border-[#EC4899] shadow-sm cursor-pointer hover:scale-105 transition-transform mb-2 relative">
             <span class="text-xs font-medium text-gray-500 mb-1 absolute -bottom-6">Battery</span>
-            <svg class="h-8 w-8 text-gray-700 dark:text-gray-300 mb-1" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M16,4h-2V2h-4v2H8C6.9,4,6,4.9,6,6v14c0,1.1,0.9,2,2,2h8c1.1,0,2-0.9,2-2V6C18,4.9,17.1,4,16,4z M16,20H8V6h8V20z M10,8h4v2h-4V8z M10,12h4v2h-4V12z M10,16h4v2h-4V16z"/>
-            </svg>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-700 dark:text-gray-300 mb-1" fill="currentColor" viewBox="0 0 24 24"><path d="M4 18h14c1.103 0 2-.897 2-2v-2h2v-4h-2V8c0-1.103-.897-2-2-2H4c-1.103 0-2 .897-2 2v8c0 1.103.897 2 2 2zM4 8h14l.002 8H4V8z"/></svg>
             <div class="text-sm font-medium flex flex-col items-center leading-tight">
               <span v-if="state?.battery_power_w !== null && state?.battery_power_w !== undefined" class="text-pink-500 dark:text-pink-400 text-xs">
                 &darr; {{ state.battery_power_w < 0 ? (Math.abs(state.battery_power_w) / 1000).toFixed(1) : '0.0' }} kW
