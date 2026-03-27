@@ -8,22 +8,13 @@ import (
 	"strconv"
 	"strings"
 
+	"nems/internal/models"
+	"nems/internal/templates"
+
 	_ "github.com/mattn/go-sqlite3"
 )
 
 var db *sql.DB
-
-type Device struct {
-	ID       int    `json:"id"`
-	Name     string `json:"name"`
-	Template string `json:"template"`
-	Host     string `json:"host"`
-	Port     int    `json:"port"`
-	ModbusID int    `json:"modbus_id"`
-	Username string `json:"username,omitempty"`
-	Password string `json:"password,omitempty"`
-	Status   string `json:"status"`
-}
 
 func enableCORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -120,29 +111,8 @@ func main() {
 
 	mux.HandleFunc("/api/templates", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		// type indicates required fields:
-		// "modbus" (requires host, port, modbus_id)
-		// "rest" (requires host, port)
-		// "cloud" (requires username, password)
-		// "cloud_rest" (requires username, password, host, port)
-		// "demo" (no specific requirements)
-		templates := []map[string]string{
-			{"id": "huawei_inverter", "name": "Huawei Hybrid Inverter", "type": "modbus"},
-			{"id": "huawei_dongle", "name": "Huawei Dongle Power Sensor", "type": "modbus"},
-			{"id": "raedian_charger", "name": "Raedian EV Charger", "type": "modbus"},
-			{"id": "solis_inverter", "name": "Solis Inverter", "type": "modbus"},
-			{"id": "sma_inverter", "name": "SMA Inverter", "type": "modbus"},
-			{"id": "alfen_charger", "name": "Alfen Charger", "type": "modbus"},
-			{"id": "bender_charger", "name": "Bender Charger", "type": "modbus"},
-			{"id": "phoenix_charger", "name": "Phoenix Contact Charx Charger", "type": "modbus"},
-			{"id": "easee_charger", "name": "Easee Charger", "type": "cloud"},
-			{"id": "peblar_charger", "name": "Peblar Charger", "type": "rest"},
-			{"id": "homewizard_meter", "name": "HomeWizard Meter", "type": "rest"},
-			{"id": "demo_inverter", "name": "Demo Inverter", "type": "demo"},
-			{"id": "demo_dongle", "name": "Demo Grid Meter", "type": "demo"},
-			{"id": "demo_charger", "name": "Demo EV Charger", "type": "demo"},
-		}
-		json.NewEncoder(w).Encode(templates)
+		tList := templates.GetTemplates()
+		json.NewEncoder(w).Encode(tList)
 	})
 
 	mux.HandleFunc("/api/devices", func(w http.ResponseWriter, r *http.Request) {
@@ -155,9 +125,9 @@ func main() {
 			}
 			defer rows.Close()
 
-			var devices []Device
+			var devices []models.Device
 			for rows.Next() {
-				var d Device
+				var d models.Device
 				var username sql.NullString
 				var password sql.NullString
 				if err := rows.Scan(&d.ID, &d.Name, &d.Template, &d.Host, &d.Port, &d.ModbusID, &username, &password); err != nil {
@@ -185,11 +155,11 @@ func main() {
 			}
 			// ensure non-nil slice in json
 			if devices == nil {
-				devices = []Device{}
+				devices = []models.Device{}
 			}
 			json.NewEncoder(w).Encode(devices)
 		} else if r.Method == "POST" {
-			var d Device
+			var d models.Device
 			if err := json.NewDecoder(r.Body).Decode(&d); err != nil {
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
@@ -242,7 +212,7 @@ func main() {
 			w.WriteHeader(http.StatusOK)
 			w.Write([]byte(`{"status": "deleted"}`))
 		} else if r.Method == "PUT" {
-			var d Device
+			var d models.Device
 			if err := json.NewDecoder(r.Body).Decode(&d); err != nil {
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
