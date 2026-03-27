@@ -1,181 +1,120 @@
 <template>
-  <div class="relative w-full h-[400px] bg-transparent rounded-lg overflow-visible">
-    <!-- SVG paths for animated power flow -->
-    <svg viewBox="0 0 100 100" preserveAspectRatio="none" class="absolute inset-0 w-full h-full z-0 overflow-visible">
+  <div class="w-full flex justify-center items-center py-8">
+    <div class="relative w-[340px] h-[460px]">
 
-      <!-- Central Junction Point -->
-      <circle v-if="hasGrid || hasSolar || hasBattery" cx="50" cy="50" r="1.5" class="fill-[#3B82F6]" />
+      <!-- SVG paths for animated power flow lines -->
+      <svg class="absolute inset-0 w-full h-full z-0 pointer-events-none" viewBox="0 0 340 460" preserveAspectRatio="none">
 
-      <!-- GRID PATHS -->
-      <!-- Grid to Central Junction (Blue) -->
-      <path
-        v-if="hasGrid"
-        id="path-grid-junction"
-        :d="hasBattery ? 'M 20 50 L 50 50' : 'M 25 60 C 35 60, 40 40, 50 40'"
-        class="stroke-[#3B82F6] stroke-[0.5] fill-none"
-        vector-effect="non-scaling-stroke"
-      />
+        <!-- Grid to Junction (Vertical line) -->
+        <!-- Center x = 170. Grid y ends at ~115 (153-24/2 for bottom padding), Junction y is at 230 -->
+        <line v-if="hasGrid" x1="170" y1="120" x2="170" y2="230" stroke="#E5E7EB" stroke-width="6" />
+        <line v-if="hasGrid && state?.grid_power_w !== null" x1="170" y1="120" x2="170" y2="230" stroke="#9CA3AF" stroke-width="4" stroke-dasharray="8 8" class="flow-path" :style="getFlowStyle(state?.grid_power_w, false)" />
 
-      <!-- Grid to Solar (Purple curve) -->
-      <path
-        v-if="hasGrid && hasSolar"
-        id="path-grid-solar"
-        :d="hasBattery ? 'M 20 45 C 35 45, 45 40, 45 20' : 'M 25 55 C 35 55, 45 35, 45 25'"
-        class="stroke-[#8B5CF6] stroke-[0.5] fill-none"
-        vector-effect="non-scaling-stroke"
-      />
+        <!-- Home to Junction (Vertical line) -->
+        <line x1="170" y1="230" x2="170" y2="330" stroke="#E5E7EB" stroke-width="6" />
+        <line v-if="state?.total_load_w !== null" x1="170" y1="230" x2="170" y2="330" stroke="#A855F7" stroke-width="4" stroke-dasharray="8 8" class="flow-path" :style="getFlowStyle(state?.total_load_w, true)" />
 
-      <!-- Grid to Battery (Purple curve) -->
-      <path
-        v-if="hasGrid && hasBattery"
-        id="path-grid-battery"
-        d="M 20 55 C 35 55, 45 60, 45 80"
-        class="stroke-[#8B5CF6] stroke-[0.5] fill-none"
-        vector-effect="non-scaling-stroke"
-      />
+        <!-- Battery to Junction (Horizontal line) -->
+        <line v-if="hasBattery" x1="100" y1="230" x2="170" y2="230" stroke="#E5E7EB" stroke-width="6" />
+        <line v-if="hasBattery && state?.battery_power_w !== null" x1="100" y1="230" x2="170" y2="230" stroke="#34D399" stroke-width="4" stroke-dasharray="8 8" class="flow-path" :style="getFlowStyle(state?.battery_power_w, false)" />
 
-      <!-- SOLAR PATHS -->
-      <!-- Solar to Central Junction (Yellow curve) -->
-      <path
-        v-if="hasSolar"
-        id="path-solar-junction"
-        :d="hasBattery ? 'M 55 20 C 55 40, 65 45, 80 45' : 'M 55 25 C 55 45, 65 55, 75 55'"
-        class="stroke-[#F59E0B] stroke-[0.5] fill-none"
-        vector-effect="non-scaling-stroke"
-      />
+        <!-- Solar to Junction (Horizontal line) -->
+        <line v-if="hasSolar" x1="170" y1="230" x2="240" y2="230" stroke="#E5E7EB" stroke-width="6" />
+        <line v-if="hasSolar && state?.solar_power_w !== null" x1="240" y1="230" x2="170" y2="230" stroke="#FBBF24" stroke-width="4" stroke-dasharray="8 8" class="flow-path" :style="getFlowStyle(state?.solar_power_w, true)" />
 
-      <!-- BATTERY PATHS -->
-      <!-- Central Junction to Battery (Teal curve) -->
-      <path
-        v-if="hasBattery"
-        id="path-junction-battery"
-        d="M 50 50 C 55 50, 55 60, 55 80"
-        class="stroke-[#14B8A6] stroke-[0.5] fill-none"
-        vector-effect="non-scaling-stroke"
-      />
-
-      <!-- Central Junction to Home (Teal line) -->
-      <path
-        v-if="hasBattery || hasSolar || hasGrid"
-        id="path-junction-home"
-        :d="hasBattery ? 'M 50 50 L 80 50' : 'M 50 40 C 60 40, 65 60, 75 60'"
-        class="stroke-[#14B8A6] stroke-[0.5] fill-none"
-        vector-effect="non-scaling-stroke"
-      />
-
-      <!-- ANIMATED DOTS using dashed strokes to avoid SVG preserveAspectRatio stretching -->
-      <!-- We overlap exactly matching paths but style them as dashed flowing lines -->
-
-      <!-- Grid <-> Junction (Purple dots) -->
-      <path
-        v-if="hasGrid && Math.abs(state?.grid_power_w || 0) > 10"
-        :d="hasBattery ? 'M 20 50 C 40 50, 45 50, 50 50' : 'M 25 60 C 40 60, 45 60, 50 60'"
-        class="stroke-[#8B5CF6] stroke-[4px] fill-none flow-path"
-        style="stroke-linecap: round; stroke-dasharray: 0 40;"
-        vector-effect="non-scaling-stroke"
-        :style="getStrokeAnimStyle(state?.grid_power_w, true)"
-      />
-
-      <!-- Solar -> Junction (Large Orange dots) -->
-      <path
-        v-if="hasSolar && (state?.solar_power_w || 0) > 10"
-        :d="hasBattery ? 'M 50 20 C 50 35, 50 45, 50 50' : 'M 50 25 C 50 40, 50 50, 50 60'"
-        class="stroke-[#F59E0B] stroke-[6px] fill-none flow-path"
-        style="stroke-linecap: round; stroke-dasharray: 0 50;"
-        vector-effect="non-scaling-stroke"
-        :style="getStrokeAnimStyle(state?.solar_power_w, true)"
-      />
-
-      <!-- Battery <-> Junction (Blue dots) -->
-      <path
-        v-if="hasBattery && Math.abs(state?.battery_power_w || 0) > 10"
-        d="M 50 80 C 50 65, 50 55, 50 50"
-        class="stroke-[#3B82F6] stroke-[4px] fill-none flow-path"
-        style="stroke-linecap: round; stroke-dasharray: 0 40;"
-        vector-effect="non-scaling-stroke"
-        :style="getStrokeAnimStyle(state?.battery_power_w, true)"
-      />
-
-      <!-- Junction -> Home (Small Purple dots) -->
-      <path
-        v-if="(state?.total_load_w || 0) > 10"
-        :d="hasBattery ? 'M 50 50 C 65 50, 75 50, 80 50' : 'M 50 60 C 60 60, 65 60, 75 60'"
-        class="stroke-[#8B5CF6] stroke-[3px] fill-none flow-path"
-        style="stroke-linecap: round; stroke-dasharray: 0 30;"
-        vector-effect="non-scaling-stroke"
-        :style="getStrokeAnimStyle(state?.total_load_w, true)"
-      />
-
-    </svg>
-
-    <!-- Node UI Elements -->
-
-    <!-- Grid Node -->
-    <div v-if="hasGrid" @click="openChart('grid')" :style="{ top: nodePositions.grid.top, left: nodePositions.grid.left }" class="absolute -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center w-28 h-28 bg-white dark:bg-gray-800 rounded-full border-[3px] border-[#3B82F6] shadow-sm cursor-pointer hover:scale-105 transition-transform">
-      <div class="absolute -bottom-6 text-sm text-gray-500 dark:text-gray-400">Grid</div>
-      <div class="mt-4 flex items-center justify-center">
-        <svg class="h-8 w-8 text-black dark:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M4 19L8 5H16L20 19" />
-          <path d="M4 15H20" />
-          <path d="M6 10H18" />
-          <path d="M12 5V19" />
-        </svg>
-      </div>
-      <div class="mt-1 flex flex-col items-center justify-center leading-tight">
-        <div v-if="state?.grid_power_w !== null && state?.grid_power_w !== undefined" class="text-sm font-medium" :class="state.grid_power_w > 0 ? 'text-[#8B5CF6]' : 'text-[#3B82F6]'">
-          {{ state.grid_power_w > 0 ? '<--' : '-->' }} {{ formatPowerGrid(state.grid_power_w) }}
-        </div>
-        <div v-else class="text-sm font-medium text-gray-500">--</div>
-      </div>
-    </div>
-
-    <!-- Solar Node -->
-    <div v-if="hasSolar" @click="openChart('solar')" :style="{ top: nodePositions.solar.top, left: nodePositions.solar.left }" class="absolute -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center w-28 h-28 bg-white dark:bg-gray-800 rounded-full border-[3px] border-[#F59E0B] shadow-sm cursor-pointer hover:scale-105 transition-transform">
-      <div class="absolute -top-6 text-sm text-gray-500 dark:text-gray-400">Solar</div>
-      <div class="mt-4 flex items-center justify-center relative">
-        <svg class="h-8 w-8 text-black dark:text-white" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 2L14.4 7.6L20 10L14.4 12.4L12 18L9.6 12.4L4 10L9.6 7.6L12 2Z" />
-        </svg>
-        <svg class="h-4 w-4 text-black dark:text-white absolute -bottom-1 -right-1" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M13 2L3 14H12L11 22L21 10H12L13 2Z" />
-        </svg>
-      </div>
-      <div class="mt-1 text-sm font-medium text-black dark:text-white">
-        {{ state?.solar_power_w !== null && state?.solar_power_w !== undefined ? formatPower(state.solar_power_w) : '--' }}
-      </div>
-    </div>
-
-    <!-- Battery Node -->
-    <div v-if="hasBattery" @click="openChart('battery')" :style="{ top: nodePositions.battery.top, left: nodePositions.battery.left }" class="absolute -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center w-28 h-28 bg-white dark:bg-gray-800 rounded-full border-[3px] border-[#EC4899] shadow-sm cursor-pointer hover:scale-105 transition-transform">
-      <div class="absolute -bottom-6 text-sm text-gray-500 dark:text-gray-400">Battery</div>
-      <div class="mt-4 flex items-center justify-center">
-        <svg class="h-8 w-8 text-black dark:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="6" y="4" width="12" height="16" rx="2" ry="2" />
-          <path d="M9 2H15" />
-          <path d="M6 9H18" />
-          <path d="M6 14H18" />
-          <path d="M6 19H18" />
-        </svg>
-      </div>
-      <div class="mt-1 flex flex-col items-center justify-center leading-tight">
-        <div v-if="state?.battery_power_w !== null && state?.battery_power_w !== undefined" class="text-sm font-medium" :class="state.battery_power_w < 0 ? 'text-[#EC4899]' : 'text-[#14B8A6]'">
-          {{ state.battery_power_w < 0 ? 'v' : '^' }} {{ formatPowerBattery(state.battery_power_w) }}
-        </div>
-        <div v-else class="text-sm font-medium text-gray-500">--</div>
-      </div>
-    </div>
-
-    <!-- Home Load Node -->
-    <div :style="{ top: nodePositions.home.top, left: nodePositions.home.left }" class="absolute -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center justify-center w-28 h-28 bg-white dark:bg-gray-800 rounded-full border-[3px] border-[#14B8A6] shadow-sm relative overflow-hidden">
-      <!-- Colored arc for Home (Teal and Orange as in image) -->
-      <svg class="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 100 100">
-        <circle cx="50" cy="50" r="48" fill="none" stroke="#F59E0B" stroke-width="6" stroke-dasharray="30 270" stroke-dashoffset="0" />
       </svg>
-      <div class="absolute -bottom-6 text-sm text-gray-500 dark:text-gray-400">Home</div>
-      <svg class="h-8 w-8 text-black dark:text-white mb-1 z-10" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 3L20 10V21H4V10L12 3Z" />
-      </svg>
-      <div class="text-sm font-medium text-black dark:text-white z-10">{{ state?.total_load_w !== null && state?.total_load_w !== undefined ? formatPower(Math.max(0, homeLoad)) : '--' }}</div>
+
+      <!-- Grid Layout for Nodes -->
+      <div class="absolute inset-0 grid grid-cols-3 grid-rows-3 gap-0">
+        <!-- Top Row: Grid -->
+        <div class="col-start-2 row-start-1 flex flex-col items-center justify-end pb-2">
+          <div v-if="hasGrid" @click="openChart('grid')" class="z-10 flex items-center justify-center w-24 h-24 bg-white dark:bg-gray-800 rounded-full border-[4px] border-[#E5E7EB] dark:border-gray-600 shadow-sm cursor-pointer hover:scale-105 transition-transform mb-2">
+            <!-- Icon -->
+            <svg class="h-10 w-10 text-gray-700 dark:text-gray-300" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M16,7V3h-2v4h-4V3H8v4H6v7.5L9.5,18v3h5v-3l3.5-3.5V7H16z M14,15.5l-2,2l-2-2V13h4V15.5z M14,11h-4V9h4V11z"/>
+            </svg>
+          </div>
+          <!-- Value Display -->
+          <div v-if="hasGrid" class="z-10 bg-[#F3F4F6] dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-sm font-medium px-4 py-1 rounded-full shadow-sm">
+            <span v-if="state?.grid_power_w !== null && state?.grid_power_w !== undefined">
+               {{ formatPower(state.grid_power_w, false) }}
+            </span>
+            <span v-else>0.0 kW</span>
+          </div>
+        </div>
+
+        <!-- Middle Row: Battery, Junction, Solar -->
+        <div class="col-start-1 row-start-2 flex flex-col items-center justify-center">
+          <div v-if="hasBattery" @click="openChart('battery')" class="z-10 flex items-center justify-center w-24 h-24 bg-white dark:bg-gray-800 rounded-full border-[4px] border-[#34D399] shadow-sm cursor-pointer hover:scale-105 transition-transform mb-2">
+            <!-- Icon -->
+            <svg class="h-10 w-10 text-gray-700 dark:text-gray-300" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M16,4h-2V2h-4v2H8C6.9,4,6,4.9,6,6v14c0,1.1,0.9,2,2,2h8c1.1,0,2-0.9,2-2V6C18,4.9,17.1,4,16,4z M16,20H8V6h8V20z M10,8h4v2h-4V8z M10,12h4v2h-4V12z M10,16h4v2h-4V16z"/>
+            </svg>
+          </div>
+          <!-- Value Display -->
+          <div v-if="hasBattery" class="z-10 flex flex-col items-center space-y-1">
+            <div class="bg-[#F3F4F6] dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-sm font-medium px-4 py-1 rounded-full shadow-sm">
+              <span v-if="state?.battery_power_w !== null && state?.battery_power_w !== undefined">
+                 {{ formatPower(state.battery_power_w, false, true) }}
+              </span>
+              <span v-else>0.0 kW</span>
+            </div>
+            <div class="bg-[#F3F4F6] dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-sm font-medium px-4 py-1 rounded-full shadow-sm">
+              <span v-if="state?.battery_soc !== null && state?.battery_soc !== undefined">{{ Math.round(state.battery_soc) }}%</span>
+              <span v-else>--%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-start-2 row-start-2 flex items-center justify-center">
+          <!-- Junction Node -->
+          <div class="z-10 flex items-center justify-center w-[4.5rem] h-[4.5rem] bg-white dark:bg-gray-800 rounded-full border-[4px] border-[#5EEAD4] shadow-sm">
+            <svg class="h-6 w-6 text-gray-700 dark:text-gray-300" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.16-.28L11.5 2h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 14.55 11 21 11 21z" />
+            </svg>
+          </div>
+        </div>
+
+        <div class="col-start-3 row-start-2 flex flex-col items-center justify-center">
+          <div v-if="hasSolar" @click="openChart('solar')" class="z-10 flex items-center justify-center w-24 h-24 bg-white dark:bg-gray-800 rounded-full border-[4px] border-[#FBBF24] shadow-sm cursor-pointer hover:scale-105 transition-transform mb-2">
+            <!-- Icon -->
+            <svg class="h-10 w-10 text-gray-700 dark:text-gray-300 relative" viewBox="0 0 24 24" fill="currentColor">
+              <!-- Outline panel -->
+              <path d="M3 4h18v16H3V4zM5 6v12h14V6H5z"/>
+              <!-- Panel grid -->
+              <path d="M11 6v12h2V6h-2zM7 6v12h2V6H7zM15 6v12h2V6h-2z"/>
+              <path d="M5 11h14v2H5v-2zM5 15h14v2H5v-2z"/>
+              <!-- Sun ray dot top right -->
+              <circle cx="21" cy="3" r="1.5" />
+            </svg>
+          </div>
+          <!-- Value Display -->
+          <div v-if="hasSolar" class="z-10 bg-[#F3F4F6] dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-sm font-medium px-4 py-1 rounded-full shadow-sm">
+            <span v-if="state?.solar_power_w !== null && state?.solar_power_w !== undefined">
+               {{ formatPower(state.solar_power_w, true, true) }}
+            </span>
+            <span v-else>0.0 kW</span>
+          </div>
+        </div>
+
+        <!-- Bottom Row: Home -->
+        <div class="col-start-2 row-start-3 flex flex-col items-center justify-start pt-2">
+          <div class="z-10 flex items-center justify-center w-24 h-24 bg-white dark:bg-gray-800 rounded-full border-[4px] border-[#A855F7] shadow-sm mb-2">
+            <!-- Icon -->
+            <svg class="h-10 w-10 text-gray-700 dark:text-gray-300" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 3L4 9v12h16V9l-8-6zm6 16h-3v-4H9v4H6v-9l6-4.5 6 4.5v9z"/>
+            </svg>
+          </div>
+          <!-- Value Display -->
+          <div class="z-10 bg-[#F3F4F6] dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-sm font-medium px-4 py-1 rounded-full shadow-sm">
+            <span v-if="state?.total_load_w !== null && state?.total_load_w !== undefined">
+               {{ formatPower(homeLoad, true) }}
+            </span>
+            <span v-else>0.0 kW</span>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -244,6 +183,7 @@ interface SiteState {
   grid_power_w: number | null
   solar_power_w: number | null
   battery_power_w: number | null
+  battery_soc: number | null
   total_load_w: number | null
   ev_charger_power_w: number | null
   device_health?: Record<number, string>
@@ -285,21 +225,6 @@ const homeLoad = computed(() => {
   return props.state.total_load_w - (props.state.ev_charger_power_w || 0)
 })
 
-const getStrokeAnimStyle = (power: number | null | undefined, normalIsPositive: boolean = true, baseDuration: number = 2000) => {
-  if (!power || Math.abs(power) < 10) return { display: 'none' }
-  const absPower = Math.abs(power)
-  const duration = Math.min(Math.max(baseDuration / absPower, 0.5), 5)
-
-  let direction = 'normal'
-  if (normalIsPositive && power < 0) direction = 'reverse'
-  else if (!normalIsPositive && power >= 0) direction = 'reverse'
-
-  return {
-    animationDuration: `${duration}s`,
-    animationDirection: direction
-  }
-}
-
 // Chart state
 const isModalOpen = ref(false)
 const selectedNode = ref<string | null>(null)
@@ -314,41 +239,47 @@ const ranges = [
   { label: 'Last 30 Days', value: '30d' },
 ]
 
-const formatPower = (powerW: number) => {
-  if (Math.abs(powerW) >= 1000) {
-    // format as kWh and replace dot with comma for European format, remove trailing zero
-    const val = (Math.abs(powerW) / 1000).toFixed(1)
-    return `${val.replace('.', ',')} kWh`
+const getFlowStyle = (power: number | null | undefined, normalIsPositive: boolean = true, baseDuration: number = 2000) => {
+  if (!power || Math.abs(power) < 10) return { display: 'none' }
+  const absPower = Math.abs(power)
+  const duration = Math.min(Math.max(baseDuration / absPower, 0.5), 5)
+
+  let direction = 'normal'
+  if (normalIsPositive && power < 0) direction = 'reverse'
+  else if (!normalIsPositive && power >= 0) direction = 'reverse'
+
+  return {
+    animationDuration: `${duration}s`,
+    animationDirection: direction
   }
-  return `${Math.abs(powerW).toFixed(0)} Wh`
 }
 
-const formatPowerGrid = (powerW: number) => {
-  return formatPower(powerW)
-}
+const formatPower = (powerW: number, normalIsPositive: boolean = true, isHorizontal: boolean = false) => {
+  const absPower = Math.abs(powerW)
+  const valKw = (absPower / 1000).toFixed(1)
 
-const formatPowerBattery = (powerW: number) => {
-  return formatPower(powerW)
-}
-
-const nodePositions = computed(() => {
-  if (hasBattery.value) {
-    return {
-      grid: { top: '50%', left: '20%' },
-      solar: { top: '20%', left: '50%' },
-      battery: { top: '80%', left: '50%' },
-      home: { top: '50%', left: '80%' }
-    }
-  } else {
-    // Re-center without battery
-    return {
-      grid: { top: '60%', left: '25%' },
-      solar: { top: '25%', left: '50%' },
-      battery: { top: '100%', left: '50%' }, // off-screen or unused
-      home: { top: '60%', left: '75%' }
+  // Arrow logic
+  let arrow = ''
+  if (absPower >= 10) {
+    if (isHorizontal) {
+       // e.g. Battery/Solar on sides
+       if (normalIsPositive) {
+         arrow = powerW > 0 ? '← ' : '→ '
+       } else {
+         arrow = powerW > 0 ? '→ ' : '← '
+       }
+    } else {
+       // Vertical flows
+       if (normalIsPositive) {
+         arrow = powerW > 0 ? '↓ ' : '↑ '
+       } else {
+         arrow = powerW > 0 ? '↑ ' : '↓ '
+       }
     }
   }
-})
+
+  return `${arrow}${valKw} kW`
+}
 
 const chartOptions = computed(() => ({
   responsive: true,

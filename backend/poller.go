@@ -290,6 +290,7 @@ func (pm *PollerManager) broadcastState() {
 	var totalGrid *float64
 	var totalSolar *float64
 	var totalBattery *float64
+	var totalBatterySoc *float64
 	var totalEvCharger *float64
 
 	deviceHealth := make(map[int]string)
@@ -310,6 +311,15 @@ func (pm *PollerManager) broadcastState() {
 				totalBattery = &v
 			}
 			*totalBattery += data.BatteryPowerW
+
+			// For simplicity, take the first battery's SOC or average it if multiple exist
+			// Let's just take the most recent / highest non-zero one for now or first found
+			if data.HasBattery {
+				if totalBatterySoc == nil || *totalBatterySoc == 0 {
+					soc := data.Soc
+					totalBatterySoc = &soc
+				}
+			}
 
 			if data.Template == "huawei_inverter" && data.HasGridMeter {
 				if totalGrid == nil {
@@ -346,6 +356,7 @@ func (pm *PollerManager) broadcastState() {
 		GridPowerW:      totalGrid,
 		SolarPowerW:     totalSolar,
 		BatteryPowerW:   totalBattery,
+		BatterySoc:      totalBatterySoc,
 		TotalLoadW:      totalLoad,
 		EvChargerPowerW: totalEvCharger,
 		DeviceHealth:    deviceHealth,
