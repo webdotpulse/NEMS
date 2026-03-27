@@ -3,15 +3,16 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import NavBar from './components/NavBar.vue'
 import Dashboard from './components/Dashboard.vue'
 import Settings from './components/Settings.vue'
+import Logger from './components/Logger.vue'
+import { getApiBase } from './api'
 
 const isConnected = ref(false)
-const currentView = ref('dashboard') // 'dashboard' | 'settings'
+const currentView = ref('dashboard') // 'dashboard' | 'settings' | 'logger'
 let pollingInterval: number | undefined
 
 const checkConnection = async () => {
   try {
-    const host = window.location.hostname
-    const response = await fetch(`http://${host}:8080/api/status`)
+    const response = await fetch(`${getApiBase()}/api/status`)
     if (response.ok) {
       const data = await response.json()
       isConnected.value = data.status === 'ok'
@@ -46,6 +47,7 @@ const setView = (view: string) => {
     <NavBar :connected="isConnected" :currentView="currentView" @navigate="setView" />
     <Dashboard v-if="currentView === 'dashboard'" />
     <Settings v-if="currentView === 'settings'" />
+    <Logger v-if="currentView === 'logger'" />
   </div>
 </template>
 

@@ -108,38 +108,82 @@
         <h2 class="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:text-3xl sm:truncate mb-4">
           Daily Summary
         </h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <!-- Grid Card -->
-          <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg p-5 flex flex-col justify-center">
-            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Grid</dt>
-            <dd class="text-sm text-gray-900 dark:text-gray-100 flex flex-col space-y-1">
-              <div class="flex justify-between"><span>Import:</span> <span class="font-semibold">{{ dailyAggregates.grid_import_kwh.toFixed(2) }} kWh</span></div>
-              <div class="flex justify-between"><span>Export:</span> <span class="font-semibold">{{ dailyAggregates.grid_export_kwh.toFixed(2) }} kWh</span></div>
-            </dd>
+          <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+              <div class="flex items-center">
+                <div class="flex-shrink-0">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z"/><path d="m13 6-6 7h4v5l6-7h-4z"/></svg>
+                </div>
+                <div class="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Grid</dt>
+                    <dd class="text-sm text-gray-900 dark:text-gray-100 flex flex-col mt-1">
+                      <div class="flex justify-between"><span>Import:</span> <span class="font-semibold text-red-500">{{ dailyAggregates.grid_import_kwh.toFixed(2) }} kWh</span></div>
+                      <div class="flex justify-between"><span>Export:</span> <span class="font-semibold text-green-500">{{ dailyAggregates.grid_export_kwh.toFixed(2) }} kWh</span></div>
+                    </dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
           </div>
           <!-- Solar Yield Card -->
-          <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg p-5 flex flex-col justify-center">
-            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Solar Yield</dt>
-            <dd class="text-sm text-gray-900 dark:text-gray-100 flex flex-col space-y-1">
-              <div class="flex justify-between"><span>Production:</span> <span class="font-semibold text-yellow-500">{{ dailyAggregates.solar_yield_kwh.toFixed(2) }} kWh</span></div>
-            </dd>
+          <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+              <div class="flex items-center">
+                <div class="flex-shrink-0">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-400" fill="currentColor" viewBox="0 0 24 24"><path d="M6.993 12c0 2.761 2.246 5.007 5.007 5.007s5.007-2.246 5.007-5.007S14.761 6.993 12 6.993 6.993 9.239 6.993 12zM12 8.993c1.658 0 3.007 1.349 3.007 3.007S13.658 15.007 12 15.007 8.993 13.658 8.993 12 10.342 8.993 12 8.993zM10.998 19h2v3h-2zm0-17h2v3h-2zm-9 9h3v2h-3zm17 0h3v2h-3zM4.219 18.363l2.12-2.122 1.415 1.414-2.12 2.122zM16.24 6.344l2.122-2.122 1.414 1.414-2.122 2.122zM6.342 7.759 4.22 5.637l1.415-1.414 2.12 2.122zm13.434 10.605-1.414 1.414-2.122-2.122 1.414-1.414z"/></svg>
+                </div>
+                <div class="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Solar Yield</dt>
+                    <dd class="text-sm text-gray-900 dark:text-gray-100 flex flex-col mt-1">
+                      <div class="flex justify-between"><span>Production:</span> <span class="font-semibold text-yellow-500">{{ dailyAggregates.solar_yield_kwh.toFixed(2) }} kWh</span></div>
+                    </dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
           </div>
           <!-- Battery Card -->
-          <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg p-5 flex flex-col justify-center">
-            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Battery</dt>
-            <dd class="text-sm text-gray-900 dark:text-gray-100 flex flex-col space-y-1">
-              <div class="flex justify-between"><span>Charged:</span> <span class="font-semibold text-green-500">{{ dailyAggregates.battery_charge_kwh.toFixed(2) }} kWh</span></div>
-              <div class="text-xs text-gray-500 dark:text-gray-400 ml-2">Solar: {{ dailyAggregates.battery_charge_solar_kwh.toFixed(2) }} kWh</div>
-              <div class="text-xs text-gray-500 dark:text-gray-400 ml-2">Grid: {{ dailyAggregates.battery_charge_grid_kwh.toFixed(2) }} kWh</div>
-              <div class="flex justify-between mt-1"><span>Discharged:</span> <span class="font-semibold text-blue-500">{{ dailyAggregates.battery_discharge_kwh.toFixed(2) }} kWh</span></div>
-            </dd>
+          <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+              <div class="flex items-center">
+                <div class="flex-shrink-0">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-400" fill="currentColor" viewBox="0 0 24 24"><path d="M4 18h14c1.103 0 2-.897 2-2v-2h2v-4h-2V8c0-1.103-.897-2-2-2H4c-1.103 0-2 .897-2 2v8c0 1.103.897 2 2 2zM4 8h14l.002 8H4V8z"/></svg>
+                </div>
+                <div class="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Battery</dt>
+                    <dd class="text-sm text-gray-900 dark:text-gray-100 flex flex-col mt-1">
+                      <div class="flex justify-between"><span>Charged:</span> <span class="font-semibold text-green-500">{{ dailyAggregates.battery_charge_kwh.toFixed(2) }} kWh</span></div>
+                      <div class="text-xs text-gray-500 dark:text-gray-400 ml-2">Solar: {{ dailyAggregates.battery_charge_solar_kwh.toFixed(2) }} kWh</div>
+                      <div class="text-xs text-gray-500 dark:text-gray-400 ml-2">Grid: {{ dailyAggregates.battery_charge_grid_kwh.toFixed(2) }} kWh</div>
+                      <div class="flex justify-between mt-1"><span>Discharged:</span> <span class="font-semibold text-blue-500">{{ dailyAggregates.battery_discharge_kwh.toFixed(2) }} kWh</span></div>
+                    </dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
           </div>
           <!-- House Card -->
-          <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg p-5 flex flex-col justify-center">
-            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">House</dt>
-            <dd class="text-sm text-gray-900 dark:text-gray-100 flex flex-col space-y-1">
-              <div class="flex justify-between"><span>Consumption:</span> <span class="font-semibold text-purple-500">{{ dailyAggregates.house_consumption_kwh.toFixed(2) }} kWh</span></div>
-            </dd>
+          <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+              <div class="flex items-center">
+                <div class="flex-shrink-0">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-purple-400" fill="currentColor" viewBox="0 0 24 24"><path d="M3 13h1v7c0 1.103.897 2 2 2h12c1.103 0 2-.897 2-2v-7h1a1 1 0 0 0 .707-1.707l-9-9a.999.999 0 0 0-1.414 0l-9 9A1 1 0 0 0 3 13zm7 7v-5h4v5h-4zm2-15.586 6 6V15l.001 5H16v-5c0-1.103-.897-2-2-2h-4c-1.103 0-2 .897-2 2v5H6v-9.586l6-6z"/></svg>
+                </div>
+                <div class="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">House</dt>
+                    <dd class="text-sm text-gray-900 dark:text-gray-100 flex flex-col mt-1">
+                      <div class="flex justify-between"><span>Consumption:</span> <span class="font-semibold text-purple-500">{{ dailyAggregates.house_consumption_kwh.toFixed(2) }} kWh</span></div>
+                    </dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -163,6 +207,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import PowerFlow from './PowerFlow.vue'
+import { getApiBase } from '../api'
 
 interface SiteState {
   grid_power_w: number | null
@@ -190,10 +235,9 @@ const dailyAggregates = ref<DailyAggregates | null>(null)
 let eventSource: EventSource | null = null
 
 onMounted(async () => {
-  const host = window.location.hostname
 
   // SSE Connection
-  eventSource = new EventSource(`http://${host}:8080/api/live`)
+  eventSource = new EventSource(`${getApiBase()}/api/live`)
 
   eventSource.onopen = () => {
     console.log("SSE connected")
@@ -218,7 +262,7 @@ onMounted(async () => {
 
   // Fetch daily aggregates
   try {
-    const res = await fetch(`http://${host}:8080/api/daily`)
+    const res = await fetch(`${getApiBase()}/api/daily`)
     if (res.ok) {
       dailyAggregates.value = await res.json()
     }

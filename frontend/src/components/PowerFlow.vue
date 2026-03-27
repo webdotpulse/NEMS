@@ -46,37 +46,41 @@
           </div>
         </template>
 <!-- Top Row: Solar -->
-        <div class="absolute flex flex-col items-center justify-center transform -translate-x-1/2 -translate-y-1/2" style="left: 50%; top: 20%;">
-          <div v-if="solarDevices.length > 0" @click="openChart('solar')" class="z-10 flex flex-col items-center justify-center w-28 h-28 bg-white dark:bg-gray-800 rounded-full border-[4px] border-[#FBBF24] shadow-sm cursor-pointer hover:scale-105 transition-transform mb-2">
-            <span class="text-xs font-medium text-gray-500 mb-1 absolute -top-6">Solar</span>
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-700 dark:text-gray-300 mb-1 relative" fill="currentColor" viewBox="0 0 24 24"><path d="M6.993 12c0 2.761 2.246 5.007 5.007 5.007s5.007-2.246 5.007-5.007S14.761 6.993 12 6.993 6.993 9.239 6.993 12zM12 8.993c1.658 0 3.007 1.349 3.007 3.007S13.658 15.007 12 15.007 8.993 13.658 8.993 12 10.342 8.993 12 8.993zM10.998 19h2v3h-2zm0-17h2v3h-2zm-9 9h3v2h-3zm17 0h3v2h-3zM4.219 18.363l2.12-2.122 1.415 1.414-2.12 2.122zM16.24 6.344l2.122-2.122 1.414 1.414-2.122 2.122zM6.342 7.759 4.22 5.637l1.415-1.414 2.12 2.122zm13.434 10.605-1.414 1.414-2.122-2.122 1.414-1.414z"/></svg>
-            <div class="text-gray-800 dark:text-gray-200 text-sm font-medium">
-              <span v-if="state?.solar_power_w !== null && state?.solar_power_w !== undefined">
-                 {{ formatPowerSimple(state.solar_power_w) }}
-              </span>
-              <span v-else>0.0 kW</span>
+        <template v-for="(device, index) in solarDevices" :key="device.id">
+          <div class="absolute flex flex-col items-center justify-center transform -translate-x-1/2 -translate-y-1/2" :style="`left: ${50 + (index * 15 - (solarDevices.length-1)*7.5)}%; top: ${20 - (index % 2 === 0 ? 0 : 5)}%;`">
+            <div @click="openChart('solar')" class="z-10 flex flex-col items-center justify-center w-28 h-28 bg-white dark:bg-gray-800 rounded-full border-[4px] border-[#FBBF24] shadow-sm cursor-pointer hover:scale-105 transition-transform mb-2 relative">
+              <span class="text-xs font-medium text-gray-500 mb-1 absolute -top-6">{{ device.name }}</span>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-700 dark:text-gray-300 mb-1 relative" fill="currentColor" viewBox="0 0 24 24"><path d="M6.993 12c0 2.761 2.246 5.007 5.007 5.007s5.007-2.246 5.007-5.007S14.761 6.993 12 6.993 6.993 9.239 6.993 12zM12 8.993c1.658 0 3.007 1.349 3.007 3.007S13.658 15.007 12 15.007 8.993 13.658 8.993 12 10.342 8.993 12 8.993zM10.998 19h2v3h-2zm0-17h2v3h-2zm-9 9h3v2h-3zm17 0h3v2h-3zM4.219 18.363l2.12-2.122 1.415 1.414-2.12 2.122zM16.24 6.344l2.122-2.122 1.414 1.414-2.122 2.122zM6.342 7.759 4.22 5.637l1.415-1.414 2.12 2.122zm13.434 10.605-1.414 1.414-2.122-2.122 1.414-1.414z"/></svg>
+              <div class="text-gray-800 dark:text-gray-200 text-sm font-medium">
+                <span v-if="state?.solar_power_w !== null && state?.solar_power_w !== undefined">
+                   {{ formatPowerSimple(state.solar_power_w / solarDevices.length) }}
+                </span>
+                <span v-else>0.0 kW</span>
+              </div>
             </div>
           </div>
-        </div>
+        </template>
 
         <!-- Middle Row: Grid (Left), Junction (Center), Home (Right) -->
-        <div class="absolute flex flex-col items-center justify-center transform -translate-x-1/2 -translate-y-1/2" style="left: 20%; top: 50%;">
-          <div v-if="gridDevices.length > 0" @click="openChart('grid')" class="z-10 flex flex-col items-center justify-center w-28 h-28 bg-white dark:bg-gray-800 rounded-full border-[4px] border-[#3B82F6] shadow-sm cursor-pointer hover:scale-105 transition-transform mb-2 relative">
-            <span class="text-xs font-medium text-gray-500 mb-1 absolute -bottom-6">Grid</span>
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-700 dark:text-gray-300 mb-1" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z"/><path d="m13 6-6 7h4v5l6-7h-4z"/></svg>
-            <div class="text-sm font-medium flex flex-col items-center leading-tight">
-              <span v-if="state?.grid_power_w !== null && state?.grid_power_w !== undefined" class="text-purple-600 dark:text-purple-400 text-xs">
-                &larr; {{ state.grid_power_w < 0 ? (Math.abs(state.grid_power_w) / 1000).toFixed(1) : '0.0' }} kW
-              </span>
-              <span v-else class="text-purple-600 dark:text-purple-400 text-xs">&larr; 0.0 kW</span>
+        <template v-for="(device, index) in gridDevices" :key="device.id">
+          <div class="absolute flex flex-col items-center justify-center transform -translate-x-1/2 -translate-y-1/2" :style="`left: ${20 - (index * 5)}%; top: ${50 + (index * 10 - (gridDevices.length-1)*5)}%;`">
+            <div @click="openChart('grid')" class="z-10 flex flex-col items-center justify-center w-28 h-28 bg-white dark:bg-gray-800 rounded-full border-[4px] border-[#3B82F6] shadow-sm cursor-pointer hover:scale-105 transition-transform mb-2 relative">
+              <span class="text-xs font-medium text-gray-500 mb-1 absolute -bottom-6">{{ device.name }}</span>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-700 dark:text-gray-300 mb-1" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z"/><path d="m13 6-6 7h4v5l6-7h-4z"/></svg>
+              <div class="text-sm font-medium flex flex-col items-center leading-tight">
+                <span v-if="state?.grid_power_w !== null && state?.grid_power_w !== undefined" class="text-purple-600 dark:text-purple-400 text-xs">
+                  &larr; {{ state.grid_power_w < 0 ? (Math.abs(state.grid_power_w / gridDevices.length) / 1000).toFixed(1) : '0.0' }} kW
+                </span>
+                <span v-else class="text-purple-600 dark:text-purple-400 text-xs">&larr; 0.0 kW</span>
 
-              <span v-if="state?.grid_power_w !== null && state?.grid_power_w !== undefined" class="text-blue-500 dark:text-blue-400 text-xs">
-                &rarr; {{ state.grid_power_w > 0 ? (state.grid_power_w / 1000).toFixed(1) : '0.0' }} kW
-              </span>
-              <span v-else class="text-blue-500 dark:text-blue-400 text-xs">&rarr; 0.0 kW</span>
+                <span v-if="state?.grid_power_w !== null && state?.grid_power_w !== undefined" class="text-blue-500 dark:text-blue-400 text-xs">
+                  &rarr; {{ state.grid_power_w > 0 ? ((state.grid_power_w / gridDevices.length) / 1000).toFixed(1) : '0.0' }} kW
+                </span>
+                <span v-else class="text-blue-500 dark:text-blue-400 text-xs">&rarr; 0.0 kW</span>
+              </div>
             </div>
           </div>
-        </div>
+        </template>
 
         <div class="absolute flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2" style="left: 50%; top: 50%;">
           <!-- Junction Node -->
@@ -99,25 +103,50 @@
         </div>
 
         <!-- Bottom Row: Battery -->
-        <div class="absolute flex flex-col items-center justify-center transform -translate-x-1/2 -translate-y-1/2" style="left: 50%; top: 80%;">
-          <div v-if="batteryDevices.length > 0" @click="openChart('battery')" class="z-10 flex flex-col items-center justify-center w-28 h-28 bg-white dark:bg-gray-800 rounded-full border-[4px] border-[#EC4899] shadow-sm cursor-pointer hover:scale-105 transition-transform mb-2 relative">
-            <span class="text-xs font-medium text-gray-500 mb-1 absolute -bottom-6">Battery</span>
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-700 dark:text-gray-300 mb-1" fill="currentColor" viewBox="0 0 24 24"><path d="M4 18h14c1.103 0 2-.897 2-2v-2h2v-4h-2V8c0-1.103-.897-2-2-2H4c-1.103 0-2 .897-2 2v8c0 1.103.897 2 2 2zM4 8h14l.002 8H4V8z"/></svg>
-            <div class="text-sm font-medium flex flex-col items-center leading-tight">
-              <span v-if="state?.battery_power_w !== null && state?.battery_power_w !== undefined" class="text-pink-500 dark:text-pink-400 text-xs">
-                &darr; {{ state.battery_power_w < 0 ? (Math.abs(state.battery_power_w) / 1000).toFixed(1) : '0.0' }} kW
-              </span>
-              <span v-else class="text-pink-500 dark:text-pink-400 text-xs">&darr; 0.0 kW</span>
+        <template v-if="batteryDevices.length > 0">
+          <template v-for="(device, index) in batteryDevices" :key="device.id">
+            <div class="absolute flex flex-col items-center justify-center transform -translate-x-1/2 -translate-y-1/2" :style="`left: ${50 + (index * 15 - (batteryDevices.length-1)*7.5)}%; top: ${80 + (index % 2 === 0 ? 0 : 5)}%;`">
+              <div @click="openChart('battery')" class="z-10 flex flex-col items-center justify-center w-28 h-28 bg-white dark:bg-gray-800 rounded-full border-[4px] border-[#EC4899] shadow-sm cursor-pointer hover:scale-105 transition-transform mb-2 relative">
+                <span class="text-xs font-medium text-gray-500 mb-1 absolute -bottom-6">{{ device.name }}</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-700 dark:text-gray-300 mb-1" fill="currentColor" viewBox="0 0 24 24"><path d="M4 18h14c1.103 0 2-.897 2-2v-2h2v-4h-2V8c0-1.103-.897-2-2-2H4c-1.103 0-2 .897-2 2v8c0 1.103.897 2 2 2zM4 8h14l.002 8H4V8z"/></svg>
+                <div class="text-sm font-medium flex flex-col items-center leading-tight">
+                  <span v-if="state?.battery_power_w !== null && state?.battery_power_w !== undefined" class="text-pink-500 dark:text-pink-400 text-xs">
+                    &darr; {{ state.battery_power_w < 0 ? (Math.abs(state.battery_power_w / batteryDevices.length) / 1000).toFixed(1) : '0.0' }} kW
+                  </span>
+                  <span v-else class="text-pink-500 dark:text-pink-400 text-xs">&darr; 0.0 kW</span>
 
-              <span v-if="state?.battery_power_w !== null && state?.battery_power_w !== undefined" class="text-teal-500 dark:text-teal-400 text-xs">
-                &uarr; {{ state.battery_power_w > 0 ? (state.battery_power_w / 1000).toFixed(1) : '0.0' }} kW
-              </span>
-              <span v-else class="text-teal-500 dark:text-teal-400 text-xs">&uarr; 0.0 kW</span>
+                  <span v-if="state?.battery_power_w !== null && state?.battery_power_w !== undefined" class="text-teal-500 dark:text-teal-400 text-xs">
+                    &uarr; {{ state.battery_power_w > 0 ? ((state.battery_power_w / batteryDevices.length) / 1000).toFixed(1) : '0.0' }} kW
+                  </span>
+                  <span v-else class="text-teal-500 dark:text-teal-400 text-xs">&uarr; 0.0 kW</span>
+                </div>
+                <!-- Battery SOC Circle Overlay -->
+                <div v-if="state?.battery_soc !== null && state?.battery_soc !== undefined" class="absolute inset-0 rounded-full border-[4px] border-[#EC4899] opacity-50" :style="`clip-path: polygon(0 ${100 - state.battery_soc}%, 100% ${100 - state.battery_soc}%, 100% 100%, 0 100%); border-color: #34D399; z-index: 20;`"></div>
+              </div>
             </div>
-            <!-- Battery SOC Circle Overlay -->
-            <div v-if="state?.battery_soc !== null && state?.battery_soc !== undefined" class="absolute inset-0 rounded-full border-[4px] border-[#EC4899] opacity-50" :style="`clip-path: polygon(0 ${100 - state.battery_soc}%, 100% ${100 - state.battery_soc}%, 100% 100%, 0 100%); border-color: #34D399; z-index: 20;`"></div>
+          </template>
+        </template>
+        <template v-else-if="state?.battery_power_w !== null">
+          <div class="absolute flex flex-col items-center justify-center transform -translate-x-1/2 -translate-y-1/2" style="left: 50%; top: 80%;">
+            <div @click="openChart('battery')" class="z-10 flex flex-col items-center justify-center w-28 h-28 bg-white dark:bg-gray-800 rounded-full border-[4px] border-[#EC4899] shadow-sm cursor-pointer hover:scale-105 transition-transform mb-2 relative">
+              <span class="text-xs font-medium text-gray-500 mb-1 absolute -bottom-6">Battery</span>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-700 dark:text-gray-300 mb-1" fill="currentColor" viewBox="0 0 24 24"><path d="M4 18h14c1.103 0 2-.897 2-2v-2h2v-4h-2V8c0-1.103-.897-2-2-2H4c-1.103 0-2 .897-2 2v8c0 1.103.897 2 2 2zM4 8h14l.002 8H4V8z"/></svg>
+              <div class="text-sm font-medium flex flex-col items-center leading-tight">
+                <span v-if="state?.battery_power_w !== null && state?.battery_power_w !== undefined" class="text-pink-500 dark:text-pink-400 text-xs">
+                  &darr; {{ state.battery_power_w < 0 ? (Math.abs(state.battery_power_w) / 1000).toFixed(1) : '0.0' }} kW
+                </span>
+                <span v-else class="text-pink-500 dark:text-pink-400 text-xs">&darr; 0.0 kW</span>
+
+                <span v-if="state?.battery_power_w !== null && state?.battery_power_w !== undefined" class="text-teal-500 dark:text-teal-400 text-xs">
+                  &uarr; {{ state.battery_power_w > 0 ? (state.battery_power_w / 1000).toFixed(1) : '0.0' }} kW
+                </span>
+                <span v-else class="text-teal-500 dark:text-teal-400 text-xs">&uarr; 0.0 kW</span>
+              </div>
+              <!-- Battery SOC Circle Overlay -->
+              <div v-if="state?.battery_soc !== null && state?.battery_soc !== undefined" class="absolute inset-0 rounded-full border-[4px] border-[#EC4899] opacity-50" :style="`clip-path: polygon(0 ${100 - state.battery_soc}%, 100% ${100 - state.battery_soc}%, 100% 100%, 0 100%); border-color: #34D399; z-index: 20;`"></div>
+            </div>
           </div>
-        </div>
+        </template>
       </div>
 
     </div>
@@ -158,6 +187,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { getApiBase } from '../api'
 
 import {
   Chart as ChartJS,
@@ -209,8 +239,7 @@ const devices = ref<Device[]>([])
 
 const fetchDevices = async () => {
   try {
-    const host = window.location.hostname
-    const res = await fetch(`http://${host}:8080/api/devices`)
+    const res = await fetch(`${getApiBase()}/api/devices`)
     if (res.ok) {
       devices.value = await res.json() || []
     }
@@ -439,8 +468,7 @@ const fetchHistory = async () => {
   isLoading.value = true
   chartData.value = null
   try {
-    const host = window.location.hostname
-    const res = await fetch(`http://${host}:8080/api/history?node=${selectedNode.value}&range=${selectedRange.value}`)
+    const res = await fetch(`${getApiBase()}/api/history?node=${selectedNode.value}&range=${selectedRange.value}`)
     if (res.ok) {
       const data: {timestamp: string, power_w: number}[] = await res.json()
 
