@@ -2,6 +2,29 @@
   <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
     <div class="px-4 py-6 sm:px-0">
 
+      <!-- System Info Section -->
+      <div v-if="sysInfo" class="mb-8">
+        <h2 class="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:text-3xl sm:truncate mb-4">
+          System Info
+        </h2>
+        <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg">
+          <div class="px-4 py-5 sm:p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Hostname</dt>
+              <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ sysInfo.hostname }}</dd>
+            </div>
+            <div>
+              <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">IP Address</dt>
+              <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ sysInfo.ip }}</dd>
+            </div>
+            <div>
+              <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Netmask</dt>
+              <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ sysInfo.netmask }}</dd>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Site Optimization Section -->
       <div class="mb-8">
         <h2 class="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:text-3xl sm:truncate mb-4">
@@ -76,6 +99,51 @@
               </div>
 
               </div>
+        </div>
+
+        <!-- Grid Connection Card -->
+        <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg mb-6">
+          <div class="px-4 py-5 sm:p-6">
+            <div class="mb-4 border-b border-gray-200 dark:border-gray-700 pb-4">
+              <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-gray-100">
+                Grid Connection
+              </h3>
+            </div>
+            <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+              <div class="sm:col-span-3">
+                <label for="grid_nominal_current_a" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nominal Current (A)</label>
+                <div class="mt-1">
+                  <input type="number" step="0.1" id="grid_nominal_current_a" v-model="siteSettings.grid_nominal_current_a" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                </div>
+              </div>
+
+              <div class="sm:col-span-3">
+                <label for="grid_system" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Grid System</label>
+                <div class="mt-1">
+                  <select id="grid_system" v-model="siteSettings.grid_system"
+                          class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    <option value="single_phase_230v">Single Phase 230V</option>
+                    <option value="three_phase_400v">Three Phase 400V</option>
+                    <option value="three_phase_230v_delta">Three Phase 230V Delta</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="sm:col-span-3">
+                <label for="allowed_grid_import_kw" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Allowed Grid Import (kW)</label>
+                <div class="mt-1">
+                  <input type="number" step="0.1" id="allowed_grid_import_kw" v-model="siteSettings.allowed_grid_import_kw" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                </div>
+              </div>
+
+              <div class="sm:col-span-3">
+                <label for="allowed_grid_export_kw" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Allowed Grid Export (kW)</label>
+                <div class="mt-1">
+                  <input type="number" step="0.1" id="allowed_grid_export_kw" v-model="siteSettings.allowed_grid_export_kw" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Save Actions Card -->
@@ -321,6 +389,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { getApiBase } from '../api'
 
 const sysInfo = ref<{hostname: string, ip: string, netmask: string} | null>(null)
 import ModbusTemplate from './templates/ModbusTemplate.vue'
@@ -395,8 +464,7 @@ const saveSettingsSuccess = ref(false)
 
 const fetchSiteSettings = async () => {
   try {
-    const host = window.location.hostname
-    const res = await fetch(`http://${host}:8080/api/settings`)
+    const res = await fetch(`${getApiBase()}/api/settings`)
     if (res.ok) {
       siteSettings.value = await res.json()
     }
@@ -407,8 +475,7 @@ const fetchSiteSettings = async () => {
 
 const saveSiteSettings = async () => {
   try {
-    const host = window.location.hostname
-    const res = await fetch(`http://${host}:8080/api/settings`, {
+    const res = await fetch(`${getApiBase()}/api/settings`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json'
@@ -429,8 +496,7 @@ const saveSiteSettings = async () => {
 
 const fetchTemplates = async () => {
   try {
-    const host = window.location.hostname
-    const res = await fetch(`http://${host}:8080/api/templates`)
+    const res = await fetch(`${getApiBase()}/api/templates`)
     templates.value = await res.json()
   } catch (e) {
     console.error("Failed to fetch templates:", e)
@@ -439,8 +505,7 @@ const fetchTemplates = async () => {
 
 const fetchDevices = async () => {
   try {
-    const host = window.location.hostname
-    const res = await fetch(`http://${host}:8080/api/devices`)
+    const res = await fetch(`${getApiBase()}/api/devices`)
     devices.value = await res.json() || []
   } catch (e) {
     console.error("Failed to fetch devices:", e)
@@ -454,8 +519,7 @@ const getTemplateName = (id: string) => {
 
 const addDevice = async () => {
   try {
-    const host = window.location.hostname
-    const res = await fetch(`http://${host}:8080/api/devices`, {
+    const res = await fetch(`${getApiBase()}/api/devices`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -504,8 +568,7 @@ const updateDevice = async () => {
   if (!editingDevice.value) return
 
   try {
-    const host = window.location.hostname
-    const res = await fetch(`http://${host}:8080/api/devices/${editingDevice.value.id}`, {
+    const res = await fetch(`${getApiBase()}/api/devices/${editingDevice.value.id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json'
@@ -524,8 +587,7 @@ const updateDevice = async () => {
 
 const deleteDevice = async (id: number) => {
   try {
-    const host = window.location.hostname
-    const res = await fetch(`http://${host}:8080/api/devices/${id}`, {
+    const res = await fetch(`${getApiBase()}/api/devices/${id}`, {
       method: 'DELETE'
     })
 
@@ -537,7 +599,19 @@ const deleteDevice = async (id: number) => {
   }
 }
 
+const fetchSystemInfo = async () => {
+  try {
+    const res = await fetch(`${getApiBase()}/api/system/info`)
+    if (res.ok) {
+      sysInfo.value = await res.json()
+    }
+  } catch (e) {
+    console.error("Failed to fetch system info:", e)
+  }
+}
+
 onMounted(() => {
+  fetchSystemInfo()
   fetchSiteSettings()
   fetchTemplates()
   fetchDevices()
