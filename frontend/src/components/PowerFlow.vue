@@ -5,22 +5,22 @@
       <!-- SVG paths for animated power flow lines -->
       <svg class="absolute inset-0 w-full h-full z-0 pointer-events-none" viewBox="0 0 340 460" preserveAspectRatio="none">
 
-        <!-- Grid to Junction (Vertical line) -->
-        <!-- Center x = 170. Grid y ends at ~115 (153-24/2 for bottom padding), Junction y is at 230 -->
-        <line v-if="hasGrid" x1="170" y1="120" x2="170" y2="230" stroke="#E5E7EB" stroke-width="6" />
-        <line v-if="hasGrid && state?.grid_power_w !== null" x1="170" y1="120" x2="170" y2="230" stroke="#9CA3AF" stroke-width="4" stroke-dasharray="8 8" class="flow-path" :style="getFlowStyle(state?.grid_power_w, false)" />
+        <!-- Static Background Lines -->
+        <path v-if="hasGrid" d="M 170 120 L 170 230" stroke-linecap="round" fill="none" stroke="#E5E7EB" stroke-width="6" />
+        <path d="M 170 230 L 170 330" stroke-linecap="round" fill="none" stroke="#E5E7EB" stroke-width="6" />
+        <path v-if="hasBattery" d="M 100 230 L 170 230" stroke-linecap="round" fill="none" stroke="#E5E7EB" stroke-width="6" />
+        <path v-if="hasSolar" d="M 170 230 L 240 230" stroke-linecap="round" fill="none" stroke="#E5E7EB" stroke-width="6" />
 
-        <!-- Home to Junction (Vertical line) -->
-        <line x1="170" y1="230" x2="170" y2="330" stroke="#E5E7EB" stroke-width="6" />
-        <line v-if="state?.total_load_w !== null" x1="170" y1="230" x2="170" y2="330" stroke="#A855F7" stroke-width="4" stroke-dasharray="8 8" class="flow-path" :style="getFlowStyle(state?.total_load_w, true)" />
-
-        <!-- Battery to Junction (Horizontal line) -->
-        <line v-if="hasBattery" x1="100" y1="230" x2="170" y2="230" stroke="#E5E7EB" stroke-width="6" />
-        <line v-if="hasBattery && state?.battery_power_w !== null" x1="100" y1="230" x2="170" y2="230" stroke="#34D399" stroke-width="4" stroke-dasharray="8 8" class="flow-path" :style="getFlowStyle(state?.battery_power_w, false)" />
-
-        <!-- Solar to Junction (Horizontal line) -->
-        <line v-if="hasSolar" x1="170" y1="230" x2="240" y2="230" stroke="#E5E7EB" stroke-width="6" />
-        <line v-if="hasSolar && state?.solar_power_w !== null" x1="240" y1="230" x2="170" y2="230" stroke="#FBBF24" stroke-width="4" stroke-dasharray="8 8" class="flow-path" :style="getFlowStyle(state?.solar_power_w, true)" />
+        <!-- Flow lines -->
+        <template v-for="segment in activeSegments" :key="segment.id">
+          <!-- Outline/glow -->
+          <path :d="segment.path" stroke-linecap="round"
+                fill="none" :stroke="segment.color" stroke-width="8" stroke-opacity="0.2" class="flow-glow" />
+          <!-- Animated flow line -->
+          <path :d="segment.path" stroke-linecap="round"
+                fill="none" :stroke="segment.color" stroke-width="4" stroke-dasharray="8 8" class="flow-path"
+                :style="getFlowStyle(segment.power, segment.normalIsPositive)" />
+        </template>
 
       </svg>
 
@@ -239,10 +239,29 @@ const ranges = [
   { label: 'Last 30 Days', value: '30d' },
 ]
 
+// Use a dynamic maximum to calculate a relative flow percentage
+const flowPercentage = computed(() => {
+  if (!props.state) return 0;
+
+  // Find the maximum absolute power flowing through any node right now
+  const grid = Math.abs(props.state.grid_power_w || 0);
+  const solar = Math.abs(props.state.solar_power_w || 0);
+  const battery = Math.abs(props.state.battery_power_w || 0);
+  const home = Math.abs(homeLoad.value || 0);
+
+  const maxVal = Math.max(grid, solar, battery, home, 100); // Floor at 100W to avoid 0 div
+  return maxVal;
+});
+
 const getFlowStyle = (power: number | null | undefined, normalIsPositive: boolean = true, baseDuration: number = 2000) => {
   if (!power || Math.abs(power) < 10) return { display: 'none' }
   const absPower = Math.abs(power)
-  const duration = Math.min(Math.max(baseDuration / absPower, 0.5), 5)
+
+  // Faster animation for higher percentage of max power
+  // Slower animation (e.g., 5s) for small flows. Base 2s. Max duration 5s, Min 0.5s.
+  const percentage = absPower / (flowPercentage.value || 100);
+  const duration = Math.min(Math.max(5 - (percentage * 4.5), 0.5), 5); // 0% = 5s, 100% = 0.5s
+
 
   let direction = 'normal'
   if (normalIsPositive && power < 0) direction = 'reverse'
@@ -253,6 +272,79 @@ const getFlowStyle = (power: number | null | undefined, normalIsPositive: boolea
     animationDirection: direction
   }
 }
+
+interface Segment {
+  id: string;
+  path: string;
+  power: number;
+  color: string;
+  normalIsPositive: boolean; // Determines direction mapping based on sign
+}
+
+const activeSegments = computed<Segment[]>(() => {
+  if (!props.state) return [];
+
+  const grid = props.state.grid_power_w || 0;
+  const solar = props.state.solar_power_w || 0;
+  const battery = props.state.battery_power_w || 0;
+  const home = homeLoad.value || 0;
+
+  const segments: Segment[] = [];
+
+  // T-Junction logic: Every segment connects a node to the exact center Site Junction (170, 230)
+  // For each node, if power is flowing (abs > 10W), draw the segment to the junction with its native color
+
+  // 1. Grid (Top) <-> Junction
+  if (hasGrid.value && Math.abs(grid) >= 10) {
+    // Normal is positive (Import) => Grid to Junction
+    segments.push({
+      id: 'grid-segment',
+      path: 'M 170 120 L 170 230',
+      power: grid,
+      color: '#9CA3AF',
+      normalIsPositive: true
+    });
+  }
+
+  // 2. Solar (Right) -> Junction
+  // Solar only produces, so flow is always Solar to Junction
+  if (hasSolar.value && Math.abs(solar) >= 10) {
+    segments.push({
+      id: 'solar-segment',
+      path: 'M 240 230 L 170 230',
+      power: solar,
+      color: '#FBBF24',
+      normalIsPositive: true
+    });
+  }
+
+  // 3. Battery (Left) <-> Junction
+  if (hasBattery.value && Math.abs(battery) >= 10) {
+    // Positive = Discharge (Battery to Junction), Negative = Charge (Junction to Battery)
+    segments.push({
+      id: 'battery-segment',
+      path: 'M 100 230 L 170 230',
+      power: battery,
+      color: '#34D399',
+      normalIsPositive: true
+    });
+  }
+
+  // 4. Junction -> Home (Bottom)
+  // Home only consumes, flow is always Junction to Home
+  if (Math.abs(home) >= 10) {
+    segments.push({
+      id: 'home-segment',
+      path: 'M 170 230 L 170 330',
+      power: home,
+      color: '#A855F7',
+      normalIsPositive: true
+    });
+  }
+
+  return segments;
+});
+
 
 const formatPower = (powerW: number, normalIsPositive: boolean = true, isHorizontal: boolean = false) => {
   const absPower = Math.abs(powerW)
