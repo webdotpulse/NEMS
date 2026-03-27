@@ -1,5 +1,11 @@
 package models
 
+type SiteSettings struct {
+	StrategyMode              string  `json:"strategy_mode"`
+	CapacityPeakLimitKw       float64 `json:"capacity_peak_limit_kw"`
+	ActiveInverterCurtailment bool    `json:"active_inverter_curtailment"`
+}
+
 type Device struct {
 	ID              int     `json:"id"`
 	Name            string  `json:"name"`
