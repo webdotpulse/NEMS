@@ -15,6 +15,16 @@ import (
 // ---------------------------------------------------------
 
 
+type DeviceData struct {
+	PowerW        float64
+	BatteryPowerW float64
+	GridPowerW    float64
+	EnergyKwh     float64
+	Status        string
+	Template      string
+	HasGridMeter  bool
+}
+
 type BufferedMeasurement struct {
 	DeviceID  int
 	PowerW    float64
@@ -28,6 +38,9 @@ type PollerManager struct {
 
 	bufferMu sync.Mutex
 	buffer   []BufferedMeasurement
+
+	cacheMu     sync.Mutex
+	deviceCache map[int]DeviceData
 }
 
 var PollerMgr *PollerManager
@@ -37,6 +50,7 @@ func InitPollerManager() {
 		pollers: make(map[int]models.DevicePoller),
 		stopCh:  make(chan struct{}),
 		buffer:  make([]BufferedMeasurement, 0),
+		deviceCache: make(map[int]DeviceData),
 	}
 }
 
@@ -94,6 +108,10 @@ func (pm *PollerManager) SyncDevices() {
 		if !activeDeviceIDs[id] {
 			poller.Close()
 			delete(pm.pollers, id)
+
+			pm.cacheMu.Lock()
+			delete(pm.deviceCache, id)
+			pm.cacheMu.Unlock()
 			log.Printf("PollerManager: Removed poller for device %d", id)
 		}
 	}
@@ -102,64 +120,52 @@ func (pm *PollerManager) SyncDevices() {
 func (pm *PollerManager) Start() {
 	go func() {
 		ticker := time.NewTicker(5 * time.Second)
+		fastTicker := time.NewTicker(1 * time.Second)
 		defer ticker.Stop()
+		defer fastTicker.Stop()
 
 		for {
 			select {
-			case <-ticker.C:
+			case <-fastTicker.C:
 				pm.mu.Lock()
-
-				var totalGrid *float64
-				var totalSolar *float64
-				var totalBattery *float64
-				var totalEvCharger *float64
-
-				deviceHealth := make(map[int]string)
+				polledAny := false
 
 				for id, poller := range pm.pollers {
-					deviceHealth[id] = poller.Status()
+					device := poller.GetDevice()
+					if device.Template != "homewizard_meter" {
+						continue
+					}
+					polledAny = true
 
 					powerW, batteryPowerW, gridPowerW, energyKwh, _, err := poller.Poll()
 					if err != nil {
 						log.Printf("PollerManager: Error polling device %d: %v", id, err)
+
+						pm.cacheMu.Lock()
+						pm.deviceCache[id] = DeviceData{
+							PowerW:        0,
+							BatteryPowerW: 0,
+							GridPowerW:    0,
+							EnergyKwh:     0, // Note: energy is cumulative, but for live display, power is what matters. Energy is only used for history averaging, which we handle by not buffering on error.
+							Status:        poller.Status(),
+							Template:      device.Template,
+							HasGridMeter:  device.HasGridMeter,
+						}
+						pm.cacheMu.Unlock()
 						continue
 					}
 
-					device := poller.GetDevice()
-					switch device.Template {
-					case "huawei_inverter", "solis_inverter", "sma_inverter", "demo_inverter":
-						if totalSolar == nil {
-							v := 0.0
-							totalSolar = &v
-						}
-						*totalSolar += powerW
-
-						if totalBattery == nil {
-							v := 0.0
-							totalBattery = &v
-						}
-						*totalBattery += batteryPowerW
-
-						if device.Template == "huawei_inverter" && device.HasGridMeter {
-							if totalGrid == nil {
-								v := 0.0
-								totalGrid = &v
-							}
-							*totalGrid += gridPowerW
-						}
-					case "homewizard_meter", "demo_dongle":
-						if totalGrid == nil {
-							v := 0.0
-							totalGrid = &v
-						}
-						*totalGrid += gridPowerW
-					case "raedian_charger", "alfen_charger", "bender_charger", "phoenix_charger", "easee_charger", "peblar_charger", "demo_charger":
-						if totalEvCharger == nil {
-							v := 0.0
-							totalEvCharger = &v
-						}
-						*totalEvCharger += powerW
+					pm.cacheMu.Lock()
+					pm.deviceCache[id] = DeviceData{
+						PowerW:        powerW,
+						BatteryPowerW: batteryPowerW,
+						GridPowerW:    gridPowerW,
+						EnergyKwh:     energyKwh,
+						Status:        poller.Status(),
+						Template:      device.Template,
+						HasGridMeter:  device.HasGridMeter,
 					}
+					pm.cacheMu.Unlock()
 
 					// Buffer measurement
 					pm.bufferMu.Lock()
@@ -172,34 +178,61 @@ func (pm *PollerManager) Start() {
 				}
 				pm.mu.Unlock()
 
-				// Total Load = Grid Power (imported positive) + Solar + Battery (discharging positive)
-				// Dongle Import is positive.
-				// Inverter Solar is positive.
-				// Inverter Battery Discharging is positive.
-				// This assumes powerW from Dongle is positive for IMPORT and negative for EXPORT.
-				// Wait, the Dongle simulation says "positive = import, negative = export".
-
-				var totalLoad *float64
-
-				// Calculate total load only if we have at least one valid measurement
-				if totalGrid != nil || totalSolar != nil || totalBattery != nil {
-					v := 0.0
-					if totalGrid != nil { v += *totalGrid }
-					if totalSolar != nil { v += *totalSolar }
-					if totalBattery != nil { v += *totalBattery }
-					totalLoad = &v
+				if polledAny {
+					pm.broadcastState()
 				}
 
-				state := SiteState{
-					GridPowerW:      totalGrid,
-					SolarPowerW:     totalSolar,
-					BatteryPowerW:   totalBattery,
-					TotalLoadW:      totalLoad,
-					EvChargerPowerW: totalEvCharger,
-					DeviceHealth:    deviceHealth,
-				}
+			case <-ticker.C:
+				pm.mu.Lock()
 
-				GlobalStateDispatcher.Broadcast(state)
+				for id, poller := range pm.pollers {
+					device := poller.GetDevice()
+					if device.Template == "homewizard_meter" {
+						continue
+					}
+
+					powerW, batteryPowerW, gridPowerW, energyKwh, _, err := poller.Poll()
+					if err != nil {
+						log.Printf("PollerManager: Error polling device %d: %v", id, err)
+
+						pm.cacheMu.Lock()
+						pm.deviceCache[id] = DeviceData{
+							PowerW:        0,
+							BatteryPowerW: 0,
+							GridPowerW:    0,
+							EnergyKwh:     0,
+							Status:        poller.Status(),
+							Template:      device.Template,
+							HasGridMeter:  device.HasGridMeter,
+						}
+						pm.cacheMu.Unlock()
+						continue
+					}
+
+					pm.cacheMu.Lock()
+					pm.deviceCache[id] = DeviceData{
+						PowerW:        powerW,
+						BatteryPowerW: batteryPowerW,
+						GridPowerW:    gridPowerW,
+						EnergyKwh:     energyKwh,
+						Status:        poller.Status(),
+						Template:      device.Template,
+						HasGridMeter:  device.HasGridMeter,
+					}
+					pm.cacheMu.Unlock()
+
+					// Buffer measurement
+					pm.bufferMu.Lock()
+					pm.buffer = append(pm.buffer, BufferedMeasurement{
+						DeviceID:  id,
+						PowerW:    powerW,
+						EnergyKwh: energyKwh,
+					})
+					pm.bufferMu.Unlock()
+				}
+				pm.mu.Unlock()
+
+				pm.broadcastState()
 
 			case <-pm.stopCh:
 				log.Println("PollerManager: Polling stopped")
@@ -223,6 +256,77 @@ func (pm *PollerManager) Start() {
 			}
 		}
 	}()
+}
+
+func (pm *PollerManager) broadcastState() {
+	pm.cacheMu.Lock()
+	defer pm.cacheMu.Unlock()
+
+	var totalGrid *float64
+	var totalSolar *float64
+	var totalBattery *float64
+	var totalEvCharger *float64
+
+	deviceHealth := make(map[int]string)
+
+	for id, data := range pm.deviceCache {
+		deviceHealth[id] = data.Status
+
+		switch data.Template {
+		case "huawei_inverter", "solis_inverter", "sma_inverter", "demo_inverter":
+			if totalSolar == nil {
+				v := 0.0
+				totalSolar = &v
+			}
+			*totalSolar += data.PowerW
+
+			if totalBattery == nil {
+				v := 0.0
+				totalBattery = &v
+			}
+			*totalBattery += data.BatteryPowerW
+
+			if data.Template == "huawei_inverter" && data.HasGridMeter {
+				if totalGrid == nil {
+					v := 0.0
+					totalGrid = &v
+				}
+				*totalGrid += data.GridPowerW
+			}
+		case "homewizard_meter", "demo_dongle":
+			if totalGrid == nil {
+				v := 0.0
+				totalGrid = &v
+			}
+			*totalGrid += data.GridPowerW
+		case "raedian_charger", "alfen_charger", "bender_charger", "phoenix_charger", "easee_charger", "peblar_charger", "demo_charger":
+			if totalEvCharger == nil {
+				v := 0.0
+				totalEvCharger = &v
+			}
+			*totalEvCharger += data.PowerW
+		}
+	}
+
+	var totalLoad *float64
+	if totalGrid != nil || totalSolar != nil || totalBattery != nil {
+		v := 0.0
+		if totalGrid != nil { v += *totalGrid }
+		if totalSolar != nil { v += *totalSolar }
+		if totalBattery != nil { v += *totalBattery }
+		totalLoad = &v
+	}
+
+	state := SiteState{
+		GridPowerW:      totalGrid,
+		SolarPowerW:     totalSolar,
+		BatteryPowerW:   totalBattery,
+		TotalLoadW:      totalLoad,
+		EvChargerPowerW: totalEvCharger,
+		DeviceHealth:    deviceHealth,
+	}
+
+	GlobalStateDispatcher.Broadcast(state)
 }
 
 func (pm *PollerManager) flushBuffer() {
