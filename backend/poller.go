@@ -304,6 +304,17 @@ func (pm *PollerManager) broadcastState() {
 		deviceHealth[id] = data.Status
 
 		switch data.Template {
+		case "demo_battery":
+			if totalBattery == nil {
+				v := 0.0
+				totalBattery = &v
+			}
+			*totalBattery += data.BatteryPowerW
+
+			if totalBatterySoc == nil || *totalBatterySoc == 0 {
+				soc := data.Soc
+				totalBatterySoc = &soc
+			}
 		case "huawei_inverter", "solis_inverter", "sma_inverter", "demo_inverter":
 			if totalSolar == nil {
 				v := 0.0

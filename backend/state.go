@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"sync"
+	"time"
 )
 
 type SiteState struct {
@@ -90,6 +91,90 @@ func handleLiveStream(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+type DailyAggregates struct {
+	GridImportKwh           float64 `json:"grid_import_kwh"`
+	GridExportKwh           float64 `json:"grid_export_kwh"`
+	SolarYieldKwh           float64 `json:"solar_yield_kwh"`
+	BatteryChargeKwh        float64 `json:"battery_charge_kwh"`
+	BatteryChargeSolarKwh   float64 `json:"battery_charge_solar_kwh"`
+	BatteryChargeGridKwh    float64 `json:"battery_charge_grid_kwh"`
+	BatteryDischargeKwh     float64 `json:"battery_discharge_kwh"`
+	HouseConsumptionKwh     float64 `json:"house_consumption_kwh"`
+}
+
+func handleDailyAggregates(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+	loc, err := time.LoadLocation("Europe/Amsterdam")
+	if err != nil {
+		loc = time.UTC
+	}
+	now := time.Now().In(loc)
+	startOfToday := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc).UTC()
+
+	// 1. Group by minute to do the charge source calculation properly.
+	query := `
+		WITH minute_aggs AS (
+			SELECT
+				strftime('%Y-%m-%dT%H:%M:00Z', m.timestamp) as ts,
+				SUM(CASE WHEN d.template IN ('huawei_dongle', 'demo_dongle', 'homewizard_meter') AND m.power_w > 0 THEN m.energy_kwh ELSE 0 END) as grid_import,
+				SUM(CASE WHEN d.template IN ('huawei_dongle', 'demo_dongle', 'homewizard_meter') AND m.power_w < 0 THEN ABS(m.energy_kwh) ELSE 0 END) as grid_export,
+				SUM(CASE WHEN d.template IN ('huawei_inverter', 'solis_inverter', 'sma_inverter', 'demo_inverter') AND d.name NOT LIKE '%battery%' AND m.power_w > 0 THEN m.energy_kwh ELSE 0 END) as solar_yield,
+				SUM(CASE WHEN (d.template IN ('huawei_inverter', 'demo_inverter') AND d.name LIKE '%battery%' OR d.template = 'demo_battery') AND m.power_w < 0 THEN ABS(m.energy_kwh) ELSE 0 END) as battery_charge,
+				SUM(CASE WHEN (d.template IN ('huawei_inverter', 'demo_inverter') AND d.name LIKE '%battery%' OR d.template = 'demo_battery') AND m.power_w > 0 THEN m.energy_kwh ELSE 0 END) as battery_discharge
+			FROM measurements m
+			JOIN devices d ON m.device_id = d.id
+			WHERE m.timestamp >= ?
+			GROUP BY ts
+		)
+		SELECT
+			SUM(grid_import),
+			SUM(grid_export),
+			SUM(solar_yield),
+			SUM(battery_charge),
+			SUM(battery_discharge),
+			SUM(CASE
+				WHEN battery_charge > 0 AND solar_yield > 0
+				THEN MIN(battery_charge, solar_yield)
+				ELSE 0
+			END) as battery_charge_solar,
+			SUM(CASE
+				WHEN battery_charge > 0 AND solar_yield > 0
+				THEN MAX(0, battery_charge - solar_yield)
+				WHEN battery_charge > 0 AND solar_yield <= 0
+				THEN battery_charge
+				ELSE 0
+			END) as battery_charge_grid
+		FROM minute_aggs
+	`
+
+	row := db.QueryRow(query, startOfToday.Format("2006-01-02 15:04:05"))
+
+	var agg DailyAggregates
+	var gImport, gExport, sYield, bCharge, bDischarge, bChargeSolar, bChargeGrid *float64
+
+	err = row.Scan(&gImport, &gExport, &sYield, &bCharge, &bDischarge, &bChargeSolar, &bChargeGrid)
+	if err == nil {
+		if gImport != nil { agg.GridImportKwh = *gImport }
+		if gExport != nil { agg.GridExportKwh = *gExport }
+		if sYield != nil { agg.SolarYieldKwh = *sYield }
+		if bCharge != nil { agg.BatteryChargeKwh = *bCharge }
+		if bDischarge != nil { agg.BatteryDischargeKwh = *bDischarge }
+		if bChargeSolar != nil { agg.BatteryChargeSolarKwh = *bChargeSolar }
+		if bChargeGrid != nil { agg.BatteryChargeGridKwh = *bChargeGrid }
+
+		agg.HouseConsumptionKwh = agg.GridImportKwh + agg.SolarYieldKwh + agg.BatteryDischargeKwh - agg.GridExportKwh - agg.BatteryChargeKwh
+		if agg.HouseConsumptionKwh < 0 {
+			agg.HouseConsumptionKwh = 0
+		}
+	} else {
+		log.Printf("Error calculating daily aggregates: %v", err)
+	}
+
+	json.NewEncoder(w).Encode(agg)
+}
+
 type HistoryDataPoint struct {
 	Timestamp string  `json:"timestamp"`
 	PowerW    float64 `json:"power_w"`
@@ -171,7 +256,7 @@ func handleHistory(w http.ResponseWriter, r *http.Request) {
 		case "solar":
 			whereClause = "(template IN ('huawei_inverter', 'solis_inverter', 'sma_inverter', 'demo_inverter') AND name NOT LIKE '%battery%')"
 		case "battery":
-			whereClause = "(template IN ('huawei_inverter', 'demo_inverter') AND name LIKE '%battery%')"
+			whereClause = "(template IN ('huawei_inverter', 'demo_inverter') AND name LIKE '%battery%') OR template = 'demo_battery'"
 		case "ev_charger":
 			whereClause = "(template IN ('raedian_charger', 'alfen_charger', 'bender_charger', 'phoenix_charger', 'easee_charger', 'peblar_charger', 'demo_charger'))"
 		default:
