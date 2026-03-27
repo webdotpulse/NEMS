@@ -53,6 +53,11 @@ func (p *EaseeChargerPoller) GetDevice() models.Device {
 	return p.Device
 }
 
+func (p *EaseeChargerPoller) SetChargeCurrent(amps float64) error {
+	log.Printf("EaseeChargerPoller: Setting charge current to %.2f A (Simulated)", amps)
+	return nil
+}
+
 func (p *EaseeChargerPoller) Close() error {
 	return nil
 }

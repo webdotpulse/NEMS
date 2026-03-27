@@ -93,6 +93,11 @@ func (p *RaedianChargerPoller) GetDevice() models.Device {
 	return p.Device
 }
 
+func (p *RaedianChargerPoller) SetChargeCurrent(amps float64) error {
+	log.Printf("RaedianChargerPoller: Setting charge current to %.2f A (Simulated)", amps)
+	return nil
+}
+
 func (p *RaedianChargerPoller) Close() error {
 	if p.client != nil {
 		return p.client.Close()

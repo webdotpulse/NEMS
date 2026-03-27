@@ -120,6 +120,11 @@ func (p *HuaweiInverterPoller) GetDevice() models.Device {
 	return p.Device
 }
 
+func (p *HuaweiInverterPoller) DischargeBattery(powerW float64) error {
+	log.Printf("HuaweiInverterPoller: Commanding battery discharge at %.2f W (Simulated)", powerW)
+	return nil
+}
+
 func (p *HuaweiInverterPoller) Close() error {
 	if p.client != nil {
 		return p.client.Close()
