@@ -321,6 +321,8 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+
+const sysInfo = ref<{hostname: string, ip: string, netmask: string} | null>(null)
 import ModbusTemplate from './templates/ModbusTemplate.vue'
 import CloudTemplate from './templates/CloudTemplate.vue'
 import RestTemplate from './templates/RestTemplate.vue'
@@ -383,7 +385,11 @@ const siteSettings = ref({
   capacity_peak_limit_kw: 2.5,
   active_inverter_curtailment: false,
   force_charge_below_euro: 0.0,
-  smart_ev_cheapest_hours: 0
+  smart_ev_cheapest_hours: 0,
+  grid_nominal_current_a: 25.0,
+  grid_system: 'single_phase_230v',
+  allowed_grid_import_kw: 0.0,
+  allowed_grid_export_kw: 0.0
 })
 const saveSettingsSuccess = ref(false)
 

@@ -102,39 +102,44 @@
 
       </div>
 
+
       <!-- Daily Aggregates Section -->
-      <div v-if="dailyAggregates" class="mt-8 bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-        <div class="px-4 py-5 sm:p-6">
-          <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100 mb-4">Daily Summary</h3>
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-md">
-              <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Grid (Today)</dt>
-              <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">
-                <div>Import: {{ dailyAggregates.grid_import_kwh.toFixed(2) }} kWh</div>
-                <div>Export: {{ dailyAggregates.grid_export_kwh.toFixed(2) }} kWh</div>
-              </dd>
-            </div>
-            <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-md">
-              <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Solar Yield (Today)</dt>
-              <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">
-                <div>Production: {{ dailyAggregates.solar_yield_kwh.toFixed(2) }} kWh</div>
-              </dd>
-            </div>
-            <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-md">
-              <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Battery (Today)</dt>
-              <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">
-                <div>Charged: {{ dailyAggregates.battery_charge_kwh.toFixed(2) }} kWh</div>
-                <div class="ml-2 text-xs text-gray-500 dark:text-gray-400">From Solar: {{ dailyAggregates.battery_charge_solar_kwh.toFixed(2) }} kWh</div>
-                <div class="ml-2 text-xs text-gray-500 dark:text-gray-400">From Grid: {{ dailyAggregates.battery_charge_grid_kwh.toFixed(2) }} kWh</div>
-                <div>Discharged: {{ dailyAggregates.battery_discharge_kwh.toFixed(2) }} kWh</div>
-              </dd>
-            </div>
-            <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-md">
-              <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">House (Today)</dt>
-              <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">
-                <div>Consumption: {{ dailyAggregates.house_consumption_kwh.toFixed(2) }} kWh</div>
-              </dd>
-            </div>
+      <div v-if="dailyAggregates" class="mt-8 mb-8">
+        <h2 class="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:text-3xl sm:truncate mb-4">
+          Daily Summary
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- Grid Card -->
+          <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg p-5 flex flex-col justify-center">
+            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Grid</dt>
+            <dd class="text-sm text-gray-900 dark:text-gray-100 flex flex-col space-y-1">
+              <div class="flex justify-between"><span>Import:</span> <span class="font-semibold">{{ dailyAggregates.grid_import_kwh.toFixed(2) }} kWh</span></div>
+              <div class="flex justify-between"><span>Export:</span> <span class="font-semibold">{{ dailyAggregates.grid_export_kwh.toFixed(2) }} kWh</span></div>
+            </dd>
+          </div>
+          <!-- Solar Yield Card -->
+          <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg p-5 flex flex-col justify-center">
+            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Solar Yield</dt>
+            <dd class="text-sm text-gray-900 dark:text-gray-100 flex flex-col space-y-1">
+              <div class="flex justify-between"><span>Production:</span> <span class="font-semibold text-yellow-500">{{ dailyAggregates.solar_yield_kwh.toFixed(2) }} kWh</span></div>
+            </dd>
+          </div>
+          <!-- Battery Card -->
+          <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg p-5 flex flex-col justify-center">
+            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Battery</dt>
+            <dd class="text-sm text-gray-900 dark:text-gray-100 flex flex-col space-y-1">
+              <div class="flex justify-between"><span>Charged:</span> <span class="font-semibold text-green-500">{{ dailyAggregates.battery_charge_kwh.toFixed(2) }} kWh</span></div>
+              <div class="text-xs text-gray-500 dark:text-gray-400 ml-2">Solar: {{ dailyAggregates.battery_charge_solar_kwh.toFixed(2) }} kWh</div>
+              <div class="text-xs text-gray-500 dark:text-gray-400 ml-2">Grid: {{ dailyAggregates.battery_charge_grid_kwh.toFixed(2) }} kWh</div>
+              <div class="flex justify-between mt-1"><span>Discharged:</span> <span class="font-semibold text-blue-500">{{ dailyAggregates.battery_discharge_kwh.toFixed(2) }} kWh</span></div>
+            </dd>
+          </div>
+          <!-- House Card -->
+          <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg p-5 flex flex-col justify-center">
+            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">House</dt>
+            <dd class="text-sm text-gray-900 dark:text-gray-100 flex flex-col space-y-1">
+              <div class="flex justify-between"><span>Consumption:</span> <span class="font-semibold text-purple-500">{{ dailyAggregates.house_consumption_kwh.toFixed(2) }} kWh</span></div>
+            </dd>
           </div>
         </div>
       </div>

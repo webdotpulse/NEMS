@@ -6,6 +6,10 @@ type SiteSettings struct {
 	ActiveInverterCurtailment bool    `json:"active_inverter_curtailment"`
 	ForceChargeBelowEuro      float64 `json:"force_charge_below_euro"`
 	SmartEvCheapestHours      int     `json:"smart_ev_cheapest_hours"`
+	GridNominalCurrentA       float64 `json:"grid_nominal_current_a"`
+	GridSystem                string  `json:"grid_system"`
+	AllowedGridImportKw       float64 `json:"allowed_grid_import_kw"`
+	AllowedGridExportKw       float64 `json:"allowed_grid_export_kw"`
 }
 
 type Device struct {

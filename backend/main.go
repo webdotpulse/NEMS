@@ -8,12 +8,166 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"os"
+	"net"
+	"sync"
+	"io"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/pem"
+	"math/big"
 
 	"nems/internal/models"
 	"nems/internal/templates"
 
 	_ "github.com/mattn/go-sqlite3"
 )
+
+
+// RingBuffer for logs
+type LogRingBuffer struct {
+	mu     sync.RWMutex
+	logs   []string
+	maxLen int
+}
+
+func (r *LogRingBuffer) Write(p []byte) (n int, err error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	msg := string(p)
+	if len(r.logs) >= r.maxLen {
+		r.logs = r.logs[1:]
+	}
+	r.logs = append(r.logs, msg)
+	return len(p), nil
+}
+
+func (r *LogRingBuffer) GetLogs() []string {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	res := make([]string, len(r.logs))
+	copy(res, r.logs)
+	return res
+}
+
+var logBuffer *LogRingBuffer
+
+func InitLogger() {
+	logBuffer = &LogRingBuffer{
+		logs:   make([]string, 0, 1000),
+		maxLen: 1000,
+	}
+	multiWriter := io.MultiWriter(os.Stdout, logBuffer)
+	log.SetOutput(multiWriter)
+}
+
+func handleLogs(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	logs := logBuffer.GetLogs()
+	json.NewEncoder(w).Encode(logs)
+}
+
+func handleSystemInfo(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	hostname, err := os.Hostname()
+	if err != nil {
+		hostname = "unknown"
+	}
+
+	var primaryIP string
+	var primaryNetmask string
+
+	addrs, err := net.InterfaceAddrs()
+	if err == nil {
+		for _, address := range addrs {
+			if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+				if ipnet.IP.To4() != nil {
+					primaryIP = ipnet.IP.String()
+					mask := ipnet.Mask
+					primaryNetmask = net.IP(mask).String()
+					break
+				}
+			}
+		}
+	}
+
+	info := map[string]string{
+		"hostname": hostname,
+		"ip":       primaryIP,
+		"netmask":  primaryNetmask,
+	}
+
+	json.NewEncoder(w).Encode(info)
+}
+
+func ensureCertificates(certFile, keyFile string) error {
+	if _, err := os.Stat(certFile); err == nil {
+		return nil
+	}
+
+	log.Println("Generating self-signed certificate...")
+	priv, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		return err
+	}
+
+	notBefore := time.Now()
+	notAfter := notBefore.Add(365 * 24 * time.Hour)
+
+	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
+	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
+	if err != nil {
+		return err
+	}
+
+	template := x509.Certificate{
+		SerialNumber: serialNumber,
+		Subject: pkix.Name{
+			Organization: []string{"Pulse EMS"},
+		},
+		NotBefore:             notBefore,
+		NotAfter:              notAfter,
+		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		BasicConstraintsValid: true,
+	}
+
+	derBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, &priv.PublicKey, priv)
+	if err != nil {
+		return err
+	}
+
+	certOut, err := os.Create(certFile)
+	if err != nil {
+		return err
+	}
+	defer certOut.Close()
+	if err := pem.Encode(certOut, &pem.Block{Type: "CERTIFICATE", Bytes: derBytes}); err != nil {
+		return err
+	}
+
+	keyOut, err := os.OpenFile(keyFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+	if err != nil {
+		return err
+	}
+	defer keyOut.Close()
+	privBytes, err := x509.MarshalECPrivateKey(priv)
+	if err != nil {
+		return err
+	}
+	if err := pem.Encode(keyOut, &pem.Block{Type: "EC PRIVATE KEY", Bytes: privBytes}); err != nil {
+		return err
+	}
+
+	log.Println("Self-signed certificate generated.")
+	return nil
+}
 
 var db *sql.DB
 
@@ -33,6 +187,8 @@ func enableCORS(next http.Handler) http.Handler {
 }
 
 func main() {
+	InitLogger()
+
 	var err error
 	db, err = sql.Open("sqlite3", "./nems.db")
 	if err != nil {
@@ -132,6 +288,10 @@ func main() {
 
 	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN force_charge_below_euro REAL DEFAULT 0")
 	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN smart_ev_cheapest_hours INTEGER DEFAULT 0")
+	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN grid_nominal_current_a REAL DEFAULT 25.0")
+	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN grid_system TEXT DEFAULT 'single_phase_230v'")
+	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN allowed_grid_import_kw REAL DEFAULT 0.0")
+	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN allowed_grid_export_kw REAL DEFAULT 0.0")
 
 	log.Println("Database schema initialized")
 
@@ -145,6 +305,8 @@ func main() {
 
 	mux.HandleFunc("/api/live", handleLiveStream)
 	mux.HandleFunc("/api/daily", handleDailyAggregates)
+	mux.HandleFunc("/api/logs", handleLogs)
+	mux.HandleFunc("/api/system/info", handleSystemInfo)
 
 	mux.HandleFunc("/api/tariffs/today", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -185,9 +347,9 @@ func main() {
 	mux.HandleFunc("/api/settings", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		if r.Method == "GET" {
-			row := db.QueryRow("SELECT strategy_mode, capacity_peak_limit_kw, active_inverter_curtailment, force_charge_below_euro, smart_ev_cheapest_hours FROM site_settings WHERE id = 1")
+			row := db.QueryRow("SELECT strategy_mode, capacity_peak_limit_kw, active_inverter_curtailment, force_charge_below_euro, smart_ev_cheapest_hours, grid_nominal_current_a, grid_system, allowed_grid_import_kw, allowed_grid_export_kw FROM site_settings WHERE id = 1")
 			var settings models.SiteSettings
-			err := row.Scan(&settings.StrategyMode, &settings.CapacityPeakLimitKw, &settings.ActiveInverterCurtailment, &settings.ForceChargeBelowEuro, &settings.SmartEvCheapestHours)
+			err := row.Scan(&settings.StrategyMode, &settings.CapacityPeakLimitKw, &settings.ActiveInverterCurtailment, &settings.ForceChargeBelowEuro, &settings.SmartEvCheapestHours, &settings.GridNominalCurrentA, &settings.GridSystem, &settings.AllowedGridImportKw, &settings.AllowedGridExportKw)
 			if err != nil {
 				if err == sql.ErrNoRows {
 					// Fallback
@@ -197,6 +359,10 @@ func main() {
 						ActiveInverterCurtailment: false,
 						ForceChargeBelowEuro:      0.0,
 						SmartEvCheapestHours:      0,
+						GridNominalCurrentA:       25.0,
+						GridSystem:                "single_phase_230v",
+						AllowedGridImportKw:       0.0,
+						AllowedGridExportKw:       0.0,
 					}
 					json.NewEncoder(w).Encode(settings)
 					return
@@ -212,8 +378,8 @@ func main() {
 				return
 			}
 
-			_, err = db.Exec("UPDATE site_settings SET strategy_mode = ?, capacity_peak_limit_kw = ?, active_inverter_curtailment = ?, force_charge_below_euro = ?, smart_ev_cheapest_hours = ? WHERE id = 1",
-				settings.StrategyMode, settings.CapacityPeakLimitKw, settings.ActiveInverterCurtailment, settings.ForceChargeBelowEuro, settings.SmartEvCheapestHours)
+			_, err = db.Exec("UPDATE site_settings SET strategy_mode = ?, capacity_peak_limit_kw = ?, active_inverter_curtailment = ?, force_charge_below_euro = ?, smart_ev_cheapest_hours = ?, grid_nominal_current_a = ?, grid_system = ?, allowed_grid_import_kw = ?, allowed_grid_export_kw = ? WHERE id = 1",
+				settings.StrategyMode, settings.CapacityPeakLimitKw, settings.ActiveInverterCurtailment, settings.ForceChargeBelowEuro, settings.SmartEvCheapestHours, settings.GridNominalCurrentA, settings.GridSystem, settings.AllowedGridImportKw, settings.AllowedGridExportKw)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
@@ -387,10 +553,40 @@ func main() {
 		TariffMgr.Start()
 	}
 
-	log.Println("Server listening on :8080")
+
+	// Try port 80 (requires root/setcap) or fallback to 8080
+	httpPort := ":80"
+	httpsPort := ":443"
+
 	handler := enableCORS(mux)
-	err = http.ListenAndServe(":8080", handler)
+
+	go func() {
+		log.Println("Starting HTTP server on :80 (fallback to :8080)")
+		err := http.ListenAndServe(httpPort, handler)
+		if err != nil {
+			log.Printf("Failed to bind to :80 (%v). Trying :8080 instead.", err)
+			err = http.ListenAndServe(":8080", handler)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+	}()
+
+	err = ensureCertificates("cert.pem", "key.pem")
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("Failed to ensure certificates: %v. HTTPS disabled.", err)
+	} else {
+		log.Println("Starting HTTPS server on :443 (fallback to :8443)")
+		err = http.ListenAndServeTLS(httpsPort, "cert.pem", "key.pem", handler)
+		if err != nil {
+			log.Printf("Failed to bind to :443 (%v). Trying :8443 instead.", err)
+			err = http.ListenAndServeTLS(":8443", "cert.pem", "key.pem", handler)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
 	}
+
+	select {} // Block main thread
+
 }
