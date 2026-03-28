@@ -1,0 +1,101 @@
+--- frontend/src/components/PowerFlow.vue
++++ frontend/src/components/PowerFlow.vue
+@@ -361,8 +361,6 @@
+
+   const segments: Segment[] = [];
+   const evPower = props.state.ev_charger_power_w || 0;
+-
+-  // Handle case where some values might be missing/null by treating them as 0 for calculations
+
+   // Track remaining power to distribute
+   let remainingSolar = solar;
+@@ -455,7 +453,7 @@
+     const solarToHome = Math.min(remainingSolar, homeLoadRemaining);
+     if (solarToHome > 0) {
+       addSegment('solar', 'home', solarToHome, '#FBBF24');
+-      remainingSolar -= solarToHome;
++      remainingSolar = Math.max(0, remainingSolar - solarToHome);
+       homeLoadRemaining -= solarToHome;
+     }
+     // Solar -> EV
+@@ -463,7 +461,7 @@
+     const solarToEV = Math.min(remainingSolar, evLoadRemaining);
+     if (solarToEV > 0) {
+       addSegment('solar', 'ev', solarToEV, '#FBBF24');
+-      remainingSolar -= solarToEV;
++      remainingSolar = Math.max(0, remainingSolar - solarToEV);
+       evLoadRemaining -= solarToEV;
+     }
+     // Solar -> Battery
+@@ -471,7 +469,7 @@
+     const solarToBattery = Math.min(remainingSolar, batteryChargeRemaining);
+     if (solarToBattery > 0) {
+       addSegment('solar', 'battery', solarToBattery, '#FBBF24');
+-      remainingSolar -= solarToBattery;
++      remainingSolar = Math.max(0, remainingSolar - solarToBattery);
+       batteryChargeRemaining -= solarToBattery;
+     }
+     // Solar -> Grid
+@@ -479,7 +477,7 @@
+     const solarToGrid = Math.min(remainingSolar, gridExportRemaining);
+     if (solarToGrid > 0) {
+       addSegment('solar', 'grid', solarToGrid, '#FBBF24');
+-      remainingSolar -= solarToGrid;
++      remainingSolar = Math.max(0, remainingSolar - solarToGrid);
+       gridExportRemaining -= solarToGrid;
+     }
+   }
+@@ -490,7 +488,7 @@
+     const batteryToHome = Math.min(remainingBatteryDischarge, homeLoadRemaining);
+     if (batteryToHome > 0) {
+       addSegment('battery', 'home', batteryToHome, '#34D399');
+-      remainingBatteryDischarge -= batteryToHome;
++      remainingBatteryDischarge = Math.max(0, remainingBatteryDischarge - batteryToHome);
+       homeLoadRemaining -= batteryToHome;
+     }
+     // Battery -> EV
+@@ -498,7 +496,7 @@
+     const batteryToEV = Math.min(remainingBatteryDischarge, evLoadRemaining);
+     if (batteryToEV > 0) {
+       addSegment('battery', 'ev', batteryToEV, '#34D399');
+-      remainingBatteryDischarge -= batteryToEV;
++      remainingBatteryDischarge = Math.max(0, remainingBatteryDischarge - batteryToEV);
+       evLoadRemaining -= batteryToEV;
+     }
+     // Battery -> Grid (Edge case, usually avoided)
+@@ -506,7 +504,7 @@
+     const batteryToGrid = Math.min(remainingBatteryDischarge, gridExportRemaining);
+     if (batteryToGrid > 0) {
+       addSegment('battery', 'grid', batteryToGrid, '#34D399');
+-      remainingBatteryDischarge -= batteryToGrid;
++      remainingBatteryDischarge = Math.max(0, remainingBatteryDischarge - batteryToGrid);
+       gridExportRemaining -= batteryToGrid;
+     }
+   }
+@@ -517,7 +515,7 @@
+     const gridToHome = Math.min(remainingGridImport, homeLoadRemaining);
+     if (gridToHome > 0) {
+       addSegment('grid', 'home', gridToHome, '#3B82F6');
+-      remainingGridImport -= gridToHome;
++      remainingGridImport = Math.max(0, remainingGridImport - gridToHome);
+       homeLoadRemaining -= gridToHome;
+     }
+     // Grid -> EV
+@@ -525,7 +523,7 @@
+     const gridToEV = Math.min(remainingGridImport, evLoadRemaining);
+     if (gridToEV > 0) {
+       addSegment('grid', 'ev', gridToEV, '#3B82F6');
+-      remainingGridImport -= gridToEV;
++      remainingGridImport = Math.max(0, remainingGridImport - gridToEV);
+       evLoadRemaining -= gridToEV;
+     }
+     // Grid -> Battery
+@@ -533,7 +531,7 @@
+     const gridToBattery = Math.min(remainingGridImport, batteryChargeRemaining);
+     if (gridToBattery > 0) {
+       addSegment('grid', 'battery', gridToBattery, '#3B82F6');
+-      remainingGridImport -= gridToBattery;
++      remainingGridImport = Math.max(0, remainingGridImport - gridToBattery);
+       batteryChargeRemaining -= gridToBattery;
+     }
+   }

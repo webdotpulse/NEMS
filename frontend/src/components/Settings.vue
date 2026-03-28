@@ -5,8 +5,11 @@
       <!-- Tabs -->
       <div class="border-b border-gray-200 dark:border-gray-700 mb-8">
         <nav class="-mb-px flex space-x-8" aria-label="Tabs">
-          <button @click="activeTab = 'system'" :class="[activeTab === 'system' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300', 'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors']">
-            System & Strategy
+          <button @click="activeTab = 'info'" :class="[activeTab === 'info' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300', 'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors']">
+            System Info
+          </button>
+          <button @click="activeTab = 'strategy'" :class="[activeTab === 'strategy' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300', 'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors']">
+            Strategy
           </button>
           <button @click="activeTab = 'devices'" :class="[activeTab === 'devices' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300', 'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors']">
             Devices
@@ -14,8 +17,8 @@
         </nav>
       </div>
 
-      <!-- TAB: SYSTEM & STRATEGY -->
-      <div v-if="activeTab === 'system'">
+      <!-- TAB: SYSTEM INFO -->
+      <div v-if="activeTab === 'info'">
         <!-- System Info Section -->
         <div v-if="sysInfo" class="mb-8">
           <h2 class="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:text-3xl sm:truncate mb-4">
@@ -38,13 +41,61 @@
             </div>
           </div>
         </div>
+      </div>
 
+      <!-- TAB: STRATEGY -->
+      <div v-if="activeTab === 'strategy'">
         <!-- Site Optimization Section -->
         <div class="mb-8">
           <h2 class="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:text-3xl sm:truncate mb-4">
             Site Optimization
           </h2>
           <form @submit.prevent="saveSiteSettings" class="space-y-6">
+            <!-- Grid Connection Card -->
+            <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg mb-6">
+              <div class="px-4 py-5 sm:p-6">
+                <div class="mb-4 border-b border-gray-200 dark:border-gray-700 pb-4">
+                  <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-gray-100">
+                    Grid Connection
+                  </h3>
+                </div>
+                <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                  <div class="sm:col-span-3">
+                    <label for="grid_nominal_current_a" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nominal Current (A)</label>
+                    <div class="mt-1">
+                      <input type="number" step="0.1" id="grid_nominal_current_a" v-model="siteSettings.grid_nominal_current_a" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                    </div>
+                  </div>
+
+                  <div class="sm:col-span-3">
+                    <label for="grid_system" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Grid System</label>
+                    <div class="mt-1">
+                      <select id="grid_system" v-model="siteSettings.grid_system"
+                              class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        <option value="single_phase_230v">Single Phase 230V</option>
+                        <option value="three_phase_400v">Three Phase 400V</option>
+                        <option value="three_phase_230v_delta">Three Phase 230V Delta</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="sm:col-span-3">
+                    <label for="allowed_grid_import_kw" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Allowed Grid Import (kW)</label>
+                    <div class="mt-1">
+                      <input type="number" step="0.1" id="allowed_grid_import_kw" v-model="siteSettings.allowed_grid_import_kw" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                    </div>
+                  </div>
+
+                  <div class="sm:col-span-3">
+                    <label for="allowed_grid_export_kw" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Allowed Grid Export (kW)</label>
+                    <div class="mt-1">
+                      <input type="number" step="0.1" id="allowed_grid_export_kw" v-model="siteSettings.allowed_grid_export_kw" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <!-- Strategy Settings Card -->
             <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg mb-6">
               <div class="px-4 py-5 sm:p-6">
@@ -283,26 +334,52 @@
               <form @submit.prevent="addDevice" class="space-y-6">
                 <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
 
-                  <div class="sm:col-span-3">
-                    <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Device Name</label>
-                    <div class="mt-1">
-                      <input type="text" id="name" v-model="form.name" required
-                             class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white transition-colors">
+                  <!-- Category Selection Cards -->
+                  <div class="sm:col-span-6" v-if="!selectedCategory">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">Select Device Category</label>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+                      <div v-for="cat in deviceCategories" :key="cat.id"
+                           @click="selectCategory(cat.id)"
+                           class="cursor-pointer border-2 rounded-lg p-4 flex flex-col items-center justify-center transition-all hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
+                           :class="selectedCategory === cat.id ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'">
+                        <i :class="cat.icon + ' text-3xl mb-2 ' + cat.color"></i>
+                        <span class="text-sm font-medium text-gray-900 dark:text-white">{{ cat.name }}</span>
+                      </div>
                     </div>
                   </div>
 
-                  <div class="sm:col-span-3">
-                    <label for="template" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Device Template</label>
-                    <div class="mt-1">
-                      <select id="template" v-model="form.template" required
-                              class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white transition-colors">
-                        <option disabled value="">Please select one</option>
-                        <option v-for="t in templates" :key="t.id" :value="t.id">
-                          {{ t.name }}
-                        </option>
-                      </select>
+                  <!-- Reset Category Button & Category Info -->
+                  <div class="sm:col-span-6 flex items-center justify-between" v-if="selectedCategory">
+                    <div class="flex items-center">
+                      <i :class="currentCategoryObj?.icon + ' text-xl mr-2 ' + currentCategoryObj?.color"></i>
+                      <span class="text-md font-medium text-gray-900 dark:text-white">Adding: {{ currentCategoryObj?.name }}</span>
                     </div>
+                    <button type="button" @click="resetCategory" class="text-sm text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300">
+                      &larr; Change Category
+                    </button>
                   </div>
+
+                  <template v-if="selectedCategory">
+                    <div class="sm:col-span-3">
+                      <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Device Name</label>
+                      <div class="mt-1">
+                        <input type="text" id="name" v-model="form.name" required
+                               class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white transition-colors">
+                      </div>
+                    </div>
+
+                    <div class="sm:col-span-3">
+                      <label for="template" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Device Template</label>
+                      <div class="mt-1">
+                        <select id="template" v-model="form.template" required
+                                class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white transition-colors">
+                          <option disabled value="">Please select one</option>
+                          <option v-for="t in filteredTemplates" :key="t.id" :value="t.id">
+                            {{ t.name }}
+                          </option>
+                        </select>
+                      </div>
+                    </div>
 
                   <template v-if="templates.find(t => t.id === form.template)?.type === 'modbus'">
                     <ModbusTemplate v-model="form" />
@@ -368,9 +445,10 @@
                     </div>
                   </template>
 
+                  </template>
                 </div>
 
-                <div class="pt-5">
+                <div class="pt-5" v-if="selectedCategory">
                   <div class="flex justify-end">
                     <button type="submit"
                             class="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
@@ -512,9 +590,30 @@ import CloudRestTemplate from './templates/CloudRestTemplate.vue'
 import P1SerialTemplate from './templates/P1SerialTemplate.vue'
 import P1NetworkTemplate from './templates/P1NetworkTemplate.vue'
 
-const activeTab = ref('system')
+const activeTab = ref('info')
 
 const sysInfo = ref<SystemInfo | null>(null)
+
+const selectedCategory = ref<string | null>(null)
+const deviceCategories = [
+  { id: 'inverter', name: 'Inverter / Solar', icon: 'bx bx-sun', color: 'text-yellow-500' },
+  { id: 'charger', name: 'EV Charger', icon: 'bx bx-car', color: 'text-purple-500' },
+  { id: 'meter', name: 'Smart Meter', icon: 'bx bx-tachometer', color: 'text-blue-500' },
+  { id: 'battery', name: 'Battery', icon: 'bx bx-battery', color: 'text-green-500' },
+  { id: 'relay', name: 'Relay / Switch', icon: 'bx bx-toggle-right', color: 'text-orange-500' },
+  { id: 'demo', name: 'Demo Device', icon: 'bx bx-code-block', color: 'text-gray-500' }
+]
+const currentCategoryObj = computed(() => deviceCategories.find(c => c.id === selectedCategory.value) || null)
+const filteredTemplates = computed(() => {
+  if (!selectedCategory.value) return templates.value
+  return templates.value.filter(t => t.category === selectedCategory.value)
+})
+const selectCategory = (cat: string) => {
+  selectedCategory.value = cat
+}
+const resetCategory = () => {
+  selectedCategory.value = null
+}
 
 const templates = ref<Template[]>([])
 const devices = ref<Device[]>([])

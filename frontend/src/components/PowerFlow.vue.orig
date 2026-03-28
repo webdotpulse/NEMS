@@ -354,9 +354,9 @@ interface Segment {
 const activeSegments = computed<Segment[]>(() => {
   if (!props.state) return [];
 
-  const grid = props.state.grid_power_w !== null ? props.state.grid_power_w : 0;
-  const solar = props.state.solar_power_w !== null ? Math.max(0, props.state.solar_power_w) : 0;
-  const battery = props.state.battery_power_w !== null ? props.state.battery_power_w : 0;
+  const grid = props.state.grid_power_w || 0;
+  const solar = props.state.solar_power_w || 0;
+  const battery = props.state.battery_power_w || 0;
   const home = homeLoad.value || 0;
 
   const segments: Segment[] = [];
