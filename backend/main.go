@@ -312,6 +312,7 @@ func main() {
 	mux.HandleFunc("/api/daily", handleDailyAggregates)
 	mux.HandleFunc("/api/logs", handleLogs)
 	mux.HandleFunc("/api/system/info", handleSystemInfo)
+	mux.HandleFunc("/api/network/scan", handleNetworkScan)
 
 	mux.HandleFunc("/api/tariffs/today", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
