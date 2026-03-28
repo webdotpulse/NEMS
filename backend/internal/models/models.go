@@ -5,6 +5,7 @@ type SiteSettings struct {
 	CapacityPeakLimitKw       float64 `json:"capacity_peak_limit_kw"`
 	ActiveInverterCurtailment bool    `json:"active_inverter_curtailment"`
 	ForceChargeBelowEuro      float64 `json:"force_charge_below_euro"`
+	ForceDischargeAboveEuro   float64 `json:"force_discharge_above_euro"`
 	SmartEvCheapestHours      int     `json:"smart_ev_cheapest_hours"`
 	GridNominalCurrentA       float64 `json:"grid_nominal_current_a"`
 	GridSystem                string  `json:"grid_system"`

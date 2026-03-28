@@ -19,6 +19,7 @@ export interface SiteSettings {
   capacity_peak_limit_kw: number;
   active_inverter_curtailment: boolean;
   force_charge_below_euro: number;
+  force_discharge_above_euro: number;
   smart_ev_cheapest_hours: number;
   grid_nominal_current_a: number;
   grid_system: string;
@@ -36,6 +37,7 @@ export interface SiteState {
   battery_soc: number | null;
   total_load_w: number | null;
   ev_charger_power_w: number | null;
+  projected_quarter_peak_w?: number | null;
   device_health?: Record<number, string>;
 }
 

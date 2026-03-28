@@ -368,14 +368,17 @@ func (pm *PollerManager) broadcastState() {
 		totalLoad = &v
 	}
 
+	peak := GetProjectedQuarterPeakW()
+
 	state := SiteState{
-		GridPowerW:      totalGrid,
-		SolarPowerW:     totalSolar,
-		BatteryPowerW:   totalBattery,
-		BatterySoc:      totalBatterySoc,
-		TotalLoadW:      totalLoad,
-		EvChargerPowerW: totalEvCharger,
-		DeviceHealth:    deviceHealth,
+		GridPowerW:            totalGrid,
+		SolarPowerW:           totalSolar,
+		BatteryPowerW:         totalBattery,
+		BatterySoc:            totalBatterySoc,
+		TotalLoadW:            totalLoad,
+		EvChargerPowerW:       totalEvCharger,
+		ProjectedQuarterPeakW: &peak,
+		DeviceHealth:          deviceHealth,
 	}
 
 	GlobalStateDispatcher.Broadcast(state)
