@@ -132,7 +132,7 @@
             </div>
           </div>
           <!-- Solar Yield Card -->
-          <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
+          <div v-if="state?.solar_power_w !== null && state?.solar_power_w !== undefined" class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
             <div class="p-5">
               <div class="flex items-center">
                 <div class="flex-shrink-0">
@@ -150,7 +150,7 @@
             </div>
           </div>
           <!-- Battery Card -->
-          <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
+          <div v-if="state?.battery_power_w !== null && state?.battery_power_w !== undefined" class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
             <div class="p-5">
               <div class="flex items-center">
                 <div class="flex-shrink-0">

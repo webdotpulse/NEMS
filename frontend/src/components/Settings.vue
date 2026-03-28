@@ -595,8 +595,7 @@ const deviceCategories = [
   { id: 'charger', name: 'EV Charger', icon: 'bx bx-car', color: 'text-purple-500' },
   { id: 'meter', name: 'Smart Meter', icon: 'bx bx-tachometer', color: 'text-blue-500' },
   { id: 'battery', name: 'Battery', icon: 'bx bx-battery', color: 'text-green-500' },
-  { id: 'relay', name: 'Relay / Switch', icon: 'bx bx-toggle-right', color: 'text-orange-500' },
-  { id: 'demo', name: 'Demo Device', icon: 'bx bx-code-block', color: 'text-gray-500' }
+  { id: 'relay', name: 'Relay / Switch', icon: 'bx bx-toggle-right', color: 'text-orange-500' }
 ]
 const currentCategoryObj = computed(() => deviceCategories.find(c => c.id === selectedCategory.value) || null)
 const filteredTemplates = computed(() => {
