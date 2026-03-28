@@ -259,6 +259,7 @@ func main() {
 	_, _ = db.Exec("ALTER TABLE devices ADD COLUMN has_grid_meter BOOLEAN DEFAULT 0")
 	_, _ = db.Exec("ALTER TABLE devices ADD COLUMN has_battery BOOLEAN DEFAULT 0")
 	_, _ = db.Exec("ALTER TABLE devices ADD COLUMN battery_capacity REAL DEFAULT 0")
+	_, _ = db.Exec("ALTER TABLE devices ADD COLUMN charge_mode TEXT DEFAULT 'eco'")
 
 	createEpexPricesSQL := `
 	CREATE TABLE IF NOT EXISTS epex_prices (
@@ -292,6 +293,9 @@ func main() {
 	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN grid_system TEXT DEFAULT 'single_phase_230v'")
 	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN allowed_grid_import_kw REAL DEFAULT 0.0")
 	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN allowed_grid_export_kw REAL DEFAULT 0.0")
+	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN appliance_turn_on_excess_w REAL DEFAULT 0.0")
+	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN peak_shaving_buffer_w REAL DEFAULT 200.0")
+	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN peak_shaving_rampup_w REAL DEFAULT 500.0")
 
 	log.Println("Database schema initialized")
 
@@ -347,9 +351,9 @@ func main() {
 	mux.HandleFunc("/api/settings", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		if r.Method == "GET" {
-			row := db.QueryRow("SELECT strategy_mode, capacity_peak_limit_kw, active_inverter_curtailment, force_charge_below_euro, smart_ev_cheapest_hours, grid_nominal_current_a, grid_system, allowed_grid_import_kw, allowed_grid_export_kw FROM site_settings WHERE id = 1")
+			row := db.QueryRow("SELECT strategy_mode, capacity_peak_limit_kw, active_inverter_curtailment, force_charge_below_euro, smart_ev_cheapest_hours, grid_nominal_current_a, grid_system, allowed_grid_import_kw, allowed_grid_export_kw, appliance_turn_on_excess_w, peak_shaving_buffer_w, peak_shaving_rampup_w FROM site_settings WHERE id = 1")
 			var settings models.SiteSettings
-			err := row.Scan(&settings.StrategyMode, &settings.CapacityPeakLimitKw, &settings.ActiveInverterCurtailment, &settings.ForceChargeBelowEuro, &settings.SmartEvCheapestHours, &settings.GridNominalCurrentA, &settings.GridSystem, &settings.AllowedGridImportKw, &settings.AllowedGridExportKw)
+			err := row.Scan(&settings.StrategyMode, &settings.CapacityPeakLimitKw, &settings.ActiveInverterCurtailment, &settings.ForceChargeBelowEuro, &settings.SmartEvCheapestHours, &settings.GridNominalCurrentA, &settings.GridSystem, &settings.AllowedGridImportKw, &settings.AllowedGridExportKw, &settings.ApplianceTurnOnExcessW, &settings.PeakShavingBufferW, &settings.PeakShavingRampupW)
 			if err != nil {
 				if err == sql.ErrNoRows {
 					// Fallback
@@ -363,6 +367,9 @@ func main() {
 						GridSystem:                "single_phase_230v",
 						AllowedGridImportKw:       0.0,
 						AllowedGridExportKw:       0.0,
+						ApplianceTurnOnExcessW:    0.0,
+						PeakShavingBufferW:        200.0,
+						PeakShavingRampupW:        500.0,
 					}
 					json.NewEncoder(w).Encode(settings)
 					return
@@ -378,8 +385,8 @@ func main() {
 				return
 			}
 
-			_, err = db.Exec("UPDATE site_settings SET strategy_mode = ?, capacity_peak_limit_kw = ?, active_inverter_curtailment = ?, force_charge_below_euro = ?, smart_ev_cheapest_hours = ?, grid_nominal_current_a = ?, grid_system = ?, allowed_grid_import_kw = ?, allowed_grid_export_kw = ? WHERE id = 1",
-				settings.StrategyMode, settings.CapacityPeakLimitKw, settings.ActiveInverterCurtailment, settings.ForceChargeBelowEuro, settings.SmartEvCheapestHours, settings.GridNominalCurrentA, settings.GridSystem, settings.AllowedGridImportKw, settings.AllowedGridExportKw)
+			_, err = db.Exec("UPDATE site_settings SET strategy_mode = ?, capacity_peak_limit_kw = ?, active_inverter_curtailment = ?, force_charge_below_euro = ?, smart_ev_cheapest_hours = ?, grid_nominal_current_a = ?, grid_system = ?, allowed_grid_import_kw = ?, allowed_grid_export_kw = ?, appliance_turn_on_excess_w = ?, peak_shaving_buffer_w = ?, peak_shaving_rampup_w = ? WHERE id = 1",
+				settings.StrategyMode, settings.CapacityPeakLimitKw, settings.ActiveInverterCurtailment, settings.ForceChargeBelowEuro, settings.SmartEvCheapestHours, settings.GridNominalCurrentA, settings.GridSystem, settings.AllowedGridImportKw, settings.AllowedGridExportKw, settings.ApplianceTurnOnExcessW, settings.PeakShavingBufferW, settings.PeakShavingRampupW)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
@@ -401,7 +408,7 @@ func main() {
 	mux.HandleFunc("/api/devices", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		if r.Method == "GET" {
-			rows, err := db.Query("SELECT id, name, template, host, port, modbus_id, username, password, has_grid_meter, has_battery, battery_capacity FROM devices")
+			rows, err := db.Query("SELECT id, name, template, host, port, modbus_id, username, password, has_grid_meter, has_battery, battery_capacity, charge_mode FROM devices")
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
@@ -413,7 +420,8 @@ func main() {
 				var d models.Device
 				var username sql.NullString
 				var password sql.NullString
-				if err := rows.Scan(&d.ID, &d.Name, &d.Template, &d.Host, &d.Port, &d.ModbusID, &username, &password, &d.HasGridMeter, &d.HasBattery, &d.BatteryCapacity); err != nil {
+				var chargeMode sql.NullString
+				if err := rows.Scan(&d.ID, &d.Name, &d.Template, &d.Host, &d.Port, &d.ModbusID, &username, &password, &d.HasGridMeter, &d.HasBattery, &d.BatteryCapacity, &chargeMode); err != nil {
 					http.Error(w, err.Error(), http.StatusInternalServerError)
 					return
 				}
@@ -422,6 +430,9 @@ func main() {
 				}
 				if password.Valid {
 					d.Password = password.String
+				}
+				if chargeMode.Valid {
+					d.ChargeMode = chargeMode.String
 				}
 
 				// Set dynamic status if poller exists
@@ -448,7 +459,11 @@ func main() {
 				return
 			}
 
-			result, err := db.Exec("INSERT INTO devices (name, template, host, port, modbus_id, username, password, has_grid_meter, has_battery, battery_capacity) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", d.Name, d.Template, d.Host, d.Port, d.ModbusID, d.Username, d.Password, d.HasGridMeter, d.HasBattery, d.BatteryCapacity)
+			if d.ChargeMode == "" {
+				d.ChargeMode = "eco"
+			}
+
+			result, err := db.Exec("INSERT INTO devices (name, template, host, port, modbus_id, username, password, has_grid_meter, has_battery, battery_capacity, charge_mode) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", d.Name, d.Template, d.Host, d.Port, d.ModbusID, d.Username, d.Password, d.HasGridMeter, d.HasBattery, d.BatteryCapacity, d.ChargeMode)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
@@ -501,8 +516,12 @@ func main() {
 				return
 			}
 
-			_, err = db.Exec("UPDATE devices SET name = ?, template = ?, host = ?, port = ?, modbus_id = ?, username = ?, password = ?, has_grid_meter = ?, has_battery = ?, battery_capacity = ? WHERE id = ?",
-				d.Name, d.Template, d.Host, d.Port, d.ModbusID, d.Username, d.Password, d.HasGridMeter, d.HasBattery, d.BatteryCapacity, id)
+			if d.ChargeMode == "" {
+				d.ChargeMode = "eco"
+			}
+
+			_, err = db.Exec("UPDATE devices SET name = ?, template = ?, host = ?, port = ?, modbus_id = ?, username = ?, password = ?, has_grid_meter = ?, has_battery = ?, battery_capacity = ?, charge_mode = ? WHERE id = ?",
+				d.Name, d.Template, d.Host, d.Port, d.ModbusID, d.Username, d.Password, d.HasGridMeter, d.HasBattery, d.BatteryCapacity, d.ChargeMode, id)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
