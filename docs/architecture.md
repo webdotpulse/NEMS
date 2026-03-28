@@ -16,6 +16,8 @@ graph TD
     PM -->|Batched Writes| DB[(SQLite DB)]
     API <--> SC[Strategy Controller]
     SC -->|Hardware Limits| Devices
+    API <--> FM[Forecast Manager]
+    FM -->|Open-Meteo REST API| OpenMeteo[Open-Meteo Servers]
 ```
 
 ## Data Flow
@@ -37,10 +39,12 @@ graph TD
 - SQLite is configured with WAL mode (`journal_mode=WAL`), `synchronous=NORMAL`, and `temp_store=MEMORY` to further reduce disk I/O.
 
 ### 4. Strategy Execution
-- The `StrategyController` runs a background loop (every 2-10 seconds depending on load).
-- It reads the latest `deviceCache` from the `PollerManager`.
-- Based on the user's selected strategy (Eco, Flanders, Netherlands), it calculates optimal setpoints.
-- It then dispatches commands (e.g., `SetActivePowerLimit` for inverters or `SetChargeCurrent` for EV chargers) to the physical devices to enforce the strategy.
+- The `StrategyController` runs a background loop (every 2 seconds).
+- It reads the latest `deviceCache` from the `PollerManager` and categorizes the measurements using the `registry.GetCategory()` properties to aggregate composite values (`totalGridImport`, `totalSolar`).
+- Based on the user's selected strategy (Eco, Flanders, Netherlands), it calculates optimal setpoints:
+  - **Predictive Peak Shaving:** In Flanders mode, an instantaneous power allowance is dynamically calculated based on the elapsed time in the synchronized 15-minute window and the currently accumulated `avg15MinImport` energy. The EV chargers and batteries are sequentially throttled based on priority against this dynamic limit.
+  - **Dynamic Battery Arbitrage & Forecasting:** The EMS optimizes battery operation via Day-Ahead EPEX spot prices using dynamic price spreads. The `ForecastManager` evaluates shortwave radiation from the Open-Meteo API; if a high yield is forecast for the upcoming day, battery arbitrage grid-charging is actively suppressed.
+- It then safely dispatches hardware commands, immediately checking for execution errors (`err == nil`) before reflecting state updates within the internal EMS `strategyMaps`.
 
 ## Design Decisions
 

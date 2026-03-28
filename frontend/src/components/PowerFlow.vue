@@ -285,11 +285,11 @@ onMounted(() => {
   fetchDevices()
 })
 
-const gridDevices = computed(() => devices.value.filter(d => d.template === 'huawei_dongle' || d.template === 'demo_dongle' || d.template === 'p1_serial' || (d.template === 'huawei_inverter' && (d as any).has_grid_meter)))
-const solarDevices = computed(() => devices.value.filter(d => d.template === 'huawei_inverter' || d.template === 'demo_inverter'))
+const gridDevices = computed(() => devices.value.filter(d => (d as any).category === 'meter' || ((d as any).category === 'inverter' && (d as any).has_grid_meter)))
+const solarDevices = computed(() => devices.value.filter(d => (d as any).category === 'inverter'))
 const batteryDevices = computed(() => devices.value.filter(d => d.has_battery))
-const evDevices = computed(() => devices.value.filter(d => ['raedian_charger', 'demo_charger', 'alfen_charger', 'easee_charger', 'bender_charger', 'peblar_charger', 'phoenix_charger'].includes(d.template)))
-const applianceDevices = computed(() => devices.value.filter(d => d.template === 'generic_relay'))
+const evDevices = computed(() => devices.value.filter(d => (d as any).category === 'charger'))
+const applianceDevices = computed(() => devices.value.filter(d => (d as any).category === 'relay'))
 const homeLoad = computed(() => {
   if (!props.state || props.state.total_load_w === null || props.state.total_load_w === undefined) return 0
   return props.state.total_load_w - (props.state.ev_charger_power_w || 0)

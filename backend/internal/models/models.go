@@ -20,6 +20,7 @@ type Device struct {
 	ID              int     `json:"id"`
 	Name            string  `json:"name"`
 	Template        string  `json:"template"`
+	Category        string  `json:"category,omitempty"`
 	Host            string  `json:"host"`
 	Port            int     `json:"port"`
 	ModbusID        int     `json:"modbus_id"`

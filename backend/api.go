@@ -307,6 +307,8 @@ func handleDevices(w http.ResponseWriter, r *http.Request) {
 				PollerMgr.mu.Unlock()
 			}
 
+			d.Category = templates.GetCategory(d.Template)
+
 			devices = append(devices, d)
 		}
 		// ensure non-nil slice in json
