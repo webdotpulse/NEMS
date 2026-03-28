@@ -21,9 +21,14 @@
       <div v-if="activeTab === 'info'">
         <!-- System Info Section -->
         <div v-if="sysInfo" class="mb-8">
-          <h2 class="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:text-3xl sm:truncate mb-4">
-            System Info
-          </h2>
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:text-3xl sm:truncate">
+              System Info
+            </h2>
+            <button @click="rebootSystem" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
+              Reboot System
+            </button>
+          </div>
           <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg">
             <div class="px-4 py-5 sm:p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
@@ -37,6 +42,22 @@
               <div>
                 <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Netmask</dt>
                 <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ sysInfo.netmask }}</dd>
+              </div>
+              <div>
+                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Gateway</dt>
+                <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ sysInfo.gateway }}</dd>
+              </div>
+              <div>
+                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">CPU</dt>
+                <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ sysInfo.cpu }}</dd>
+              </div>
+              <div>
+                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Memory</dt>
+                <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ sysInfo.memory }}</dd>
+              </div>
+              <div>
+                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Disk</dt>
+                <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ sysInfo.disk }}</dd>
               </div>
             </div>
           </div>
@@ -838,6 +859,18 @@ const deleteDevice = async (id: number) => {
     }
   } catch (e) {
     console.error("Failed to delete device:", e)
+  }
+}
+
+const rebootSystem = async () => {
+  if (confirm("Are you sure you want to reboot the system? This will interrupt power management.")) {
+    try {
+      await fetch(`${getApiBase()}/api/system/reboot`, { method: 'POST' })
+      alert("System is rebooting. Please wait a moment and refresh the page.")
+    } catch (e) {
+      console.error("Failed to reboot system:", e)
+      alert("Failed to send reboot command.")
+    }
   }
 }
 

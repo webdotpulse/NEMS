@@ -23,6 +23,7 @@ func init() {
 			ID:   "sma_inverter",
 			Name: "SMA Inverter",
 			Type: "modbus",
+			Category: "inverter",
 		},
 		NewPoller: func(device models.Device) models.DevicePoller {
 			return &SmaInverterPoller{Device: device}

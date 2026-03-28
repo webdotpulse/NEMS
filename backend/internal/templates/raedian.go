@@ -23,6 +23,7 @@ func init() {
 			ID:   "raedian_charger",
 			Name: "Raedian EV Charger",
 			Type: "modbus",
+			Category: "charger",
 		},
 		NewPoller: func(device models.Device) models.DevicePoller {
 			return &RaedianChargerPoller{Device: device}

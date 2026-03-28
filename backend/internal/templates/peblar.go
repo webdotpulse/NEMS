@@ -23,6 +23,7 @@ func init() {
 			ID:   "peblar_charger",
 			Name: "Peblar Charger",
 			Type: "rest",
+			Category: "charger",
 		},
 		NewPoller: func(device models.Device) models.DevicePoller {
 			return &PeblarChargerPoller{Device: device}

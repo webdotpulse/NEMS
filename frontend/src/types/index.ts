@@ -63,4 +63,8 @@ export interface SystemInfo {
   hostname: string;
   ip: string;
   netmask: string;
+  gateway: string;
+  cpu: string;
+  memory: string;
+  disk: string;
 }

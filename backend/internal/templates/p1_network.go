@@ -27,6 +27,7 @@ func init() {
 			ID:   "p1_network",
 			Name: "P1 Smart Meter (Network/TCP)",
 			Type: "network",
+			Category: "meter",
 		},
 		NewPoller: func(d models.Device) models.DevicePoller {
 			return &P1NetworkPoller{Device: d, status: "offline"}

@@ -23,6 +23,7 @@ func init() {
 			ID:   "generic_relay",
 			Name: "Generic HTTP Relay",
 			Type: "rest",
+			Category: "relay",
 		},
 		NewPoller: func(device models.Device) models.DevicePoller {
 			return &GenericRelayPoller{

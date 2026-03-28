@@ -28,6 +28,7 @@ func init() {
 			ID:   "p1_serial",
 			Name: "P1 Smart Meter (USB/Serial)",
 			Type: "serial",
+			Category: "meter",
 		},
 		NewPoller: func(d models.Device) models.DevicePoller {
 			return &P1SerialPoller{Device: d, status: "offline"}
