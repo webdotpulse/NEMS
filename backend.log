@@ -1,0 +1,21 @@
+2026/03/28 00:18:59 Connected to SQLite database
+2026/03/28 00:18:59 SQLite WAL mode, synchronous=NORMAL, and temp_store=MEMORY enabled for SD card optimization
+2026/03/28 00:18:59 Database schema initialized
+2026/03/28 00:18:59 PollerManager: Syncing devices...
+2026/03/28 00:18:59 PollerManager: Added poller for device 1 (Demo Inverter)
+2026/03/28 00:18:59 PollerManager: Added poller for device 2 (Demo Charger)
+2026/03/28 00:18:59 PollerManager: Added poller for device 3 (Demo Grid Meter)
+2026/03/28 00:18:59 Starting HTTPS server on :443 (fallback to :8443)
+2026/03/28 00:18:59 Starting HTTP server on :80 (fallback to :8080)
+2026/03/28 00:18:59 Failed to bind to :443 (listen tcp :443: bind: permission denied). Trying :8443 instead.
+2026/03/28 00:18:59 Failed to bind to :80 (listen tcp :80: bind: permission denied). Trying :8080 instead.
+2026/03/28 00:19:05 Control Loop: Changing EV Charger 2 from 0.0 A to 6.0 A
+2026/03/28 00:19:07 Control Loop: Changing EV Charger 2 from 6.0 A to 9.9 A
+2026/03/28 00:19:15 Control Loop: Changing EV Charger 2 from 9.9 A to 11.7 A
+2026/03/28 00:19:17 Control Loop: Changing EV Charger 2 from 11.7 A to 13.5 A
+2026/03/28 00:19:19 Control Loop: Changing EV Charger 2 from 13.5 A to 16.0 A
+2026/03/28 00:20:11 SSE client disconnected
+2026/03/28 00:20:30 SSE client disconnected
+2026/03/28 00:20:57 SSE client disconnected
+2026/03/28 00:22:06 SSE client disconnected
+2026/03/28 00:22:29 SSE client disconnected
