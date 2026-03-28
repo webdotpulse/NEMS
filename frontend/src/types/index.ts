@@ -56,6 +56,7 @@ export interface Template {
   id: string;
   name: string;
   type: string;
+  category: string;
 }
 
 export interface SystemInfo {

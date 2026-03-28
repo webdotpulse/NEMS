@@ -1,0 +1,12 @@
+--- frontend/src/components/Settings.vue
++++ frontend/src/components/Settings.vue
+@@ -41,6 +44,9 @@
+             </div>
+           </div>
+         </div>
++      </div>
+
++      <!-- TAB: STRATEGY -->
++      <div v-if="activeTab === 'strategy'">
+         <!-- Strategy Config Section -->
+         <div class="mb-8">

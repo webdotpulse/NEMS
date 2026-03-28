@@ -135,11 +135,11 @@ func handleDailyAggregates(w http.ResponseWriter, r *http.Request) {
 		WITH minute_aggs AS (
 			SELECT
 				strftime('%Y-%m-%dT%H:%M:00Z', m.timestamp) as ts,
-				SUM(CASE WHEN d.template IN ('huawei_dongle', 'demo_dongle', 'homewizard_meter') AND m.power_w > 0 THEN m.energy_kwh ELSE 0 END) as grid_import,
-				SUM(CASE WHEN d.template IN ('huawei_dongle', 'demo_dongle', 'homewizard_meter') AND m.power_w < 0 THEN ABS(m.energy_kwh) ELSE 0 END) as grid_export,
-				SUM(CASE WHEN d.template IN ('huawei_inverter', 'solis_inverter', 'sma_inverter', 'demo_inverter') AND d.name NOT LIKE '%battery%' AND m.power_w > 0 THEN m.energy_kwh ELSE 0 END) as solar_yield,
-				SUM(CASE WHEN (d.template IN ('huawei_inverter', 'demo_inverter') AND d.name LIKE '%battery%' OR d.template = 'demo_battery') AND m.power_w < 0 THEN ABS(m.energy_kwh) ELSE 0 END) as battery_charge,
-				SUM(CASE WHEN (d.template IN ('huawei_inverter', 'demo_inverter') AND d.name LIKE '%battery%' OR d.template = 'demo_battery') AND m.power_w > 0 THEN m.energy_kwh ELSE 0 END) as battery_discharge
+				SUM(CASE WHEN (d.template IN ('huawei_dongle', 'demo_dongle', 'homewizard_meter', 'p1_serial', 'p1_network') OR (d.template = 'huawei_inverter' AND d.has_grid_meter = 1)) AND m.power_w > 0 THEN (m.power_w / 60000.0) ELSE 0 END) as grid_import,
+				SUM(CASE WHEN (d.template IN ('huawei_dongle', 'demo_dongle', 'homewizard_meter', 'p1_serial', 'p1_network') OR (d.template = 'huawei_inverter' AND d.has_grid_meter = 1)) AND m.power_w < 0 THEN ABS(m.power_w / 60000.0) ELSE 0 END) as grid_export,
+				SUM(CASE WHEN d.template IN ('huawei_inverter', 'solis_inverter', 'sma_inverter', 'demo_inverter') AND d.name NOT LIKE '%battery%' AND m.power_w > 0 THEN (m.power_w / 60000.0) ELSE 0 END) as solar_yield,
+				SUM(CASE WHEN ((d.template IN ('huawei_inverter', 'demo_inverter') AND d.name LIKE '%battery%') OR d.template = 'demo_battery') AND m.power_w < 0 THEN ABS(m.power_w / 60000.0) ELSE 0 END) as battery_charge,
+				SUM(CASE WHEN ((d.template IN ('huawei_inverter', 'demo_inverter') AND d.name LIKE '%battery%') OR d.template = 'demo_battery') AND m.power_w > 0 THEN (m.power_w / 60000.0) ELSE 0 END) as battery_discharge
 			FROM measurements m
 			JOIN devices d ON m.device_id = d.id
 			WHERE m.timestamp >= ?
@@ -265,7 +265,7 @@ func handleHistory(w http.ResponseWriter, r *http.Request) {
 				%s AS ts,
 				SUM(
 					CASE
-						WHEN d.template IN ('huawei_dongle', 'demo_dongle', 'homewizard_meter') THEN m.power_w
+						WHEN d.template IN ('huawei_dongle', 'demo_dongle', 'homewizard_meter', 'p1_serial', 'p1_network') OR (d.template = 'huawei_inverter' AND d.has_grid_meter = 1) THEN m.power_w
 						WHEN d.template IN ('huawei_inverter', 'solis_inverter', 'sma_inverter', 'demo_inverter') AND d.name NOT LIKE '%%battery%%' THEN m.power_w
 						WHEN d.template IN ('huawei_inverter', 'demo_inverter') AND d.name LIKE '%%battery%%' THEN m.power_w
 						WHEN d.template IN ('raedian_charger', 'alfen_charger', 'bender_charger', 'phoenix_charger', 'easee_charger', 'peblar_charger', 'demo_charger') THEN -m.power_w
@@ -282,7 +282,7 @@ func handleHistory(w http.ResponseWriter, r *http.Request) {
 		whereClause := ""
 		switch node {
 		case "grid":
-			whereClause = "(template IN ('huawei_dongle', 'demo_dongle', 'homewizard_meter'))"
+			whereClause = "(template IN ('huawei_dongle', 'demo_dongle', 'homewizard_meter', 'p1_serial', 'p1_network') OR (template = 'huawei_inverter' AND has_grid_meter = 1))"
 		case "solar":
 			whereClause = "(template IN ('huawei_inverter', 'solis_inverter', 'sma_inverter', 'demo_inverter') AND name NOT LIKE '%battery%')"
 		case "battery":
