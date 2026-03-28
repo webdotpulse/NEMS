@@ -67,6 +67,7 @@ func (pm *PollerManager) GetPollers() map[int]models.DevicePoller {
 	return copyPollers
 }
 
+// InitPollerManager initializes the global PollerMgr instance.
 func InitPollerManager() {
 	PollerMgr = &PollerManager{
 		pollers: make(map[int]models.DevicePoller),
@@ -76,6 +77,9 @@ func InitPollerManager() {
 	}
 }
 
+// SyncDevices fetches all active devices from the database and ensures
+// the correct DevicePoller templates are running. It creates new pollers
+// and removes outdated ones.
 func (pm *PollerManager) SyncDevices() {
 	pm.mu.Lock()
 	defer pm.mu.Unlock()
@@ -139,6 +143,10 @@ func (pm *PollerManager) SyncDevices() {
 	}
 }
 
+// Start begins the asynchronous polling loops.
+// It uses a fast 1-second ticker for smart meters (e.g. HomeWizard) and
+// a 5-second ticker for standard devices. It also starts a background
+// goroutine to flush buffered data to SQLite every minute.
 func (pm *PollerManager) Start() {
 	go func() {
 		ticker := time.NewTicker(5 * time.Second)
@@ -288,6 +296,8 @@ func (pm *PollerManager) Start() {
 	}()
 }
 
+// broadcastState aggregates all currently cached device data into a single
+// SiteState struct and broadcasts it to any connected SSE clients via GlobalStateDispatcher.
 func (pm *PollerManager) broadcastState() {
 	pm.cacheMu.Lock()
 	defer pm.cacheMu.Unlock()
@@ -384,6 +394,9 @@ func (pm *PollerManager) broadcastState() {
 	GlobalStateDispatcher.Broadcast(state)
 }
 
+// flushBuffer aggregates the 1-second/5-second in-memory power measurements
+// into a 1-minute average and flushes them to the SQLite `measurements` table
+// using a single database transaction to limit SD card wear.
 func (pm *PollerManager) flushBuffer() {
 	pm.bufferMu.Lock()
 	if len(pm.buffer) == 0 {
@@ -445,6 +458,7 @@ func (pm *PollerManager) flushBuffer() {
 	}
 }
 
+// Stop gracefully shuts down all active pollers and stops the background sync tasks.
 func (pm *PollerManager) Stop() {
 	close(pm.stopCh)
 	pm.mu.Lock()

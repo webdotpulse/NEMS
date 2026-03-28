@@ -180,8 +180,7 @@ func handleDailyAggregates(w http.ResponseWriter, r *http.Request) {
 		}
 		// Some other db error occurred
 		log.Printf("Error scanning daily aggregates: %v", err)
-		// Still return zeroed aggregates instead of failing HTTP request
-		json.NewEncoder(w).Encode(agg)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 

@@ -1,4 +1,4 @@
-# Pulse EMS (formerly NEMS)
+# Pulse EMS
 
 Pulse EMS is a lightweight, highly responsive, fully UI-driven Energy Management System (EMS) optimized for running on a Raspberry Pi. It provides real-time monitoring, historical tracking, and active control of your home energy usage—coordinating Grid, Solar, Battery, and EV Charger hardware to optimize energy consumption and reduce costs.
 
@@ -14,25 +14,6 @@ Pulse EMS is a lightweight, highly responsive, fully UI-driven Energy Management
   - *Netherlands Mode*: Zero-export constraint logic to limit solar feed-in to the grid.
 - **Dynamic Pricing**: Integrates Day-Ahead EPEX spot prices for smart scheduling of EV charging and home battery operation.
 - **Supported Device Integrations**: Modbus TCP and REST API support for various manufacturers, including Huawei, Raedian, Solis, SMA, Alfen, Easee, and more.
-
----
-
-## Project Structure
-
-The repository is organized into a monorepo structure:
-
-- `backend/`: Contains the Go application.
-  - `main.go`: Entry point, HTTP server setup, and SQLite initialization.
-  - `poller.go`: Device data acquisition via `DevicePoller` interfaces and background synchronization.
-  - `state.go`: SSE (Server-Sent Events) live streaming and time-series history aggregation.
-  - `strategy.go`: Core logic loop for evaluating and executing energy optimization rules.
-  - `internal/`: Domain models and hardware-specific device integration templates.
-- `frontend/`: Contains the Vue 3 / TypeScript UI.
-  - `src/components/`: Core UI cards, the `PowerFlow` hero graphic, and device configuration forms.
-  - `src/types/`: Shared TypeScript interface definitions.
-- `docs/`: Architectural documentation.
-
----
 
 ## Prerequisites & Installation
 
@@ -84,8 +65,6 @@ The repository is organized into a monorepo structure:
    sudo systemctl start nems.service
    ```
 
----
-
 ## Usage
 
 Once the Pulse EMS service is running, it automatically serves both the JSON API and the frontend SPA on port `8080`.
@@ -110,3 +89,19 @@ Once the Pulse EMS service is running, it automatically serves both the JSON API
 4. **Applying Strategies:**
    - In the **Settings** view, locate the "Site Optimization" section.
    - Select an Optimization Strategy (like *Eco* or *Netherlands Mode*) and configure associated parameters like Grid Nominal Current or Allowed Export limits to enable autonomous hardware control.
+
+## Project Structure
+
+The repository is organized into a monorepo structure:
+
+- `backend/`: Contains the Go application.
+  - `main.go`: Entry point, HTTP server setup, and SQLite initialization.
+  - `api.go`: Houses the API HTTP handlers.
+  - `poller.go`: Device data acquisition via `DevicePoller` interfaces and background synchronization.
+  - `state.go`: SSE (Server-Sent Events) live streaming and time-series history aggregation.
+  - `strategy.go`: Core logic loop for evaluating and executing energy optimization rules.
+  - `internal/`: Domain models and hardware-specific device integration templates.
+- `frontend/`: Contains the Vue 3 / TypeScript UI.
+  - `src/components/`: Core UI cards, the `PowerFlow` hero graphic, and device configuration forms.
+  - `src/types/`: Shared TypeScript interface definitions.
+- `docs/`: Architectural documentation.

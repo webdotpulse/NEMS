@@ -18,6 +18,7 @@ var StrategyCtrl *StrategyController
 // Assuming a global map to track charger setpoints for simulation purposes.
 // In a real application, the charger poller should return its current setpoint,
 // or it should be persisted in a database or device state.
+var strategyMapsMu sync.Mutex
 var chargerCurrentSetpoints = make(map[int]float64)
 var batteryForceChargeW = make(map[int]float64)
 var evSmartChargeActive = make(map[int]bool)
@@ -49,12 +50,16 @@ var isCachedCheapestHour bool = false
 var lastPricingCacheUpdate time.Time
 var lastSettingsForPricing models.SiteSettings
 
+// InitStrategyController initializes the global StrategyCtrl instance.
 func InitStrategyController() {
 	StrategyCtrl = &StrategyController{
 		stopCh: make(chan struct{}),
 	}
 }
 
+// updatePricingCache fetches the current hour's EPEX spot price and determines
+// if the current hour is among the 'N' cheapest hours of the day (for Smart EV logic).
+// This reduces SQLite read operations during the 2-second control loop.
 func (sc *StrategyController) updatePricingCache(settings models.SiteSettings) {
 	loc, _ := time.LoadLocation("Europe/Amsterdam")
 	now := time.Now().In(loc)
@@ -95,6 +100,8 @@ func (sc *StrategyController) updatePricingCache(settings models.SiteSettings) {
 	lastSettingsForPricing = settings
 }
 
+// Start kicks off a background goroutine that polls the site settings
+// and executes the core energy optimization loop every 2 seconds.
 func (sc *StrategyController) Start() {
 	go func() {
 		ticker := time.NewTicker(2 * time.Second)
@@ -143,6 +150,10 @@ func (sc *StrategyController) Start() {
 	}()
 }
 
+// executeControlLoop calculates global site state based on current device metrics.
+// It evaluates priority logic (Smart EV Charging, Arbitrage, Excess Solar Routing, Flanders Peak Shaving)
+// and issues commands to controllable hardware (Chargers, Batteries, Inverters, Relays).
+// Modifications to the `strategyMaps` are protected via `strategyMapsMu` to ensure thread safety.
 func (sc *StrategyController) executeControlLoop(settings models.SiteSettings) {
 	cache := PollerMgr.GetDeviceCache()
 	pollers := PollerMgr.GetPollers()
@@ -254,7 +265,9 @@ func (sc *StrategyController) executeControlLoop(settings models.SiteSettings) {
 	for id, poller := range pollers {
 		if _, ok := poller.(models.ChargeController); ok {
 			dev := poller.GetDevice()
+			strategyMapsMu.Lock()
 			currentSetpoint, exists := chargerCurrentSetpoints[id]
+			strategyMapsMu.Unlock()
 			if !exists {
 				// Estimate current setpoint if unknown
 				if cache[id].PowerW > 1000 {
@@ -262,7 +275,9 @@ func (sc *StrategyController) executeControlLoop(settings models.SiteSettings) {
 				} else {
 					currentSetpoint = 0.0
 				}
+				strategyMapsMu.Lock()
 				chargerCurrentSetpoints[id] = currentSetpoint
+				strategyMapsMu.Unlock()
 			}
 
 			// Start with current setpoint
@@ -461,17 +476,21 @@ func (sc *StrategyController) executeControlLoop(settings models.SiteSettings) {
 	// Issue EV Charger Commands
 	for id, desiredSp := range desiredEvSetpoints {
 		if charger, ok := pollers[id].(models.ChargeController); ok {
+			strategyMapsMu.Lock()
 			currentSp := chargerCurrentSetpoints[id]
+			strategyMapsMu.Unlock()
 			if currentSp != desiredSp {
 				log.Printf("Control Loop: Changing EV Charger %d from %.1f A to %.1f A", id, currentSp, desiredSp)
 				err := charger.SetChargeCurrent(desiredSp)
 				if err == nil {
+					strategyMapsMu.Lock()
 					chargerCurrentSetpoints[id] = desiredSp
 					if desiredSp > 0 && isCachedCheapestHour {
 						evSmartChargeActive[id] = true
 					} else if desiredSp == 0 {
 						evSmartChargeActive[id] = false
 					}
+					strategyMapsMu.Unlock()
 				}
 			}
 		}
@@ -500,7 +519,9 @@ func (sc *StrategyController) executeControlLoop(settings models.SiteSettings) {
 			dev := poller.GetDevice()
 			if dev.HasBattery {
 				desiredChargeW := desiredBatteryForceChargeW[id]
+				strategyMapsMu.Lock()
 				lastChargeW, exists := batteryForceChargeW[id]
+				strategyMapsMu.Unlock()
 
 				if !exists || desiredChargeW != lastChargeW {
 					if desiredChargeW > 0 {
@@ -510,7 +531,9 @@ func (sc *StrategyController) executeControlLoop(settings models.SiteSettings) {
 						log.Printf("Control Loop: Stopping Battery Force Charge for %d", id)
 						battery.ChargeBattery(0)
 					}
+					strategyMapsMu.Lock()
 					batteryForceChargeW[id] = desiredChargeW
+					strategyMapsMu.Unlock()
 				}
 
 				// Handle discharge if needed (Flanders peak shave)
@@ -526,6 +549,9 @@ func (sc *StrategyController) executeControlLoop(settings models.SiteSettings) {
 	}
 }
 
+// applyNetherlandsMode evaluates zero-export constraints.
+// It attempts to sink any excess solar back into home storage or EV chargers.
+// If storage is full and EVs are not charging, it will curtail inverter production to exactly match house load.
 func (sc *StrategyController) applyNetherlandsMode(activeCurtailment bool) {
 	cache := PollerMgr.GetDeviceCache()
 	pollers := PollerMgr.GetPollers()
@@ -560,7 +586,9 @@ func (sc *StrategyController) applyNetherlandsMode(activeCurtailment bool) {
 		// Action 1: Ramp up EV Chargers
 		for id, poller := range pollers {
 			if charger, ok := poller.(models.ChargeController); ok {
+				strategyMapsMu.Lock()
 				currentSetpoint, exists := chargerCurrentSetpoints[id]
+				strategyMapsMu.Unlock()
 				if !exists {
 					currentSetpoint = 0.0
 				}
@@ -578,7 +606,9 @@ func (sc *StrategyController) applyNetherlandsMode(activeCurtailment bool) {
 					if newSetpoint > currentSetpoint {
 						log.Printf("Netherlands Mode: Ramping up charger %d current from %.1f A to %.1f A to sink export", id, currentSetpoint, newSetpoint)
 						charger.SetChargeCurrent(newSetpoint)
+						strategyMapsMu.Lock()
 						chargerCurrentSetpoints[id] = newSetpoint
+						strategyMapsMu.Unlock()
 
 						reductionW := (newSetpoint - currentSetpoint) * 230.0
 						totalGridExport -= reductionW
@@ -650,6 +680,7 @@ func (sc *StrategyController) applyNetherlandsMode(activeCurtailment bool) {
 	}
 }
 
+// Stop safely shuts down the strategy evaluation background task.
 func (sc *StrategyController) Stop() {
 	close(sc.stopCh)
 }
