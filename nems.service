@@ -12,7 +12,7 @@ ExecStart=/opt/nems/nems-server
 Restart=always
 RestartSec=5
 # Adjust these based on the security context
-NoNewPrivileges=yes
+NoNewPrivileges=no
 PrivateTmp=yes
 ProtectSystem=full
 

@@ -1,5 +1,5 @@
 <template>
-  <div class="w-full flex justify-center items-center py-8">
+  <div class="w-full flex justify-center items-center">
     <div class="relative w-full h-[460px] bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
 
       <!-- SVG paths for animated power flow lines -->
@@ -8,7 +8,7 @@
 
         <!-- Static Background Lines (Direct Routing) -->
         <!-- Center line (Grid to Home) -->
-        <path v-for="(device, index) in gridDevices" :key="'static-grid-center-'+device.id" :d="`M 50 ${15 - (index * 10 - (gridDevices.length-1)*5)} L 50 85`" vector-effect="non-scaling-stroke" stroke-linecap="round" fill="none" stroke="#E5E7EB" stroke-width="2" />
+        <path v-for="(device, index) in gridDevices" :key="'static-grid-center-'+device.id" :d="`M 50 ${20 - (index * 10 - (gridDevices.length-1)*5)} L 50 85`" vector-effect="non-scaling-stroke" stroke-linecap="round" fill="none" stroke="#E5E7EB" stroke-width="2" />
 
         <!-- Solar -> Center -->
         <path v-for="(device, index) in solarDevices" :key="'static-solar-center-'+device.id" :d="`M ${85 - (index * 15 - (solarDevices.length-1)*7.5)} 50 L 50 50`" vector-effect="non-scaling-stroke" stroke-linecap="round" fill="none" stroke="#E5E7EB" stroke-width="2" />
@@ -42,7 +42,7 @@
 
         <!-- Grid (Top) -->
         <template v-for="(device, index) in gridDevices" :key="device.id">
-          <div class="absolute flex flex-col items-center justify-center transform -translate-x-1/2 -translate-y-1/2" :style="`left: 50%; top: ${15 - (index * 10 - (gridDevices.length-1)*5)}%;`">
+          <div class="absolute flex flex-col items-center justify-center transform -translate-x-1/2 -translate-y-1/2" :style="`left: 50%; top: ${20 - (index * 10 - (gridDevices.length-1)*5)}%;`">
             <div @click="openChart('grid')" class="z-10 flex flex-col items-center justify-center w-28 h-28 bg-white dark:bg-gray-800 rounded-full border-[4px] border-[#3B82F6] shadow-sm cursor-pointer hover:scale-105 transition-transform mb-2 relative">
               <span class="text-xs font-medium text-gray-500 mb-1 absolute -top-6">Grid</span>
               <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-700 dark:text-gray-300 mb-1" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z"/><path d="m13 6-6 7h4v5l6-7h-4z"/></svg>
@@ -127,11 +127,12 @@
             <div @click="openChart('ev_charger')" class="z-10 flex flex-col items-center justify-center w-28 h-28 bg-white dark:bg-gray-800 rounded-full border-[4px] border-[#A855F7] shadow-sm cursor-pointer hover:scale-105 transition-transform mb-2 relative">
               <span class="text-xs font-medium text-gray-500 mb-1 absolute -top-6">EV Charger</span>
               <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-700 dark:text-gray-300 mb-1" fill="currentColor" viewBox="0 0 24 24"><path d="m20.772 10.156-1.368-4.105A2.995 2.995 0 0 0 16.559 4H7.441a2.995 2.995 0 0 0-2.845 2.051l-1.368 4.105A2.003 2.003 0 0 0 2 12v5c0 .753.423 1.402 1.039 1.743-.013.066-.039.126-.039.195V21a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-2h12v2a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-2.062c0-.069-.026-.13-.039-.195A1.993 1.993 0 0 0 22 17v-5c0-.829-.508-1.541-1.228-1.844zM4 17v-5h16l.002 5H4zM7.441 6h9.117c.431 0 .813.274.949.684L18.613 10H5.387l1.105-3.316A1 1 0 0 1 7.441 6z"/><circle cx="6.5" cy="14.5" r="1.5"/><circle cx="17.5" cy="14.5" r="1.5"/></svg>
-              <div class="text-gray-800 dark:text-gray-200 text-sm font-medium">
+              <div class="text-gray-800 dark:text-gray-200 text-sm font-medium flex flex-col items-center">
                 <span v-if="state?.ev_charger_power_w !== null && state?.ev_charger_power_w !== undefined">
                   {{ formatPowerSimple(state.ev_charger_power_w / evDevices.length) }}
                 </span>
                 <span v-else>0.0 kW</span>
+                <span class="text-[10px] font-bold text-purple-600 uppercase mt-0.5">{{ device.charge_mode || 'ECO' }}</span>
               </div>
               <select @change="setEvModeDevice(device, ($event.target as HTMLSelectElement).value)" class="text-xs mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded pointer-events-auto shadow-sm absolute -bottom-8" @click.stop>
                 <option value="off" :selected="device.charge_mode === 'off'">Off</option>
@@ -401,7 +402,7 @@ const activeSegments = computed<Segment[]>(() => {
         }
         else if (targetType === 'grid') {
             gridDevices.value.forEach((gd, gdIndex) => {
-                 const targetY = 15 - (gdIndex * 10 - (gridDevices.value.length-1)*5);
+                 const targetY = 20 - (gdIndex * 10 - (gridDevices.value.length-1)*5);
                  path = `M ${startX} 50 L 50 50 L 50 ${targetY}`;
                  segments.push({
                    id: `solar-${targetType}-${d.id}-${gd.id}`,
@@ -435,7 +436,7 @@ const activeSegments = computed<Segment[]>(() => {
         }
         else if (targetType === 'grid') {
              gridDevices.value.forEach((gd, gdIndex) => {
-                 const targetY = 15 - (gdIndex * 10 - (gridDevices.value.length-1)*5);
+                 const targetY = 20 - (gdIndex * 10 - (gridDevices.value.length-1)*5);
                  path = `M ${startX} 50 L 50 50 L 50 ${targetY}`;
                  segments.push({
                    id: `battery-${targetType}-${d.id}-${gd.id}`,
@@ -453,7 +454,7 @@ const activeSegments = computed<Segment[]>(() => {
     } else if (sourceType === 'grid') {
       gridDevices.value.forEach((d, index) => {
         let path = '';
-        const startY = 15 - (index * 10 - (gridDevices.value.length-1)*5);
+        const startY = 20 - (index * 10 - (gridDevices.value.length-1)*5);
         // Grid -> Center(50,50) -> Target
         if (targetType === 'home') path = `M 50 ${startY} L 50 85`;
         else if (targetType === 'ev') {
