@@ -13,10 +13,10 @@ type DemoInverterPoller struct {
 func init() {
 	Register(Template{
 		Metadata: TemplateMetadata{
-			ID:   "demo_inverter",
-			Name: "Demo Inverter",
-			Type: "demo",
-			Category: "demo",
+			ID:       "demo_inverter",
+			Name:     "Demo Inverter",
+			Type:     "demo",
+			Category: "inverter",
 		},
 		NewPoller: func(device models.Device) models.DevicePoller {
 			return &DemoInverterPoller{Device: device}
@@ -24,10 +24,10 @@ func init() {
 	})
 	Register(Template{
 		Metadata: TemplateMetadata{
-			ID:   "demo_dongle",
-			Name: "Demo Grid Meter",
-			Type: "demo",
-			Category: "demo",
+			ID:       "demo_dongle",
+			Name:     "Demo Grid Meter",
+			Type:     "demo",
+			Category: "meter",
 		},
 		NewPoller: func(device models.Device) models.DevicePoller {
 			return &DemoDonglePoller{Device: device}
@@ -35,10 +35,10 @@ func init() {
 	})
 	Register(Template{
 		Metadata: TemplateMetadata{
-			ID:   "demo_charger",
-			Name: "Demo EV Charger",
-			Type: "demo",
-			Category: "demo",
+			ID:       "demo_charger",
+			Name:     "Demo EV Charger",
+			Type:     "demo",
+			Category: "charger",
 		},
 		NewPoller: func(device models.Device) models.DevicePoller {
 			return &DemoChargerPoller{Device: device}
@@ -46,10 +46,10 @@ func init() {
 	})
 	Register(Template{
 		Metadata: TemplateMetadata{
-			ID:   "demo_battery",
-			Name: "Demo Battery",
-			Type: "demo",
-			Category: "demo",
+			ID:       "demo_battery",
+			Name:     "Demo Battery",
+			Type:     "demo",
+			Category: "battery",
 		},
 		NewPoller: func(device models.Device) models.DevicePoller {
 			return &DemoBatteryPoller{Device: device}

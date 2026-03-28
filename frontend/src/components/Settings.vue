@@ -5,14 +5,14 @@
       <!-- Tabs -->
       <div class="border-b border-gray-200 dark:border-gray-700 mb-8">
         <nav class="-mb-px flex space-x-8" aria-label="Tabs">
-          <button @click="activeTab = 'info'" :class="[activeTab === 'info' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300', 'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors']">
-            System Info
-          </button>
           <button @click="activeTab = 'strategy'" :class="[activeTab === 'strategy' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300', 'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors']">
             Strategy
           </button>
           <button @click="activeTab = 'devices'" :class="[activeTab === 'devices' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300', 'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors']">
             Devices
+          </button>
+          <button @click="activeTab = 'info'" :class="[activeTab === 'info' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300', 'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors']">
+            System Info
           </button>
         </nav>
       </div>
@@ -229,51 +229,6 @@
                   </div>
                 </div>
 
-              </div>
-            </div>
-
-            <!-- Grid Connection Card -->
-            <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg mb-6">
-              <div class="px-4 py-5 sm:p-6">
-                <div class="mb-4 border-b border-gray-200 dark:border-gray-700 pb-4">
-                  <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-gray-100">
-                    Grid Connection
-                  </h3>
-                </div>
-                <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-                  <div class="sm:col-span-3">
-                    <label for="grid_nominal_current_a" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nominal Current (A)</label>
-                    <div class="mt-1">
-                      <input type="number" step="0.1" id="grid_nominal_current_a" v-model="siteSettings.grid_nominal_current_a" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
-                    </div>
-                  </div>
-
-                  <div class="sm:col-span-3">
-                    <label for="grid_system" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Grid System</label>
-                    <div class="mt-1">
-                      <select id="grid_system" v-model="siteSettings.grid_system"
-                              class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                        <option value="single_phase_230v">Single Phase 230V</option>
-                        <option value="three_phase_400v">Three Phase 400V</option>
-                        <option value="three_phase_230v_delta">Three Phase 230V Delta</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div class="sm:col-span-3">
-                    <label for="allowed_grid_import_kw" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Allowed Grid Import (kW)</label>
-                    <div class="mt-1">
-                      <input type="number" step="0.1" id="allowed_grid_import_kw" v-model="siteSettings.allowed_grid_import_kw" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
-                    </div>
-                  </div>
-
-                  <div class="sm:col-span-3">
-                    <label for="allowed_grid_export_kw" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Allowed Grid Export (kW)</label>
-                    <div class="mt-1">
-                      <input type="number" step="0.1" id="allowed_grid_export_kw" v-model="siteSettings.allowed_grid_export_kw" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
 
@@ -611,7 +566,7 @@ import CloudRestTemplate from './templates/CloudRestTemplate.vue'
 import P1SerialTemplate from './templates/P1SerialTemplate.vue'
 import P1NetworkTemplate from './templates/P1NetworkTemplate.vue'
 
-const activeTab = ref('info')
+const activeTab = ref('strategy')
 
 const sysInfo = ref<SystemInfo | null>(null)
 

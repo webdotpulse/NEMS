@@ -21,9 +21,10 @@ type GenericModbusChargerPoller struct {
 func init() {
 	Register(Template{
 		Metadata: TemplateMetadata{
-			ID:   "alfen_charger",
-			Name: "Alfen Charger",
-			Type: "modbus",
+			ID:       "alfen_charger",
+			Name:     "Alfen Charger",
+			Type:     "modbus",
+			Category: "charger",
 		},
 		NewPoller: func(device models.Device) models.DevicePoller {
 			return &GenericModbusChargerPoller{Device: device, Prefix: "AlfenChargerPoller"}
@@ -31,9 +32,10 @@ func init() {
 	})
 	Register(Template{
 		Metadata: TemplateMetadata{
-			ID:   "bender_charger",
-			Name: "Bender Charger",
-			Type: "modbus",
+			ID:       "bender_charger",
+			Name:     "Bender Charger",
+			Type:     "modbus",
+			Category: "charger",
 		},
 		NewPoller: func(device models.Device) models.DevicePoller {
 			return &GenericModbusChargerPoller{Device: device, Prefix: "BenderChargerPoller"}
@@ -41,9 +43,10 @@ func init() {
 	})
 	Register(Template{
 		Metadata: TemplateMetadata{
-			ID:   "phoenix_charger",
-			Name: "Phoenix Contact Charx Charger",
-			Type: "modbus",
+			ID:       "phoenix_charger",
+			Name:     "Phoenix Contact Charx Charger",
+			Type:     "modbus",
+			Category: "charger",
 		},
 		NewPoller: func(device models.Device) models.DevicePoller {
 			return &GenericModbusChargerPoller{Device: device, Prefix: "PhoenixChargerPoller"}

@@ -20,9 +20,10 @@ type HuaweiInverterPoller struct {
 func init() {
 	Register(Template{
 		Metadata: TemplateMetadata{
-			ID:   "huawei_inverter",
-			Name: "Huawei Hybrid Inverter",
-			Type: "modbus",
+			ID:       "huawei_inverter",
+			Name:     "Huawei Hybrid Inverter",
+			Type:     "modbus",
+			Category: "inverter",
 		},
 		NewPoller: func(device models.Device) models.DevicePoller {
 			return &HuaweiInverterPoller{Device: device}
