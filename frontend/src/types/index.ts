@@ -7,6 +7,7 @@ export interface Device {
   modbus_id: number;
   username?: string;
   password?: string;
+  charge_mode?: string;
   status?: string;
   has_grid_meter?: boolean;
   has_battery?: boolean;
@@ -23,6 +24,9 @@ export interface SiteSettings {
   grid_system: string;
   allowed_grid_import_kw: number;
   allowed_grid_export_kw: number;
+  appliance_turn_on_excess_w: number;
+  peak_shaving_buffer_w: number;
+  peak_shaving_rampup_w: number;
 }
 
 export interface SiteState {

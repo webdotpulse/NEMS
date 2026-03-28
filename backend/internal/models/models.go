@@ -10,6 +10,9 @@ type SiteSettings struct {
 	GridSystem                string  `json:"grid_system"`
 	AllowedGridImportKw       float64 `json:"allowed_grid_import_kw"`
 	AllowedGridExportKw       float64 `json:"allowed_grid_export_kw"`
+	ApplianceTurnOnExcessW    float64 `json:"appliance_turn_on_excess_w"`
+	PeakShavingBufferW        float64 `json:"peak_shaving_buffer_w"`
+	PeakShavingRampupW        float64 `json:"peak_shaving_rampup_w"`
 }
 
 type Device struct {
@@ -21,6 +24,7 @@ type Device struct {
 	ModbusID        int     `json:"modbus_id"`
 	Username        string  `json:"username,omitempty"`
 	Password        string  `json:"password,omitempty"`
+	ChargeMode      string  `json:"charge_mode,omitempty"`
 	Status          string  `json:"status"`
 	HasGridMeter    bool    `json:"has_grid_meter"`
 	HasBattery      bool    `json:"has_battery"`
@@ -46,4 +50,8 @@ type BatteryController interface {
 
 type InverterController interface {
 	SetActivePowerLimit(powerW float64) error
+}
+
+type RelayController interface {
+	SetState(on bool) error
 }

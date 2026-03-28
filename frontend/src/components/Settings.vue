@@ -57,6 +57,22 @@
                   </div>
                 </div>
 
+                <div v-if="siteSettings.strategy_mode === 'flanders'" class="sm:col-span-3">
+                  <label for="peak_shaving_buffer_w" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Peak Shaving Buffer (W)</label>
+                  <div class="mt-1">
+                    <input type="number" step="1" min="0" id="peak_shaving_buffer_w" v-model="siteSettings.peak_shaving_buffer_w"
+                           class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                  </div>
+                </div>
+
+                <div v-if="siteSettings.strategy_mode === 'flanders'" class="sm:col-span-3">
+                  <label for="peak_shaving_rampup_w" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Ramp-up Hysteresis (W)</label>
+                  <div class="mt-1">
+                    <input type="number" step="1" min="0" id="peak_shaving_rampup_w" v-model="siteSettings.peak_shaving_rampup_w"
+                           class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                  </div>
+                </div>
+
                 <div v-if="siteSettings.strategy_mode === 'netherlands'" class="sm:col-span-3 flex items-center pt-6">
                   <input id="active_inverter_curtailment" type="checkbox" v-model="siteSettings.active_inverter_curtailment"
                          class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600" />
@@ -68,6 +84,29 @@
               </div>
 
               </div>
+        </div>
+
+        <!-- Appliance Control Card -->
+        <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg mb-6">
+          <div class="px-4 py-5 sm:p-6">
+            <div class="mb-4 border-b border-gray-200 dark:border-gray-700 pb-4">
+              <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-gray-100">
+                Appliance Control
+              </h3>
+              <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                Configure when to turn on Smart Plugs or Generic Relays to sink excess solar power. Set to 0 to disable.
+              </p>
+            </div>
+
+            <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+              <div class="sm:col-span-6">
+                <label for="appliance_turn_on_excess_w" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Turn on Relays above Solar Excess (W)</label>
+                <div class="mt-1">
+                  <input type="number" step="1" min="0" id="appliance_turn_on_excess_w" v-model="siteSettings.appliance_turn_on_excess_w" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Dynamic Tariffs Card -->
@@ -246,6 +285,20 @@
                 <CloudRestTemplate v-model="editForm" prefix="edit_" />
               </template>
 
+              <!-- EV Charger Mode Selection -->
+              <div v-if="isCharger(editForm.template)" class="sm:col-span-3">
+                <label for="edit_charge_mode" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Charge Mode</label>
+                <div class="mt-1">
+                  <select id="edit_charge_mode" v-model="editForm.charge_mode"
+                          class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    <option value="eco">Eco / Smart</option>
+                    <option value="pv_only">PV Only (Solar)</option>
+                    <option value="now">Fast (Max Power)</option>
+                    <option value="off">Off</option>
+                  </select>
+                </div>
+              </div>
+
               <!-- Conditional Fields for Huawei Hybrid Inverter Combo -->
               <template v-if="editForm.template === 'huawei_inverter'">
                 <div class="sm:col-span-6 border-t border-gray-200 dark:border-gray-700 pt-4 mt-2">
@@ -337,6 +390,20 @@
                   <CloudRestTemplate v-model="form" />
                 </template>
 
+                <!-- EV Charger Mode Selection -->
+                <div v-if="isCharger(form.template)" class="sm:col-span-3">
+                  <label for="charge_mode" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Charge Mode</label>
+                  <div class="mt-1">
+                    <select id="charge_mode" v-model="form.charge_mode"
+                            class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                      <option value="eco">Eco / Smart</option>
+                      <option value="pv_only">PV Only (Solar)</option>
+                      <option value="now">Fast (Max Power)</option>
+                      <option value="off">Off</option>
+                    </select>
+                  </div>
+                </div>
+
                 <!-- Conditional Fields for Huawei Hybrid Inverter Combo -->
                 <template v-if="form.template === 'huawei_inverter'">
                   <div class="sm:col-span-6 border-t border-gray-200 dark:border-gray-700 pt-4 mt-2">
@@ -412,7 +479,8 @@ const form = ref({
   password: '',
   has_grid_meter: false,
   has_battery: false,
-  battery_capacity: 0
+  battery_capacity: 0,
+  charge_mode: 'eco'
 })
 
 const editingDevice = ref<Device | null>(null)
@@ -427,7 +495,8 @@ const editForm = ref({
   password: '',
   has_grid_meter: false,
   has_battery: false,
-  battery_capacity: 0
+  battery_capacity: 0,
+  charge_mode: 'eco'
 })
 
 const siteSettings = ref<SiteSettings>({
@@ -439,7 +508,10 @@ const siteSettings = ref<SiteSettings>({
   grid_nominal_current_a: 25.0,
   grid_system: 'single_phase_230v',
   allowed_grid_import_kw: 0.0,
-  allowed_grid_export_kw: 0.0
+  allowed_grid_export_kw: 0.0,
+  appliance_turn_on_excess_w: 0.0,
+  peak_shaving_buffer_w: 200.0,
+  peak_shaving_rampup_w: 500.0
 })
 const saveSettingsSuccess = ref(false)
 
@@ -493,6 +565,10 @@ const fetchDevices = async () => {
   }
 }
 
+const isCharger = (templateId: string) => {
+  return templateId.includes('charger')
+}
+
 const getTemplateName = (id: string) => {
   const t = templates.value.find(t => t.id === id)
   return t ? t.name : id
@@ -520,7 +596,8 @@ const addDevice = async () => {
         password: '',
         has_grid_meter: false,
         has_battery: false,
-        battery_capacity: 0
+        battery_capacity: 0,
+        charge_mode: 'eco'
       }
       await fetchDevices()
     }
@@ -537,7 +614,8 @@ const editDevice = (device: Device) => {
     password: device.password || '',
     has_grid_meter: device.has_grid_meter || false,
     has_battery: device.has_battery || false,
-    battery_capacity: device.battery_capacity || 0
+    battery_capacity: device.battery_capacity || 0,
+    charge_mode: device.charge_mode || 'eco'
   }
 }
 

@@ -81,8 +81,8 @@ func (sc *StrategyController) Start() {
 			select {
 			case <-ticker.C:
 				var settings models.SiteSettings
-				row := db.QueryRow("SELECT strategy_mode, capacity_peak_limit_kw, active_inverter_curtailment, force_charge_below_euro, smart_ev_cheapest_hours FROM site_settings WHERE id = 1")
-				err := row.Scan(&settings.StrategyMode, &settings.CapacityPeakLimitKw, &settings.ActiveInverterCurtailment, &settings.ForceChargeBelowEuro, &settings.SmartEvCheapestHours)
+				row := db.QueryRow("SELECT strategy_mode, capacity_peak_limit_kw, active_inverter_curtailment, force_charge_below_euro, smart_ev_cheapest_hours, appliance_turn_on_excess_w, peak_shaving_buffer_w, peak_shaving_rampup_w FROM site_settings WHERE id = 1")
+				err := row.Scan(&settings.StrategyMode, &settings.CapacityPeakLimitKw, &settings.ActiveInverterCurtailment, &settings.ForceChargeBelowEuro, &settings.SmartEvCheapestHours, &settings.ApplianceTurnOnExcessW, &settings.PeakShavingBufferW, &settings.PeakShavingRampupW)
 				if err != nil {
 					if err == sql.ErrNoRows {
 						settings = models.SiteSettings{
@@ -91,6 +91,9 @@ func (sc *StrategyController) Start() {
 							ActiveInverterCurtailment: false,
 							ForceChargeBelowEuro: 0.0,
 							SmartEvCheapestHours: 0,
+							ApplianceTurnOnExcessW: 0.0,
+							PeakShavingBufferW: 200.0,
+							PeakShavingRampupW: 500.0,
 						}
 					} else {
 						log.Printf("StrategyController: Error fetching site settings: %v", err)
@@ -166,7 +169,11 @@ func (sc *StrategyController) executeControlLoop(settings models.SiteSettings) {
 					// If we are in Flanders mode, available capacity is threshold - current import
 					// If not Flanders, we can just command max available (100000)
 					if settings.StrategyMode == "flanders" {
-						threshold := (settings.CapacityPeakLimitKw * 1000) - 200
+						buffer := settings.PeakShavingBufferW
+						if buffer == 0 {
+							buffer = 200 // Default fallback
+						}
+						threshold := (settings.CapacityPeakLimitKw * 1000) - buffer
 						// Add current battery charge power back to available capacity calculation
 						// because if it is currently charging, that power is already included in totalGridImport
 						currentChargePower := cache[id].BatteryPowerW
@@ -189,6 +196,7 @@ func (sc *StrategyController) executeControlLoop(settings models.SiteSettings) {
 	// Smart EV Charging Intent
 	for id, poller := range pollers {
 		if _, ok := poller.(models.ChargeController); ok {
+			dev := poller.GetDevice()
 			currentSetpoint, exists := chargerCurrentSetpoints[id]
 			if !exists {
 				// Estimate current setpoint if unknown
@@ -203,22 +211,37 @@ func (sc *StrategyController) executeControlLoop(settings models.SiteSettings) {
 			// Start with current setpoint
 			desiredEvSetpoints[id] = currentSetpoint
 
-			if settings.SmartEvCheapestHours > 0 {
-				if isCachedCheapestHour {
-					// If cheapest hour, gently ramp up to max
-					if desiredEvSetpoints[id] < 16.0 {
-						newSetpoint := desiredEvSetpoints[id] + 1.0
-						if newSetpoint < 6.0 && desiredEvSetpoints[id] == 0 {
-							newSetpoint = 6.0
+			chargeMode := dev.ChargeMode
+			if chargeMode == "" {
+				chargeMode = "eco"
+			}
+
+			if chargeMode == "off" {
+				desiredEvSetpoints[id] = 0.0
+			} else if chargeMode == "now" {
+				desiredEvSetpoints[id] = 16.0
+			} else if chargeMode == "pv_only" || chargeMode == "eco" {
+				// Default behavior for Smart EV
+				if chargeMode == "eco" && settings.SmartEvCheapestHours > 0 {
+					if isCachedCheapestHour {
+						// If cheapest hour, gently ramp up to max
+						if desiredEvSetpoints[id] < 16.0 {
+							newSetpoint := desiredEvSetpoints[id] + 1.0
+							if newSetpoint < 6.0 && desiredEvSetpoints[id] == 0 {
+								newSetpoint = 6.0
+							}
+							if newSetpoint > 16.0 {
+								newSetpoint = 16.0
+							}
+							desiredEvSetpoints[id] = newSetpoint
 						}
-						if newSetpoint > 16.0 {
-							newSetpoint = 16.0
-						}
-						desiredEvSetpoints[id] = newSetpoint
+					} else {
+						// Outside cheapest hours, block grid charging by aggressively dropping to 0
+						// unless overridden by solar routing later
+						desiredEvSetpoints[id] = 0.0
 					}
-				} else {
-					// Outside cheapest hours, block grid charging by aggressively dropping to 0
-					// unless overridden by solar routing later
+				} else if chargeMode == "pv_only" {
+					// PV only blocks all non-solar charging
 					desiredEvSetpoints[id] = 0.0
 				}
 			}
@@ -229,6 +252,12 @@ func (sc *StrategyController) executeControlLoop(settings models.SiteSettings) {
 	// If there is excess solar, sink it into EVs regardless of the strategy mode.
 	if totalGridExport > 0 {
 		for id := range desiredEvSetpoints {
+			dev := pollers[id].GetDevice()
+			chargeMode := dev.ChargeMode
+			if chargeMode == "off" || chargeMode == "now" {
+				continue // Skip routing for Off/Now
+			}
+
 			if desiredEvSetpoints[id] < 16.0 {
 				ampsToAdd := totalGridExport / 230.0
 				newSetpoint := desiredEvSetpoints[id] + ampsToAdd
@@ -253,7 +282,15 @@ func (sc *StrategyController) executeControlLoop(settings models.SiteSettings) {
 	// Step 4: Apply Strategy Overrides (Flanders / Netherlands)
 
 	if settings.StrategyMode == "flanders" {
-		threshold := (settings.CapacityPeakLimitKw * 1000) - 200
+		buffer := settings.PeakShavingBufferW
+		if buffer == 0 {
+			buffer = 200
+		}
+		threshold := (settings.CapacityPeakLimitKw * 1000) - buffer
+		rampup := settings.PeakShavingRampupW
+		if rampup == 0 {
+			rampup = 500
+		}
 
 		// Check if our current (or intended) load exceeds threshold
 		// We use current grid import to determine excess
@@ -308,7 +345,7 @@ func (sc *StrategyController) executeControlLoop(settings models.SiteSettings) {
 					}
 				}
 			}
-		} else if totalGridImport < threshold - 500 {
+		} else if totalGridImport < threshold - rampup {
 			// When house load drops, slowly ramp EV chargers UP if they were throttled
 			// (If they are 0 because of SmartEV blocking, do not ramp up)
 			for id, currentSp := range desiredEvSetpoints {
@@ -378,6 +415,21 @@ func (sc *StrategyController) executeControlLoop(settings models.SiteSettings) {
 						evSmartChargeActive[id] = false
 					}
 				}
+			}
+		}
+	}
+
+	// Issue Relay Commands
+	for _, poller := range pollers {
+		if relay, ok := poller.(models.RelayController); ok {
+			if settings.ApplianceTurnOnExcessW > 0 {
+				if totalGridExport > settings.ApplianceTurnOnExcessW {
+					relay.SetState(true)
+				} else {
+					relay.SetState(false)
+				}
+			} else {
+				relay.SetState(false)
 			}
 		}
 	}
