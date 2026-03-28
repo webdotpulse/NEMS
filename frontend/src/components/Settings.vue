@@ -25,9 +25,14 @@
             <h2 class="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:text-3xl sm:truncate">
               System Info
             </h2>
-            <button @click="rebootSystem" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
-              Reboot System
-            </button>
+            <div class="flex gap-4">
+              <button @click="resetDatabase" class="inline-flex items-center px-4 py-2 border border-red-500 text-sm font-medium rounded-md shadow-sm text-red-500 bg-transparent hover:bg-red-50 dark:hover:bg-red-900/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
+                Reset Database
+              </button>
+              <button @click="rebootSystem" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
+                Reboot System
+              </button>
+            </div>
           </div>
           <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg">
             <div class="px-4 py-5 sm:p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -96,6 +101,19 @@
                         <option value="single_phase_230v">Single Phase 230V</option>
                         <option value="three_phase_400v">Three Phase 400V</option>
                         <option value="three_phase_230v_delta">Three Phase 230V Delta</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="sm:col-span-3">
+                    <label for="timezone" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Time Zone</label>
+                    <div class="mt-1">
+                      <select id="timezone" v-model="siteSettings.timezone"
+                              class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        <option value="UTC">UTC</option>
+                        <option value="Europe/Brussels">Europe/Brussels</option>
+                        <option value="Europe/London">Europe/London</option>
+                        <option value="America/New_York">America/New_York</option>
                       </select>
                     </div>
                   </div>
@@ -281,6 +299,7 @@
                       </h4>
                       <div class="mt-2 max-w-xl text-sm text-gray-500 dark:text-gray-400">
                         <p><strong>Template:</strong> {{ getTemplateName(device.template) }}</p>
+                        <p><strong>Vendor:</strong> {{ getTemplateVendor(device.template) }}</p>
                         <p v-if="device.host"><strong>Host:</strong> {{ device.host }}:{{ device.port }}</p>
                         <p v-if="device.modbus_id"><strong>Modbus ID:</strong> {{ device.modbus_id }}</p>
                       </div>
@@ -642,7 +661,8 @@ const siteSettings = ref<SiteSettings>({
   allowed_grid_export_kw: 0.0,
   appliance_turn_on_excess_w: 0.0,
   peak_shaving_buffer_w: 200.0,
-  peak_shaving_rampup_w: 500.0
+  peak_shaving_rampup_w: 500.0,
+  timezone: 'Europe/Brussels'
 })
 const saveSettingsSuccess = ref(false)
 
@@ -738,6 +758,11 @@ const getTemplateName = (id: string) => {
   return t ? t.name : id
 }
 
+const getTemplateVendor = (id: string) => {
+  const t = templates.value.find(t => t.id === id)
+  return t ? t.vendor : 'Unknown'
+}
+
 const addDevice = async () => {
   try {
     const res = await fetch(`${getApiBase()}/api/devices`, {
@@ -830,6 +855,23 @@ const rebootSystem = async () => {
     } catch (e) {
       console.error("Failed to reboot system:", e)
       alert("Failed to send reboot command.")
+    }
+  }
+}
+
+const resetDatabase = async () => {
+  if (confirm("WARNING: Are you sure you want to reset the database? This is irreversible and will delete all measurements and configured devices!")) {
+    try {
+      const res = await fetch(`${getApiBase()}/api/system/reset-db`, { method: 'POST' })
+      if (res.ok) {
+        alert("Database has been reset. The page will now reload.")
+        window.location.reload()
+      } else {
+        alert("Failed to reset database.")
+      }
+    } catch (e) {
+      console.error("Failed to reset database:", e)
+      alert("Failed to send reset command.")
     }
   }
 }

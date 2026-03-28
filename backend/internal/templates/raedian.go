@@ -22,6 +22,7 @@ func init() {
 		Metadata: TemplateMetadata{
 			ID:   "raedian_charger",
 			Name: "Raedian EV Charger",
+			Vendor: "Raedian",
 			Type: "modbus",
 			Category: "charger",
 		},

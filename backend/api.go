@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net"
 	"net/http"
 	"os"
@@ -20,6 +21,12 @@ import (
 // handleLogs is the HTTP handler for the /api/logs endpoint.
 func handleLogs(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+	if r.Method == "DELETE" {
+		logBuffer.ClearLogs()
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"status": "cleared"}`))
+		return
+	}
 	logs := logBuffer.GetLogs()
 	json.NewEncoder(w).Encode(logs)
 }
@@ -133,6 +140,41 @@ func handleSystemInfo(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(info)
 }
 
+// handleSystemResetDb is the HTTP handler for the /api/system/reset-db endpoint.
+func handleSystemResetDb(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	_, err := db.Exec("DELETE FROM measurements")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	_, err = db.Exec("DELETE FROM devices")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	_, err = db.Exec("UPDATE site_settings SET strategy_mode='eco', capacity_peak_limit_kw=2.5, active_inverter_curtailment=0, force_charge_below_euro=0.0, force_discharge_above_euro=999.0, smart_ev_cheapest_hours=0, grid_nominal_current_a=25.0, grid_system='single_phase_230v', allowed_grid_import_kw=0.0, allowed_grid_export_kw=0.0, appliance_turn_on_excess_w=0.0, peak_shaving_buffer_w=200.0, peak_shaving_rampup_w=500.0")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if PollerMgr != nil {
+		PollerMgr.SyncDevices()
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"status": "database reset"}`))
+}
+
 // handleSystemReboot is the HTTP handler for the /api/system/reboot endpoint.
 func handleSystemReboot(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
@@ -147,7 +189,10 @@ func handleSystemReboot(w http.ResponseWriter, r *http.Request) {
 	// Give the HTTP response time to be sent before rebooting
 	go func() {
 		time.Sleep(2 * time.Second)
-		_ = exec.Command("sudo", "reboot").Run()
+		out, err := exec.Command("sudo", "reboot").CombinedOutput()
+		if err != nil {
+			log.Printf("Reboot failed: %v, output: %s", err, string(out))
+		}
 	}()
 }
 
@@ -203,9 +248,9 @@ func handleTariffsToday(w http.ResponseWriter, r *http.Request) {
 func handleSettings(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	if r.Method == "GET" {
-		row := db.QueryRow("SELECT strategy_mode, capacity_peak_limit_kw, active_inverter_curtailment, force_charge_below_euro, force_discharge_above_euro, smart_ev_cheapest_hours, grid_nominal_current_a, grid_system, allowed_grid_import_kw, allowed_grid_export_kw, appliance_turn_on_excess_w, peak_shaving_buffer_w, peak_shaving_rampup_w FROM site_settings WHERE id = 1")
+		row := db.QueryRow("SELECT strategy_mode, capacity_peak_limit_kw, active_inverter_curtailment, force_charge_below_euro, force_discharge_above_euro, smart_ev_cheapest_hours, grid_nominal_current_a, grid_system, allowed_grid_import_kw, allowed_grid_export_kw, appliance_turn_on_excess_w, peak_shaving_buffer_w, peak_shaving_rampup_w, timezone FROM site_settings WHERE id = 1")
 		var settings models.SiteSettings
-		err := row.Scan(&settings.StrategyMode, &settings.CapacityPeakLimitKw, &settings.ActiveInverterCurtailment, &settings.ForceChargeBelowEuro, &settings.ForceDischargeAboveEuro, &settings.SmartEvCheapestHours, &settings.GridNominalCurrentA, &settings.GridSystem, &settings.AllowedGridImportKw, &settings.AllowedGridExportKw, &settings.ApplianceTurnOnExcessW, &settings.PeakShavingBufferW, &settings.PeakShavingRampupW)
+		err := row.Scan(&settings.StrategyMode, &settings.CapacityPeakLimitKw, &settings.ActiveInverterCurtailment, &settings.ForceChargeBelowEuro, &settings.ForceDischargeAboveEuro, &settings.SmartEvCheapestHours, &settings.GridNominalCurrentA, &settings.GridSystem, &settings.AllowedGridImportKw, &settings.AllowedGridExportKw, &settings.ApplianceTurnOnExcessW, &settings.PeakShavingBufferW, &settings.PeakShavingRampupW, &settings.Timezone)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				// Fallback
@@ -223,6 +268,7 @@ func handleSettings(w http.ResponseWriter, r *http.Request) {
 					ApplianceTurnOnExcessW:    0.0,
 					PeakShavingBufferW:        200.0,
 					PeakShavingRampupW:        500.0,
+					Timezone:                  "Europe/Brussels",
 				}
 				json.NewEncoder(w).Encode(settings)
 				return
@@ -238,8 +284,12 @@ func handleSettings(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		_, err := db.Exec("UPDATE site_settings SET strategy_mode = ?, capacity_peak_limit_kw = ?, active_inverter_curtailment = ?, force_charge_below_euro = ?, force_discharge_above_euro = ?, smart_ev_cheapest_hours = ?, grid_nominal_current_a = ?, grid_system = ?, allowed_grid_import_kw = ?, allowed_grid_export_kw = ?, appliance_turn_on_excess_w = ?, peak_shaving_buffer_w = ?, peak_shaving_rampup_w = ? WHERE id = 1",
-			settings.StrategyMode, settings.CapacityPeakLimitKw, settings.ActiveInverterCurtailment, settings.ForceChargeBelowEuro, settings.ForceDischargeAboveEuro, settings.SmartEvCheapestHours, settings.GridNominalCurrentA, settings.GridSystem, settings.AllowedGridImportKw, settings.AllowedGridExportKw, settings.ApplianceTurnOnExcessW, settings.PeakShavingBufferW, settings.PeakShavingRampupW)
+		if settings.Timezone == "" {
+			settings.Timezone = "Europe/Brussels"
+		}
+
+		_, err := db.Exec("UPDATE site_settings SET strategy_mode = ?, capacity_peak_limit_kw = ?, active_inverter_curtailment = ?, force_charge_below_euro = ?, force_discharge_above_euro = ?, smart_ev_cheapest_hours = ?, grid_nominal_current_a = ?, grid_system = ?, allowed_grid_import_kw = ?, allowed_grid_export_kw = ?, appliance_turn_on_excess_w = ?, peak_shaving_buffer_w = ?, peak_shaving_rampup_w = ?, timezone = ? WHERE id = 1",
+			settings.StrategyMode, settings.CapacityPeakLimitKw, settings.ActiveInverterCurtailment, settings.ForceChargeBelowEuro, settings.ForceDischargeAboveEuro, settings.SmartEvCheapestHours, settings.GridNominalCurrentA, settings.GridSystem, settings.AllowedGridImportKw, settings.AllowedGridExportKw, settings.ApplianceTurnOnExcessW, settings.PeakShavingBufferW, settings.PeakShavingRampupW, settings.Timezone)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

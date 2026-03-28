@@ -22,6 +22,7 @@ func init() {
 		Metadata: TemplateMetadata{
 			ID:   "homewizard_meter",
 			Name: "HomeWizard Meter",
+			Vendor: "HomeWizard",
 			Type: "rest",
 			Category: "meter",
 		},

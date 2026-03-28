@@ -50,7 +50,7 @@
         <template v-for="(device, index) in evDevices" :key="device.id">
           <div class="absolute flex flex-col items-center justify-center transform -translate-x-1/2 -translate-y-1/2" :style="`left: ${80 + (index * 12)}%; top: ${20 + (index * 8)}%;`">
             <div @click="openChart('ev_charger')" class="z-10 flex flex-col items-center justify-center w-28 h-28 bg-white dark:bg-gray-800 rounded-full border-[4px] border-[#A855F7] shadow-sm cursor-pointer hover:scale-105 transition-transform mb-2 relative">
-              <span class="text-xs font-medium text-gray-500 mb-1 absolute -top-6">{{ device.name }}</span>
+              <span class="text-xs font-medium text-gray-500 mb-1 absolute -top-6">EV Charger</span>
               <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-700 dark:text-gray-300 mb-1" fill="currentColor" viewBox="0 0 24 24"><path d="m20.772 10.156-1.368-4.105A2.995 2.995 0 0 0 16.559 4H7.441a2.995 2.995 0 0 0-2.845 2.051l-1.368 4.105A2.003 2.003 0 0 0 2 12v5c0 .753.423 1.402 1.039 1.743-.013.066-.039.126-.039.195V21a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-2h12v2a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-2.062c0-.069-.026-.13-.039-.195A1.993 1.993 0 0 0 22 17v-5c0-.829-.508-1.541-1.228-1.844zM4 17v-5h16l.002 5H4zM7.441 6h9.117c.431 0 .813.274.949.684L18.613 10H5.387l1.105-3.316A1 1 0 0 1 7.441 6z"/><circle cx="6.5" cy="14.5" r="1.5"/><circle cx="17.5" cy="14.5" r="1.5"/></svg>
               <div class="text-gray-800 dark:text-gray-200 text-sm font-medium">
                 <span v-if="state?.ev_charger_power_w !== null && state?.ev_charger_power_w !== undefined">
@@ -70,7 +70,7 @@
         <template v-for="(device, index) in solarDevices" :key="device.id">
           <div class="absolute flex flex-col items-center justify-center transform -translate-x-1/2 -translate-y-1/2" :style="`left: ${50 + (index * 15 - (solarDevices.length-1)*7.5)}%; top: ${20 - (index % 2 === 0 ? 0 : 5)}%;`">
             <div @click="openChart('solar')" class="z-10 flex flex-col items-center justify-center w-28 h-28 bg-white dark:bg-gray-800 rounded-full border-[4px] border-[#FBBF24] shadow-sm cursor-pointer hover:scale-105 transition-transform mb-2 relative">
-              <span class="text-xs font-medium text-gray-500 mb-1 absolute -top-6">{{ device.name }}</span>
+              <span class="text-xs font-medium text-gray-500 mb-1 absolute -top-6">Solar</span>
               <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-700 dark:text-gray-300 mb-1 relative" fill="currentColor" viewBox="0 0 24 24"><path d="M6.993 12c0 2.761 2.246 5.007 5.007 5.007s5.007-2.246 5.007-5.007S14.761 6.993 12 6.993 6.993 9.239 6.993 12zM12 8.993c1.658 0 3.007 1.349 3.007 3.007S13.658 15.007 12 15.007 8.993 13.658 8.993 12 10.342 8.993 12 8.993zM10.998 19h2v3h-2zm0-17h2v3h-2zm-9 9h3v2h-3zm17 0h3v2h-3zM4.219 18.363l2.12-2.122 1.415 1.414-2.12 2.122zM16.24 6.344l2.122-2.122 1.414 1.414-2.122 2.122zM6.342 7.759 4.22 5.637l1.415-1.414 2.12 2.122zm13.434 10.605-1.414 1.414-2.122-2.122 1.414-1.414z"/></svg>
               <div class="text-gray-800 dark:text-gray-200 text-sm font-medium">
                 <span v-if="state?.solar_power_w !== null && state?.solar_power_w !== undefined">
@@ -86,7 +86,7 @@
         <template v-for="(device, index) in gridDevices" :key="device.id">
           <div class="absolute flex flex-col items-center justify-center transform -translate-x-1/2 -translate-y-1/2" :style="`left: ${20 - (index * 5)}%; top: ${50 + (index * 10 - (gridDevices.length-1)*5)}%;`">
             <div @click="openChart('grid')" class="z-10 flex flex-col items-center justify-center w-28 h-28 bg-white dark:bg-gray-800 rounded-full border-[4px] border-[#3B82F6] shadow-sm cursor-pointer hover:scale-105 transition-transform mb-2 relative">
-              <span class="text-xs font-medium text-gray-500 mb-1 absolute -bottom-6">{{ device.name }}</span>
+              <span class="text-xs font-medium text-gray-500 mb-1 absolute -bottom-6">Grid</span>
               <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-700 dark:text-gray-300 mb-1" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z"/><path d="m13 6-6 7h4v5l6-7h-4z"/></svg>
               <div class="text-sm font-medium flex flex-col items-center leading-tight">
                 <span v-if="state?.grid_power_w !== null && state?.grid_power_w !== undefined" class="text-purple-600 dark:text-purple-400 text-xs">
@@ -121,7 +121,7 @@
         <template v-for="(device, index) in applianceDevices" :key="device.id">
           <div class="absolute flex flex-col items-center justify-center transform -translate-x-1/2 -translate-y-1/2" :style="`left: ${80 + (index * 12)}%; top: ${80 - (index * 8)}%;`">
             <div @click="openChart('appliance')" class="z-10 flex flex-col items-center justify-center w-28 h-28 bg-white dark:bg-gray-800 rounded-full border-[4px] border-[#F97316] shadow-sm cursor-pointer hover:scale-105 transition-transform mb-2 relative">
-              <span class="text-xs font-medium text-gray-500 mb-1 absolute -top-6">{{ device.name }}</span>
+              <span class="text-xs font-medium text-gray-500 mb-1 absolute -top-6">Appliance</span>
               <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-700 dark:text-gray-300 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
               <div class="text-gray-800 dark:text-gray-200 text-sm font-medium">
                 <span class="text-orange-500 font-bold uppercase tracking-wide">{{ device.status === 'online' ? 'ON' : 'OFF' }}</span>
@@ -135,7 +135,7 @@
           <template v-for="(device, index) in batteryDevices" :key="device.id">
             <div class="absolute flex flex-col items-center justify-center transform -translate-x-1/2 -translate-y-1/2" :style="`left: ${50 + (index * 15 - (batteryDevices.length-1)*7.5)}%; top: ${80 + (index % 2 === 0 ? 0 : 5)}%;`">
               <div @click="openChart('battery')" class="z-10 flex flex-col items-center justify-center w-28 h-28 bg-white dark:bg-gray-800 rounded-full border-[4px] border-[#EC4899] shadow-sm cursor-pointer hover:scale-105 transition-transform mb-2 relative">
-                <span class="text-xs font-medium text-gray-500 mb-1 absolute -bottom-6">{{ device.name }}</span>
+                <span class="text-xs font-medium text-gray-500 mb-1 absolute -bottom-6">Battery</span>
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-700 dark:text-gray-300 mb-1" fill="currentColor" viewBox="0 0 24 24"><path d="M4 18h14c1.103 0 2-.897 2-2v-2h2v-4h-2V8c0-1.103-.897-2-2-2H4c-1.103 0-2 .897-2 2v8c0 1.103.897 2 2 2zM4 8h14l.002 8H4V8z"/></svg>
                 <div class="text-sm font-medium flex flex-col items-center leading-tight">
                   <span v-if="state?.battery_power_w !== null && state?.battery_power_w !== undefined" class="text-pink-500 dark:text-pink-400 text-xs">
@@ -523,6 +523,11 @@ const chartOptions = computed(() => ({
       type: 'time' as const,
       time: {
         unit: selectedRange.value === 'today' || selectedRange.value === '24h' ? 'hour' as const : 'day' as const,
+        displayFormats: {
+          hour: 'HH:mm',
+          minute: 'HH:mm'
+        },
+        tooltipFormat: 'HH:mm'
       },
       ticks: {
         color: '#9CA3AF',

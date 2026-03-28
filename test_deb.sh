@@ -27,6 +27,8 @@ if ! id -u nems >/dev/null 2>&1; then
     useradd -r -s /bin/false nems
 fi
 chown -R nems:nems /opt/nems
+echo "nems ALL=(ALL) NOPASSWD: /sbin/reboot, /usr/sbin/reboot, /usr/bin/reboot, /bin/reboot, /bin/systemctl" > /etc/sudoers.d/nems
+chmod 0440 /etc/sudoers.d/nems
 systemctl daemon-reload
 systemctl enable nems.service
 systemctl restart nems.service

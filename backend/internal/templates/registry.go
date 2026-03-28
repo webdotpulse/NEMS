@@ -11,6 +11,7 @@ type TemplateMetadata struct {
 	Name     string `json:"name"`
 	Type     string `json:"type"` // "modbus", "rest", "cloud", "cloud_rest", "demo"
 	Category string `json:"category"`
+	Vendor   string `json:"vendor"`
 }
 
 type Template struct {

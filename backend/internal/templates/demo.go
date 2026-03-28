@@ -15,6 +15,7 @@ func init() {
 		Metadata: TemplateMetadata{
 			ID:       "demo_inverter",
 			Name:     "Demo Inverter",
+			Vendor:   "Generic",
 			Type:     "demo",
 			Category: "inverter",
 		},
@@ -37,6 +38,7 @@ func init() {
 		Metadata: TemplateMetadata{
 			ID:       "demo_charger",
 			Name:     "Demo EV Charger",
+			Vendor:   "Generic",
 			Type:     "demo",
 			Category: "charger",
 		},
@@ -48,6 +50,7 @@ func init() {
 		Metadata: TemplateMetadata{
 			ID:       "demo_battery",
 			Name:     "Demo Battery",
+			Vendor:   "Generic",
 			Type:     "demo",
 			Category: "battery",
 		},

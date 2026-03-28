@@ -22,6 +22,7 @@ func init() {
 		Metadata: TemplateMetadata{
 			ID:   "sma_inverter",
 			Name: "SMA Inverter",
+			Vendor: "SMA",
 			Type: "modbus",
 			Category: "inverter",
 		},
