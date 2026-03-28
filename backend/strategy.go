@@ -166,23 +166,23 @@ func (sc *StrategyController) executeControlLoop(settings models.SiteSettings) {
 	var totalEvCharger float64
 
 	for _, data := range cache {
-		if data.Template == "homewizard_meter" || data.Template == "demo_dongle" {
+		if data.Category == "meter" {
 			if data.GridPowerW > 0 {
 				totalGridImport += data.GridPowerW
 			} else {
 				totalGridExport += -data.GridPowerW
 			}
-		} else if data.Template == "huawei_inverter" || data.Template == "solis_inverter" || data.Template == "sma_inverter" || data.Template == "demo_inverter" {
+		} else if data.Category == "inverter" {
 			totalSolar += data.PowerW
 			totalBattery += data.BatteryPowerW
-			if data.Template == "huawei_inverter" && data.HasGridMeter {
+			if data.HasGridMeter {
 				if data.GridPowerW > 0 {
 					totalGridImport += data.GridPowerW
 				} else {
 					totalGridExport += -data.GridPowerW
 				}
 			}
-		} else if data.Template == "raedian_charger" || data.Template == "demo_charger" || data.Template == "alfen_charger" || data.Template == "easee_charger" || data.Template == "bender_charger" || data.Template == "peblar_charger" || data.Template == "phoenix_charger" {
+		} else if data.Category == "charger" {
 			totalEvCharger += data.PowerW
 		}
 	}
@@ -491,6 +491,8 @@ func (sc *StrategyController) executeControlLoop(settings models.SiteSettings) {
 						evSmartChargeActive[id] = false
 					}
 					strategyMapsMu.Unlock()
+				} else {
+					log.Printf("Control Loop: Failed to execute EV charger command for %d: %v", id, err)
 				}
 			}
 		}
@@ -524,16 +526,22 @@ func (sc *StrategyController) executeControlLoop(settings models.SiteSettings) {
 				strategyMapsMu.Unlock()
 
 				if !exists || desiredChargeW != lastChargeW {
+					var err error
 					if desiredChargeW > 0 {
 						log.Printf("Control Loop: Setting Battery Force Charge for %d to %.1f W", id, desiredChargeW)
-						battery.ChargeBattery(desiredChargeW)
+						err = battery.ChargeBattery(desiredChargeW)
 					} else if exists && lastChargeW > 0 {
 						log.Printf("Control Loop: Stopping Battery Force Charge for %d", id)
-						battery.ChargeBattery(0)
+						err = battery.ChargeBattery(0)
 					}
-					strategyMapsMu.Lock()
-					batteryForceChargeW[id] = desiredChargeW
-					strategyMapsMu.Unlock()
+
+					if err == nil {
+						strategyMapsMu.Lock()
+						batteryForceChargeW[id] = desiredChargeW
+						strategyMapsMu.Unlock()
+					} else {
+						log.Printf("Control Loop: Failed to execute battery charge command for %d: %v", id, err)
+					}
 				}
 
 				// Handle discharge if needed (Flanders peak shave)
@@ -542,7 +550,10 @@ func (sc *StrategyController) executeControlLoop(settings models.SiteSettings) {
 					// For simplicity we just issue discharge command if requested,
 					// assuming the poller handles throttling or repeated commands fine,
 					// or we could track last discharge command.
-					battery.DischargeBattery(dischargeW)
+					err := battery.DischargeBattery(dischargeW)
+					if err != nil {
+						log.Printf("Control Loop: Failed to execute battery discharge command for %d: %v", id, err)
+					}
 				}
 			}
 		}
@@ -562,15 +573,15 @@ func (sc *StrategyController) applyNetherlandsMode(activeCurtailment bool) {
 	totalEvCharger := 0.0
 
 	for _, data := range cache {
-		if data.Template == "homewizard_meter" || data.Template == "demo_dongle" {
+		if data.Category == "meter" {
 			totalGrid += data.GridPowerW
-		} else if data.Template == "huawei_inverter" || data.Template == "solis_inverter" || data.Template == "sma_inverter" || data.Template == "demo_inverter" {
+		} else if data.Category == "inverter" {
 			totalSolar += data.PowerW
 			totalBattery += data.BatteryPowerW
-			if data.Template == "huawei_inverter" && data.HasGridMeter {
+			if data.HasGridMeter {
 				totalGrid += data.GridPowerW
 			}
-		} else if data.Template == "raedian_charger" || data.Template == "demo_charger" || data.Template == "alfen_charger" || data.Template == "easee_charger" || data.Template == "bender_charger" || data.Template == "peblar_charger" || data.Template == "phoenix_charger" {
+		} else if data.Category == "charger" {
 			totalEvCharger += data.PowerW
 		}
 	}
