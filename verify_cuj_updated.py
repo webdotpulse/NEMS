@@ -1,55 +1,33 @@
+import time
 from playwright.sync_api import sync_playwright
 
 def run_cuj(page):
-    # Navigate to app
+    # Navigate to the dashboard
     page.goto("http://localhost:5173")
+    page.wait_for_timeout(2000)
+
+    # Navigate to settings page
+    page.get_by_text("Settings", exact=True).click()
     page.wait_for_timeout(1000)
 
-    # 1. Navigate to Settings
-    page.get_by_role("link", name="Settings").click()
+    # Click on "Devices" tab
+    page.get_by_text("Devices", exact=True).click()
     page.wait_for_timeout(1000)
 
-    # Check the System Info tab for the new reboot button
-    page.screenshot(path="/home/jules/verification/screenshots/settings_system_info.png")
-    page.wait_for_timeout(500)
-
-    # 2. Check Add Device Category Cards
-    page.get_by_role("button", name="Devices").click()
-    page.wait_for_timeout(1000)
-
-    # Scroll to add device section
+    # Scroll down to Add Device
     page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
     page.wait_for_timeout(1000)
 
-    # Take screenshot of category cards
-    page.screenshot(path="/home/jules/verification/screenshots/add_device_categories.png")
-
-    # Select category Inverter
-    page.locator('div').filter(has_text='Inverter / Solar').last.click()
+    # Take screenshot of the add device categories
+    page.screenshot(path="/home/jules/verification/screenshots/settings_devices.png")
     page.wait_for_timeout(1000)
-
-    # Take screenshot of the filtered form showing inverters
-    page.screenshot(path="/home/jules/verification/screenshots/add_device_inverters.png")
-
-    # 3. Check Network Scanner
-    page.get_by_role("link", name="Scanner").click()
-    page.wait_for_timeout(1000)
-
-    page.get_by_role("button", name="Start Scan").click()
-    page.wait_for_timeout(4000) # Give it some time to scan
-
-    # Take screenshot of the scanner results (vendor column)
-    page.screenshot(path="/home/jules/verification/screenshots/scanner_vendor.png")
-
 
 if __name__ == "__main__":
-    import os
-    os.makedirs("/home/jules/verification/videos", exist_ok=True)
-    os.makedirs("/home/jules/verification/screenshots", exist_ok=True)
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         context = browser.new_context(
-            record_video_dir="/home/jules/verification/videos"
+            record_video_dir="/home/jules/verification/videos",
+            viewport={"width": 1280, "height": 800}
         )
         page = context.new_page()
         try:

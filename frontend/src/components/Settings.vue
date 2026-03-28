@@ -337,7 +337,7 @@
                            @click="selectCategory(cat.id)"
                            class="cursor-pointer border-2 rounded-lg p-4 flex flex-col items-center justify-center transition-all hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
                            :class="selectedCategory === cat.id ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'">
-                        <i :class="cat.icon + ' text-3xl mb-2 ' + cat.color"></i>
+                        <div v-html="cat.svg" class="w-8 h-8 mb-2" :class="cat.color"></div>
                         <span class="text-sm font-medium text-gray-900 dark:text-white">{{ cat.name }}</span>
                       </div>
                     </div>
@@ -346,7 +346,7 @@
                   <!-- Reset Category Button & Category Info -->
                   <div class="sm:col-span-6 flex items-center justify-between" v-if="selectedCategory">
                     <div class="flex items-center">
-                      <i :class="currentCategoryObj?.icon + ' text-xl mr-2 ' + currentCategoryObj?.color"></i>
+                      <div v-html="currentCategoryObj?.svg" class="w-6 h-6 mr-2" :class="currentCategoryObj?.color"></div>
                       <span class="text-md font-medium text-gray-900 dark:text-white">Adding: {{ currentCategoryObj?.name }}</span>
                     </div>
                     <button type="button" @click="resetCategory" class="text-sm text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300">
@@ -591,11 +591,11 @@ const sysInfo = ref<SystemInfo | null>(null)
 
 const selectedCategory = ref<string | null>(null)
 const deviceCategories = [
-  { id: 'inverter', name: 'Inverter / Solar', icon: 'bx bx-sun', color: 'text-yellow-500' },
-  { id: 'charger', name: 'EV Charger', icon: 'bx bx-car', color: 'text-purple-500' },
-  { id: 'meter', name: 'Smart Meter', icon: 'bx bx-tachometer', color: 'text-blue-500' },
-  { id: 'battery', name: 'Battery', icon: 'bx bx-battery', color: 'text-green-500' },
-  { id: 'relay', name: 'Relay / Switch', icon: 'bx bx-toggle-right', color: 'text-orange-500' }
+  { id: 'inverter', name: 'Inverter / Solar', svg: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M6.993 12c0 2.761 2.246 5.007 5.007 5.007s5.007-2.246 5.007-5.007S14.761 6.993 12 6.993 6.993 9.239 6.993 12zM12 8.993c1.658 0 3.007 1.349 3.007 3.007S13.658 15.007 12 15.007 8.993 13.658 8.993 12 10.342 8.993 12 8.993zM10.998 19h2v3h-2zm0-17h2v3h-2zm-9 9h3v2h-3zm17 0h3v2h-3zM4.219 18.363l2.12-2.122 1.415 1.414-2.12 2.122zM16.24 6.344l2.122-2.122 1.414 1.414-2.122 2.122zM6.342 7.759 4.22 5.637l1.415-1.414 2.12 2.122zm13.434 10.605-1.414 1.414-2.122-2.122 1.414-1.414z"/></svg>', color: 'text-yellow-500' },
+  { id: 'charger', name: 'EV Charger', svg: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="m20.772 10.156-1.368-4.105A2.995 2.995 0 0 0 16.559 4H7.441a2.995 2.995 0 0 0-2.845 2.051l-1.368 4.105A2.003 2.003 0 0 0 2 12v5c0 .753.423 1.402 1.039 1.743-.013.066-.039.126-.039.195V21a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-2h12v2a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-2.062c0-.069-.026-.13-.039-.195A1.993 1.993 0 0 0 22 17v-5c0-.829-.508-1.541-1.228-1.844zM4 17v-5h16l.002 5H4zM7.441 6h9.117c.431 0 .813.274.949.684L18.613 10H5.387l1.105-3.316A1 1 0 0 1 7.441 6z"/><circle cx="6.5" cy="14.5" r="1.5"/><circle cx="17.5" cy="14.5" r="1.5"/></svg>', color: 'text-purple-500' },
+  { id: 'meter', name: 'Smart Meter', svg: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z"/><path d="m13 6-6 7h4v5l6-7h-4z"/></svg>', color: 'text-blue-500' },
+  { id: 'battery', name: 'Battery', svg: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M16 7h-2V6c0-1.103-.897-2-2-2h-4c-1.103 0-2 .897-2 2v1H4c-1.103 0-2 .897-2 2v10c0 1.103.897 2 2 2h12c1.103 0 2-.897 2-2V9c0-1.103-.897-2-2-2zM8 6h4v1H8V6zm8 13H4V9h12v10z"/><rect width="2" height="6" x="19" y="11"/></svg>', color: 'text-green-500' },
+  { id: 'relay', name: 'Relay / Switch', svg: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M16 7H8c-2.757 0-5 2.243-5 5s2.243 5 5 5h8c2.757 0 5-2.243 5-5s-2.243-5-5-5zM8 15c-1.654 0-3-1.346-3-3s1.346-3 3-3 3 1.346 3 3-1.346 3-3 3z"/></svg>', color: 'text-orange-500' }
 ]
 const currentCategoryObj = computed(() => deviceCategories.find(c => c.id === selectedCategory.value) || null)
 const filteredTemplates = computed(() => {

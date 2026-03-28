@@ -184,17 +184,23 @@ func (pm *PollerManager) Start() {
 						}
 
 						pm.cacheMu.Lock()
-						pm.deviceCache[id] = DeviceData{
-							PowerW:        0,
-							BatteryPowerW: 0,
-							GridPowerW:    0,
-							EnergyKwh:     0, // Note: energy is cumulative, but for live display, power is what matters. Energy is only used for history averaging, which we handle by not buffering on error.
-							Soc:           0,
-							Status:        poller.Status(),
-							Template:      device.Template,
-							Category:      category,
-							HasGridMeter:  device.HasGridMeter,
-							HasBattery:    device.HasBattery,
+						oldData, exists := pm.deviceCache[id]
+						if exists {
+							oldData.Status = poller.Status()
+							pm.deviceCache[id] = oldData
+						} else {
+							pm.deviceCache[id] = DeviceData{
+								PowerW:        0,
+								BatteryPowerW: 0,
+								GridPowerW:    0,
+								EnergyKwh:     0,
+								Soc:           0,
+								Status:        poller.Status(),
+								Template:      device.Template,
+								Category:      category,
+								HasGridMeter:  device.HasGridMeter,
+								HasBattery:    device.HasBattery,
+							}
 						}
 						pm.cacheMu.Unlock()
 						continue
@@ -254,17 +260,23 @@ func (pm *PollerManager) Start() {
 						}
 
 						pm.cacheMu.Lock()
-						pm.deviceCache[id] = DeviceData{
-							PowerW:        0,
-							BatteryPowerW: 0,
-							GridPowerW:    0,
-							EnergyKwh:     0,
-							Soc:           0,
-							Status:        poller.Status(),
-							Template:      device.Template,
-							Category:      category,
-							HasGridMeter:  device.HasGridMeter,
-							HasBattery:    device.HasBattery,
+						oldData, exists := pm.deviceCache[id]
+						if exists {
+							oldData.Status = poller.Status()
+							pm.deviceCache[id] = oldData
+						} else {
+							pm.deviceCache[id] = DeviceData{
+								PowerW:        0,
+								BatteryPowerW: 0,
+								GridPowerW:    0,
+								EnergyKwh:     0,
+								Soc:           0,
+								Status:        poller.Status(),
+								Template:      device.Template,
+								Category:      category,
+								HasGridMeter:  device.HasGridMeter,
+								HasBattery:    device.HasBattery,
+							}
 						}
 						pm.cacheMu.Unlock()
 						continue
