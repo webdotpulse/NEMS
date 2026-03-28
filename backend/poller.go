@@ -24,6 +24,7 @@ type DeviceData struct {
 	Soc           float64
 	Status        string
 	Template      string
+	Category      string
 	HasGridMeter  bool
 	HasBattery    bool
 }
@@ -163,7 +164,8 @@ func (pm *PollerManager) Start() {
 
 				for id, poller := range pm.pollers {
 					device := poller.GetDevice()
-					if device.Template != "homewizard_meter" {
+					category := templates.GetCategory(device.Template)
+					if category != "meter" {
 						continue
 					}
 					polledAny = true
@@ -190,6 +192,7 @@ func (pm *PollerManager) Start() {
 							Soc:           0,
 							Status:        poller.Status(),
 							Template:      device.Template,
+							Category:      category,
 							HasGridMeter:  device.HasGridMeter,
 							HasBattery:    device.HasBattery,
 						}
@@ -206,6 +209,7 @@ func (pm *PollerManager) Start() {
 						Soc:           soc,
 						Status:        poller.Status(),
 						Template:      device.Template,
+						Category:      category,
 						HasGridMeter:  device.HasGridMeter,
 						HasBattery:    device.HasBattery,
 					}
@@ -231,7 +235,8 @@ func (pm *PollerManager) Start() {
 
 				for id, poller := range pm.pollers {
 					device := poller.GetDevice()
-					if device.Template == "homewizard_meter" {
+					category := templates.GetCategory(device.Template)
+					if category == "meter" {
 						continue
 					}
 
@@ -257,6 +262,7 @@ func (pm *PollerManager) Start() {
 							Soc:           0,
 							Status:        poller.Status(),
 							Template:      device.Template,
+							Category:      category,
 							HasGridMeter:  device.HasGridMeter,
 							HasBattery:    device.HasBattery,
 						}
@@ -273,6 +279,7 @@ func (pm *PollerManager) Start() {
 						Soc:           soc,
 						Status:        poller.Status(),
 						Template:      device.Template,
+						Category:      category,
 						HasGridMeter:  device.HasGridMeter,
 						HasBattery:    device.HasBattery,
 					}
@@ -332,8 +339,8 @@ func (pm *PollerManager) broadcastState() {
 	for id, data := range pm.deviceCache {
 		deviceHealth[id] = data.Status
 
-		switch data.Template {
-		case "demo_battery":
+		switch data.Category {
+		case "battery":
 			if totalBattery == nil {
 				v := 0.0
 				totalBattery = &v
@@ -344,7 +351,7 @@ func (pm *PollerManager) broadcastState() {
 				soc := data.Soc
 				totalBatterySoc = &soc
 			}
-		case "huawei_inverter", "solis_inverter", "sma_inverter", "demo_inverter":
+		case "inverter":
 			if totalSolar == nil {
 				v := 0.0
 				totalSolar = &v
@@ -366,20 +373,20 @@ func (pm *PollerManager) broadcastState() {
 				}
 			}
 
-			if data.Template == "huawei_inverter" && data.HasGridMeter {
+			if data.HasGridMeter {
 				if totalGrid == nil {
 					v := 0.0
 					totalGrid = &v
 				}
 				*totalGrid += data.GridPowerW
 			}
-		case "homewizard_meter", "demo_dongle":
+		case "meter":
 			if totalGrid == nil {
 				v := 0.0
 				totalGrid = &v
 			}
 			*totalGrid += data.GridPowerW
-		case "raedian_charger", "alfen_charger", "bender_charger", "phoenix_charger", "easee_charger", "peblar_charger", "demo_charger":
+		case "charger":
 			if totalEvCharger == nil {
 				v := 0.0
 				totalEvCharger = &v

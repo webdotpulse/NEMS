@@ -21,6 +21,11 @@ export interface SiteSettings {
   force_charge_below_euro: number;
   force_discharge_above_euro: number;
   smart_ev_cheapest_hours: number;
+  battery_arbitrage_cheapest_hours: number;
+  battery_arbitrage_expensive_hours: number;
+  solar_forecast_enabled: boolean;
+  latitude: number;
+  longitude: number;
   grid_nominal_current_a: number;
   grid_system: string;
   allowed_grid_import_kw: number;
