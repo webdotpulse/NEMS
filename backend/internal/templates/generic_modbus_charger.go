@@ -23,6 +23,7 @@ func init() {
 		Metadata: TemplateMetadata{
 			ID:       "alfen_charger",
 			Name:     "Alfen Charger",
+			Vendor:   "Alfen",
 			Type:     "modbus",
 			Category: "charger",
 		},
@@ -34,6 +35,7 @@ func init() {
 		Metadata: TemplateMetadata{
 			ID:       "bender_charger",
 			Name:     "Bender Charger",
+			Vendor:   "Bender",
 			Type:     "modbus",
 			Category: "charger",
 		},
@@ -45,6 +47,7 @@ func init() {
 		Metadata: TemplateMetadata{
 			ID:       "phoenix_charger",
 			Name:     "Phoenix Contact Charx Charger",
+			Vendor:   "Phoenix Contact",
 			Type:     "modbus",
 			Category: "charger",
 		},

@@ -22,6 +22,7 @@ func init() {
 		Metadata: TemplateMetadata{
 			ID:   "peblar_charger",
 			Name: "Peblar Charger",
+			Vendor: "Peblar",
 			Type: "rest",
 			Category: "charger",
 		},

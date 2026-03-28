@@ -22,6 +22,7 @@ func init() {
 		Metadata: TemplateMetadata{
 			ID:   "generic_relay",
 			Name: "Generic HTTP Relay",
+			Vendor: "Generic",
 			Type: "rest",
 			Category: "relay",
 		},

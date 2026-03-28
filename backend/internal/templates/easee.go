@@ -18,6 +18,7 @@ func init() {
 		Metadata: TemplateMetadata{
 			ID:   "easee_charger",
 			Name: "Easee Charger",
+			Vendor: "Easee",
 			Type: "cloud",
 		},
 		NewPoller: func(device models.Device) models.DevicePoller {

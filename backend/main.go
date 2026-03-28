@@ -48,6 +48,12 @@ func (r *LogRingBuffer) GetLogs() []string {
 	return res
 }
 
+func (r *LogRingBuffer) ClearLogs() {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.logs = make([]string, 0, r.maxLen)
+}
+
 var logBuffer *LogRingBuffer
 
 func InitLogger() {
@@ -258,6 +264,7 @@ func main() {
 	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN appliance_turn_on_excess_w REAL DEFAULT 0.0")
 	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN peak_shaving_buffer_w REAL DEFAULT 200.0")
 	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN peak_shaving_rampup_w REAL DEFAULT 500.0")
+	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN timezone TEXT DEFAULT 'Europe/Brussels'")
 
 	log.Println("Database schema initialized")
 
@@ -270,6 +277,7 @@ func main() {
 	mux.HandleFunc("/api/logs", handleLogs)
 	mux.HandleFunc("/api/system/info", handleSystemInfo)
 	mux.HandleFunc("/api/system/reboot", handleSystemReboot)
+	mux.HandleFunc("/api/system/reset-db", handleSystemResetDb)
 	mux.HandleFunc("/api/network/scan", handleNetworkScan)
 
 	mux.HandleFunc("/api/tariffs/today", handleTariffsToday)

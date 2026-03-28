@@ -34,6 +34,7 @@ export interface SiteSettings {
   appliance_turn_on_excess_w: number;
   peak_shaving_buffer_w: number;
   peak_shaving_rampup_w: number;
+  timezone: string;
 }
 
 export interface SiteState {
@@ -63,6 +64,7 @@ export interface Template {
   name: string;
   type: string;
   category: string;
+  vendor: string;
 }
 
 export interface SystemInfo {

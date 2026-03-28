@@ -26,6 +26,7 @@ func init() {
 		Metadata: TemplateMetadata{
 			ID:   "p1_network",
 			Name: "P1 Smart Meter (Network/TCP)",
+			Vendor: "Generic",
 			Type: "network",
 			Category: "meter",
 		},
