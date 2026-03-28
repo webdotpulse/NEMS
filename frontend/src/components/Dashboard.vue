@@ -208,27 +208,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import PowerFlow from './PowerFlow.vue'
 import { getApiBase } from '../api'
-
-interface SiteState {
-  grid_power_w: number | null
-  solar_power_w: number | null
-  battery_power_w: number | null
-  battery_soc: number | null
-  total_load_w: number | null
-  ev_charger_power_w: number | null
-  device_health?: Record<number, string>
-}
-
-interface DailyAggregates {
-  grid_import_kwh: number
-  grid_export_kwh: number
-  solar_yield_kwh: number
-  battery_charge_kwh: number
-  battery_charge_solar_kwh: number
-  battery_charge_grid_kwh: number
-  battery_discharge_kwh: number
-  house_consumption_kwh: number
-}
+import type { SiteState, DailyAggregates } from '../types'
 
 const state = ref<SiteState | null>(null)
 const dailyAggregates = ref<DailyAggregates | null>(null)
