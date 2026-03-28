@@ -2,6 +2,7 @@ export interface Device {
   id: number;
   name: string;
   template: string;
+  category?: string;
   host: string;
   port: number;
   modbus_id: number;
