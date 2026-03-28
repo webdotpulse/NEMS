@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -9,33 +10,41 @@ import (
 	"time"
 )
 
+// SiteState represents the aggregated real-time power metrics of the entire system.
+// Pointers to float64 are used so that unconfigured or offline devices can be serialized
+// as `null` in JSON rather than defaulting to `0`.
 type SiteState struct {
-	GridPowerW      *float64         `json:"grid_power_w"`
-	SolarPowerW     *float64         `json:"solar_power_w"`
-	BatteryPowerW   *float64         `json:"battery_power_w"`
-	BatterySoc      *float64         `json:"battery_soc"`
-	TotalLoadW      *float64         `json:"total_load_w"`
-	EvChargerPowerW *float64         `json:"ev_charger_power_w"`
-	DeviceHealth    map[int]string   `json:"device_health"`
+	GridPowerW      *float64       `json:"grid_power_w"`
+	SolarPowerW     *float64       `json:"solar_power_w"`
+	BatteryPowerW   *float64       `json:"battery_power_w"`
+	BatterySoc      *float64       `json:"battery_soc"`
+	TotalLoadW      *float64       `json:"total_load_w"`
+	EvChargerPowerW *float64       `json:"ev_charger_power_w"`
+	DeviceHealth    map[int]string `json:"device_health"`
 }
 
+// StateDispatcher manages Server-Sent Events (SSE) connections for clients
+// listening to real-time site state updates.
 type StateDispatcher struct {
 	clients map[chan SiteState]bool
 	mu      sync.Mutex
 }
 
+// GlobalStateDispatcher is the singleton instance handling all active SSE clients.
 var GlobalStateDispatcher = &StateDispatcher{
 	clients: make(map[chan SiteState]bool),
 }
 
+// AddClient creates a new buffered channel for a client and registers it with the dispatcher.
 func (d *StateDispatcher) AddClient() chan SiteState {
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	ch := make(chan SiteState, 1) // buffer to avoid blocking
+	ch := make(chan SiteState, 1) // Buffer to avoid blocking the broadcaster
 	d.clients[ch] = true
 	return ch
 }
 
+// RemoveClient unregisters a client's channel and closes it.
 func (d *StateDispatcher) RemoveClient(ch chan SiteState) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -45,6 +54,8 @@ func (d *StateDispatcher) RemoveClient(ch chan SiteState) {
 	}
 }
 
+// Broadcast sends the current SiteState to all registered SSE clients.
+// If a client's channel is full, the message is dropped to prevent blocking the polling loop.
 func (d *StateDispatcher) Broadcast(state SiteState) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -57,6 +68,7 @@ func (d *StateDispatcher) Broadcast(state SiteState) {
 	}
 }
 
+// handleLiveStream is the HTTP handler for the /api/live SSE endpoint.
 func handleLiveStream(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
@@ -91,29 +103,33 @@ func handleLiveStream(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// DailyAggregates holds the calculated energy summaries for the current day.
 type DailyAggregates struct {
-	GridImportKwh           float64 `json:"grid_import_kwh"`
-	GridExportKwh           float64 `json:"grid_export_kwh"`
-	SolarYieldKwh           float64 `json:"solar_yield_kwh"`
-	BatteryChargeKwh        float64 `json:"battery_charge_kwh"`
-	BatteryChargeSolarKwh   float64 `json:"battery_charge_solar_kwh"`
-	BatteryChargeGridKwh    float64 `json:"battery_charge_grid_kwh"`
-	BatteryDischargeKwh     float64 `json:"battery_discharge_kwh"`
-	HouseConsumptionKwh     float64 `json:"house_consumption_kwh"`
+	GridImportKwh         float64 `json:"grid_import_kwh"`
+	GridExportKwh         float64 `json:"grid_export_kwh"`
+	SolarYieldKwh         float64 `json:"solar_yield_kwh"`
+	BatteryChargeKwh      float64 `json:"battery_charge_kwh"`
+	BatteryChargeSolarKwh float64 `json:"battery_charge_solar_kwh"`
+	BatteryChargeGridKwh  float64 `json:"battery_charge_grid_kwh"`
+	BatteryDischargeKwh   float64 `json:"battery_discharge_kwh"`
+	HouseConsumptionKwh   float64 `json:"house_consumption_kwh"`
 }
 
+// handleDailyAggregates computes today's energy statistics dynamically via a CTE query.
 func handleDailyAggregates(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	loc, err := time.LoadLocation("Europe/Amsterdam")
 	if err != nil {
+		// Fallback to UTC if tzdata is missing on the system
 		loc = time.UTC
 	}
 	now := time.Now().In(loc)
 	startOfToday := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc).UTC()
 
-	// 1. Group by minute to do the charge source calculation properly.
+	// Group by minute to do the charge source calculation properly.
+	// This determines if a battery was charged from excess solar or from the grid.
 	query := `
 		WITH minute_aggs AS (
 			SELECT
@@ -155,31 +171,45 @@ func handleDailyAggregates(w http.ResponseWriter, r *http.Request) {
 	var gImport, gExport, sYield, bCharge, bDischarge, bChargeSolar, bChargeGrid *float64
 
 	err = row.Scan(&gImport, &gExport, &sYield, &bCharge, &bDischarge, &bChargeSolar, &bChargeGrid)
-	if err == nil {
-		if gImport != nil { agg.GridImportKwh = *gImport }
-		if gExport != nil { agg.GridExportKwh = *gExport }
-		if sYield != nil { agg.SolarYieldKwh = *sYield }
-		if bCharge != nil { agg.BatteryChargeKwh = *bCharge }
-		if bDischarge != nil { agg.BatteryDischargeKwh = *bDischarge }
-		if bChargeSolar != nil { agg.BatteryChargeSolarKwh = *bChargeSolar }
-		if bChargeGrid != nil { agg.BatteryChargeGridKwh = *bChargeGrid }
-
-		agg.HouseConsumptionKwh = agg.GridImportKwh + agg.SolarYieldKwh + agg.BatteryDischargeKwh - agg.GridExportKwh - agg.BatteryChargeKwh
-		if agg.HouseConsumptionKwh < 0 {
-			agg.HouseConsumptionKwh = 0
+	if err != nil {
+		if err == sql.ErrNoRows {
+			// No measurements today, return empty struct
+			json.NewEncoder(w).Encode(agg)
+			return
 		}
-	} else {
-		log.Printf("Error calculating daily aggregates: %v", err)
+		// Some other db error occurred
+		log.Printf("Error scanning daily aggregates: %v", err)
+		// Still return zeroed aggregates instead of failing HTTP request
+		json.NewEncoder(w).Encode(agg)
+		return
+	}
+
+	// Safe pointer dereferencing for aggregate sum columns (which can be NULL if CTE result is empty)
+	if gImport != nil { agg.GridImportKwh = *gImport }
+	if gExport != nil { agg.GridExportKwh = *gExport }
+	if sYield != nil { agg.SolarYieldKwh = *sYield }
+	if bCharge != nil { agg.BatteryChargeKwh = *bCharge }
+	if bDischarge != nil { agg.BatteryDischargeKwh = *bDischarge }
+	if bChargeSolar != nil { agg.BatteryChargeSolarKwh = *bChargeSolar }
+	if bChargeGrid != nil { agg.BatteryChargeGridKwh = *bChargeGrid }
+
+	// Calculate net house consumption
+	agg.HouseConsumptionKwh = agg.GridImportKwh + agg.SolarYieldKwh + agg.BatteryDischargeKwh - agg.GridExportKwh - agg.BatteryChargeKwh
+	if agg.HouseConsumptionKwh < 0 {
+		agg.HouseConsumptionKwh = 0
 	}
 
 	json.NewEncoder(w).Encode(agg)
 }
 
+// HistoryDataPoint represents a single data point on the frontend charts.
 type HistoryDataPoint struct {
 	Timestamp string  `json:"timestamp"`
 	PowerW    float64 `json:"power_w"`
 }
 
+// handleHistory aggregates historical power measurements over varying intervals (5m to 1h)
+// based on the requested time range and node (e.g. grid, solar, home).
 func handleHistory(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "*")

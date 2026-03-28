@@ -390,33 +390,14 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { getApiBase } from '../api'
+import type { Device, SiteSettings, Template, SystemInfo } from '../types'
 
-const sysInfo = ref<{hostname: string, ip: string, netmask: string} | null>(null)
 import ModbusTemplate from './templates/ModbusTemplate.vue'
 import CloudTemplate from './templates/CloudTemplate.vue'
 import RestTemplate from './templates/RestTemplate.vue'
 import CloudRestTemplate from './templates/CloudRestTemplate.vue'
 
-interface Template {
-  id: string;
-  name: string;
-  type: string;
-}
-
-interface Device {
-  id: number;
-  name: string;
-  template: string;
-  host: string;
-  port: number;
-  modbus_id: number;
-  username?: string;
-  password?: string;
-  status?: string;
-  has_grid_meter?: boolean;
-  has_battery?: boolean;
-  battery_capacity?: number;
-}
+const sysInfo = ref<SystemInfo | null>(null)
 
 const templates = ref<Template[]>([])
 const devices = ref<Device[]>([])
@@ -449,7 +430,7 @@ const editForm = ref({
   battery_capacity: 0
 })
 
-const siteSettings = ref({
+const siteSettings = ref<SiteSettings>({
   strategy_mode: 'eco',
   capacity_peak_limit_kw: 2.5,
   active_inverter_curtailment: false,
