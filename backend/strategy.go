@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"log"
+	"sync"
 	"time"
 
 	"nems/internal/models"
@@ -27,6 +28,21 @@ type TimeValue struct {
 	Value float64
 }
 var gridImportSamples []TimeValue
+
+var projectedQuarterPeakWMu sync.RWMutex
+var projectedQuarterPeakW float64
+
+func GetProjectedQuarterPeakW() float64 {
+	projectedQuarterPeakWMu.RLock()
+	defer projectedQuarterPeakWMu.RUnlock()
+	return projectedQuarterPeakW
+}
+
+func SetProjectedQuarterPeakW(v float64) {
+	projectedQuarterPeakWMu.Lock()
+	defer projectedQuarterPeakWMu.Unlock()
+	projectedQuarterPeakW = v
+}
 
 var currentCachedPrice float64 = 999.0
 var isCachedCheapestHour bool = false
@@ -165,13 +181,16 @@ func (sc *StrategyController) executeControlLoop(settings models.SiteSettings) {
 	desiredBatteryForceChargeW := make(map[int]float64)
 	desiredBatteryDischargeW := make(map[int]float64)
 
-	// 1.5 Calculate Kwartierpiek (15-min sliding average for Flanders mode)
+	// 1.5 Calculate Kwartierpiek (15-min synchronized average for Flanders mode)
 	now := time.Now()
+	quarterMin := (now.Minute() / 15) * 15
+	startOfQuarter := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), quarterMin, 0, 0, now.Location())
+
 	gridImportSamples = append(gridImportSamples, TimeValue{Time: now, Value: totalGridImport})
 	var recentSamples []TimeValue
 	var sumImport float64
 	for _, sample := range gridImportSamples {
-		if now.Sub(sample.Time) <= 15*time.Minute {
+		if !sample.Time.Before(startOfQuarter) {
 			recentSamples = append(recentSamples, sample)
 			sumImport += sample.Value
 		}
@@ -181,8 +200,22 @@ func (sc *StrategyController) executeControlLoop(settings models.SiteSettings) {
 	if len(gridImportSamples) > 0 {
 		avg15MinImport = sumImport / float64(len(gridImportSamples))
 	}
+	SetProjectedQuarterPeakW(avg15MinImport)
 
 	// Step 2: Apply Dynamic Tariffs Base Intent
+
+	// Battery Arbitrage Discharge Intent
+	if currentCachedPrice > settings.ForceDischargeAboveEuro {
+		for id, poller := range pollers {
+			if _, ok := poller.(models.BatteryController); ok {
+				dev := poller.GetDevice()
+				if dev.HasBattery && dev.BatteryMode != "hold" && dev.BatteryMode != "force_charge" {
+					desiredBatteryDischargeW[id] = 100000.0
+				}
+			}
+		}
+	}
+
 	// Battery Arbitrage Intent
 	if currentCachedPrice < settings.ForceChargeBelowEuro {
 		for id, poller := range pollers {

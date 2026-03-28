@@ -143,6 +143,13 @@
                   </div>
 
                   <div class="sm:col-span-6">
+                    <label for="force_discharge_above_euro" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Force Discharge Battery to Grid if price rises above (€/kWh)</label>
+                    <div class="mt-1">
+                      <input type="number" step="0.01" id="force_discharge_above_euro" v-model="siteSettings.force_discharge_above_euro" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                    </div>
+                  </div>
+
+                  <div class="sm:col-span-6">
                     <label for="smart_ev_cheapest_hours" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Smart EV Charging: Charge during the cheapest hours of the day</label>
                     <div class="mt-1">
                       <input type="number" step="1" min="0" max="24" id="smart_ev_cheapest_hours" v-model="siteSettings.smart_ev_cheapest_hours" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
@@ -312,6 +319,9 @@
                   <template v-else-if="templates.find(t => t.id === form.template)?.type === 'serial'">
                     <P1SerialTemplate :device="form" />
                   </template>
+                  <template v-else-if="templates.find(t => t.id === form.template)?.type === 'network'">
+                    <P1NetworkTemplate :device="form" />
+                  </template>
 
                   <!-- EV Charger Mode Selection -->
                   <div v-if="isCharger(form.template)" class="sm:col-span-3">
@@ -421,6 +431,9 @@
               <template v-else-if="templates.find(t => t.id === editForm.template)?.type === 'serial'">
                 <P1SerialTemplate :device="editForm" />
               </template>
+              <template v-else-if="templates.find(t => t.id === editForm.template)?.type === 'network'">
+                <P1NetworkTemplate :device="editForm" />
+              </template>
 
               <!-- EV Charger Mode Selection -->
               <div v-if="isCharger(editForm.template)" class="sm:col-span-3">
@@ -497,6 +510,7 @@ import CloudTemplate from './templates/CloudTemplate.vue'
 import RestTemplate from './templates/RestTemplate.vue'
 import CloudRestTemplate from './templates/CloudRestTemplate.vue'
 import P1SerialTemplate from './templates/P1SerialTemplate.vue'
+import P1NetworkTemplate from './templates/P1NetworkTemplate.vue'
 
 const activeTab = ref('system')
 
@@ -540,6 +554,7 @@ const siteSettings = ref<SiteSettings>({
   capacity_peak_limit_kw: 2.5,
   active_inverter_curtailment: false,
   force_charge_below_euro: 0.0,
+  force_discharge_above_euro: 999.0,
   smart_ev_cheapest_hours: 0,
   grid_nominal_current_a: 25.0,
   grid_system: 'single_phase_230v',

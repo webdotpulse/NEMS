@@ -58,6 +58,11 @@
                 </span>
                 <span v-else>0.0 kW</span>
               </div>
+              <select @change="setEvModeDevice(device, ($event.target as HTMLSelectElement).value)" class="text-xs mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded pointer-events-auto shadow-sm absolute -bottom-8" @click.stop>
+                <option value="off" :selected="device.charge_mode === 'off'">Off</option>
+                <option value="eco" :selected="device.charge_mode === 'eco' || !device.charge_mode">Eco</option>
+                <option value="now" :selected="device.charge_mode === 'now'">Now</option>
+              </select>
             </div>
           </div>
         </template>
@@ -143,6 +148,11 @@
                   </span>
                   <span v-else class="text-teal-500 dark:text-teal-400 text-xs">&uarr; 0.0 kW</span>
                 </div>
+                <select @change="setBatteryModeDevice(device, ($event.target as HTMLSelectElement).value)" class="text-xs mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded pointer-events-auto shadow-sm z-30 relative absolute -bottom-8" @click.stop>
+                  <option value="auto" :selected="device.battery_mode === 'auto' || !device.battery_mode">Auto</option>
+                  <option value="hold" :selected="device.battery_mode === 'hold'">Hold</option>
+                  <option value="force_charge" :selected="device.battery_mode === 'force_charge'">Force Charge</option>
+                </select>
                 <!-- Battery SOC Circle Overlay -->
                 <div v-if="state?.battery_soc !== null && state?.battery_soc !== undefined" class="absolute inset-0 rounded-full border-[4px] border-[#EC4899] opacity-50" :style="`clip-path: polygon(0 ${100 - state.battery_soc}%, 100% ${100 - state.battery_soc}%, 100% 100%, 0 100%); border-color: #34D399; z-index: 20;`"></div>
               </div>
@@ -165,6 +175,11 @@
                 </span>
                 <span v-else class="text-teal-500 dark:text-teal-400 text-xs">&uarr; 0.0 kW</span>
               </div>
+              <select v-if="batteryDevices.length > 0" @change="setBatteryModeDevice(batteryDevices[0], ($event.target as HTMLSelectElement).value)" class="text-xs mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded pointer-events-auto shadow-sm z-30 relative absolute -bottom-8" @click.stop>
+                <option value="auto" :selected="batteryDevices[0].battery_mode === 'auto' || !batteryDevices[0].battery_mode">Auto</option>
+                <option value="hold" :selected="batteryDevices[0].battery_mode === 'hold'">Hold</option>
+                <option value="force_charge" :selected="batteryDevices[0].battery_mode === 'force_charge'">Force Charge</option>
+              </select>
               <!-- Battery SOC Circle Overlay -->
               <div v-if="state?.battery_soc !== null && state?.battery_soc !== undefined" class="absolute inset-0 rounded-full border-[4px] border-[#EC4899] opacity-50" :style="`clip-path: polygon(0 ${100 - state.battery_soc}%, 100% ${100 - state.battery_soc}%, 100% 100%, 0 100%); border-color: #34D399; z-index: 20;`"></div>
             </div>
@@ -587,35 +602,43 @@ const setRange = (range: string) => {
 
 const setEvMode = async (mode: string) => {
   for (const d of evDevices.value) {
-    try {
-      const res = await fetch(`${getApiBase()}/api/devices/${d.id}/mode`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ charge_mode: mode })
-      });
-      if (res.ok) {
-        d.charge_mode = mode;
-      }
-    } catch (e) {
-      console.error(`Failed to set EV mode for device ${d.id}`, e);
+    await setEvModeDevice(d, mode);
+  }
+}
+
+const setEvModeDevice = async (d: any, mode: string) => {
+  try {
+    const res = await fetch(`${getApiBase()}/api/devices/${d.id}/mode`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ charge_mode: mode })
+    });
+    if (res.ok) {
+      d.charge_mode = mode;
     }
+  } catch (e) {
+    console.error(`Failed to set EV mode for device ${d.id}`, e);
   }
 }
 
 const setBatteryMode = async (mode: string) => {
   for (const d of batteryDevices.value) {
-    try {
-      const res = await fetch(`${getApiBase()}/api/devices/${d.id}/mode`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ battery_mode: mode })
-      });
-      if (res.ok) {
-        d.battery_mode = mode;
-      }
-    } catch (e) {
-      console.error(`Failed to set battery mode for device ${d.id}`, e);
+    await setBatteryModeDevice(d, mode);
+  }
+}
+
+const setBatteryModeDevice = async (d: any, mode: string) => {
+  try {
+    const res = await fetch(`${getApiBase()}/api/devices/${d.id}/mode`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ battery_mode: mode })
+    });
+    if (res.ok) {
+      d.battery_mode = mode;
     }
+  } catch (e) {
+    console.error(`Failed to set battery mode for device ${d.id}`, e);
   }
 }
 

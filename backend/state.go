@@ -14,13 +14,14 @@ import (
 // Pointers to float64 are used so that unconfigured or offline devices can be serialized
 // as `null` in JSON rather than defaulting to `0`.
 type SiteState struct {
-	GridPowerW      *float64       `json:"grid_power_w"`
-	SolarPowerW     *float64       `json:"solar_power_w"`
-	BatteryPowerW   *float64       `json:"battery_power_w"`
-	BatterySoc      *float64       `json:"battery_soc"`
-	TotalLoadW      *float64       `json:"total_load_w"`
-	EvChargerPowerW *float64       `json:"ev_charger_power_w"`
-	DeviceHealth    map[int]string `json:"device_health"`
+	GridPowerW            *float64       `json:"grid_power_w"`
+	SolarPowerW           *float64       `json:"solar_power_w"`
+	BatteryPowerW         *float64       `json:"battery_power_w"`
+	BatterySoc            *float64       `json:"battery_soc"`
+	TotalLoadW            *float64       `json:"total_load_w"`
+	EvChargerPowerW       *float64       `json:"ev_charger_power_w"`
+	ProjectedQuarterPeakW *float64       `json:"projected_quarter_peak_w"`
+	DeviceHealth          map[int]string `json:"device_health"`
 }
 
 // StateDispatcher manages Server-Sent Events (SSE) connections for clients

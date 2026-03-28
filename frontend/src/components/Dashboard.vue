@@ -25,6 +25,9 @@
                     <div class="text-sm" :class="state.grid_power_w > 0 ? 'text-red-500' : 'text-green-500'">
                       {{ state.grid_power_w > 0 ? 'Importing' : (state.grid_power_w < 0 ? 'Exporting' : 'Idle') }}
                     </div>
+                    <div v-if="state.projected_quarter_peak_w !== undefined && state.projected_quarter_peak_w !== null" class="text-xs text-gray-500 mt-1">
+                      Proj. 15m Peak: {{ state.projected_quarter_peak_w?.toFixed(0) }} W
+                    </div>
                   </dd>
                 </dl>
               </div>
