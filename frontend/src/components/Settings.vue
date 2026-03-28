@@ -284,6 +284,9 @@
               <template v-else-if="templates.find(t => t.id === editForm.template)?.type === 'cloud_rest'">
                 <CloudRestTemplate v-model="editForm" prefix="edit_" />
               </template>
+              <template v-else-if="templates.find(t => t.id === editForm.template)?.type === 'serial'">
+                <P1SerialTemplate :device="editForm" />
+              </template>
 
               <!-- EV Charger Mode Selection -->
               <div v-if="isCharger(editForm.template)" class="sm:col-span-3">
@@ -389,6 +392,9 @@
                 <template v-else-if="templates.find(t => t.id === form.template)?.type === 'cloud_rest'">
                   <CloudRestTemplate v-model="form" />
                 </template>
+                <template v-else-if="templates.find(t => t.id === form.template)?.type === 'serial'">
+                  <P1SerialTemplate :device="form" />
+                </template>
 
                 <!-- EV Charger Mode Selection -->
                 <div v-if="isCharger(form.template)" class="sm:col-span-3">
@@ -463,6 +469,7 @@ import ModbusTemplate from './templates/ModbusTemplate.vue'
 import CloudTemplate from './templates/CloudTemplate.vue'
 import RestTemplate from './templates/RestTemplate.vue'
 import CloudRestTemplate from './templates/CloudRestTemplate.vue'
+import P1SerialTemplate from './templates/P1SerialTemplate.vue'
 
 const sysInfo = ref<SystemInfo | null>(null)
 

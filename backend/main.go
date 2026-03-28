@@ -260,6 +260,7 @@ func main() {
 	_, _ = db.Exec("ALTER TABLE devices ADD COLUMN has_battery BOOLEAN DEFAULT 0")
 	_, _ = db.Exec("ALTER TABLE devices ADD COLUMN battery_capacity REAL DEFAULT 0")
 	_, _ = db.Exec("ALTER TABLE devices ADD COLUMN charge_mode TEXT DEFAULT 'eco'")
+	_, _ = db.Exec("ALTER TABLE devices ADD COLUMN battery_mode TEXT DEFAULT 'auto'")
 
 	createEpexPricesSQL := `
 	CREATE TABLE IF NOT EXISTS epex_prices (
@@ -408,7 +409,7 @@ func main() {
 	mux.HandleFunc("/api/devices", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		if r.Method == "GET" {
-			rows, err := db.Query("SELECT id, name, template, host, port, modbus_id, username, password, has_grid_meter, has_battery, battery_capacity, charge_mode FROM devices")
+			rows, err := db.Query("SELECT id, name, template, host, port, modbus_id, username, password, has_grid_meter, has_battery, battery_capacity, charge_mode, battery_mode FROM devices")
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
@@ -421,7 +422,8 @@ func main() {
 				var username sql.NullString
 				var password sql.NullString
 				var chargeMode sql.NullString
-				if err := rows.Scan(&d.ID, &d.Name, &d.Template, &d.Host, &d.Port, &d.ModbusID, &username, &password, &d.HasGridMeter, &d.HasBattery, &d.BatteryCapacity, &chargeMode); err != nil {
+				var batteryMode sql.NullString
+				if err := rows.Scan(&d.ID, &d.Name, &d.Template, &d.Host, &d.Port, &d.ModbusID, &username, &password, &d.HasGridMeter, &d.HasBattery, &d.BatteryCapacity, &chargeMode, &batteryMode); err != nil {
 					http.Error(w, err.Error(), http.StatusInternalServerError)
 					return
 				}
@@ -433,6 +435,9 @@ func main() {
 				}
 				if chargeMode.Valid {
 					d.ChargeMode = chargeMode.String
+				}
+				if batteryMode.Valid {
+					d.BatteryMode = batteryMode.String
 				}
 
 				// Set dynamic status if poller exists
@@ -462,8 +467,11 @@ func main() {
 			if d.ChargeMode == "" {
 				d.ChargeMode = "eco"
 			}
+			if d.BatteryMode == "" {
+				d.BatteryMode = "auto"
+			}
 
-			result, err := db.Exec("INSERT INTO devices (name, template, host, port, modbus_id, username, password, has_grid_meter, has_battery, battery_capacity, charge_mode) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", d.Name, d.Template, d.Host, d.Port, d.ModbusID, d.Username, d.Password, d.HasGridMeter, d.HasBattery, d.BatteryCapacity, d.ChargeMode)
+			result, err := db.Exec("INSERT INTO devices (name, template, host, port, modbus_id, username, password, has_grid_meter, has_battery, battery_capacity, charge_mode, battery_mode) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", d.Name, d.Template, d.Host, d.Port, d.ModbusID, d.Username, d.Password, d.HasGridMeter, d.HasBattery, d.BatteryCapacity, d.ChargeMode, d.BatteryMode)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
@@ -489,6 +497,9 @@ func main() {
 		w.Header().Set("Content-Type", "application/json")
 
 		idStr := strings.TrimPrefix(r.URL.Path, "/api/devices/")
+		if strings.HasSuffix(idStr, "/mode") {
+			idStr = strings.TrimSuffix(idStr, "/mode")
+		}
 		id, err := strconv.Atoi(idStr)
 		if err != nil {
 			http.Error(w, "Invalid device ID", http.StatusBadRequest)
@@ -509,6 +520,28 @@ func main() {
 
 			w.WriteHeader(http.StatusOK)
 			w.Write([]byte(`{"status": "deleted"}`))
+		} else if strings.HasSuffix(r.URL.Path, "/mode") && r.Method == "PUT" {
+			var payload struct {
+				ChargeMode  string `json:"charge_mode"`
+				BatteryMode string `json:"battery_mode"`
+			}
+			if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+
+			if payload.ChargeMode != "" {
+				_, err = db.Exec("UPDATE devices SET charge_mode = ? WHERE id = ?", payload.ChargeMode, id)
+			} else if payload.BatteryMode != "" {
+				_, err = db.Exec("UPDATE devices SET battery_mode = ? WHERE id = ?", payload.BatteryMode, id)
+			}
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(`{"status": "updated"}`))
+
 		} else if r.Method == "PUT" {
 			var d models.Device
 			if err := json.NewDecoder(r.Body).Decode(&d); err != nil {
@@ -519,9 +552,12 @@ func main() {
 			if d.ChargeMode == "" {
 				d.ChargeMode = "eco"
 			}
+			if d.BatteryMode == "" {
+				d.BatteryMode = "auto"
+			}
 
-			_, err = db.Exec("UPDATE devices SET name = ?, template = ?, host = ?, port = ?, modbus_id = ?, username = ?, password = ?, has_grid_meter = ?, has_battery = ?, battery_capacity = ?, charge_mode = ? WHERE id = ?",
-				d.Name, d.Template, d.Host, d.Port, d.ModbusID, d.Username, d.Password, d.HasGridMeter, d.HasBattery, d.BatteryCapacity, d.ChargeMode, id)
+			_, err = db.Exec("UPDATE devices SET name = ?, template = ?, host = ?, port = ?, modbus_id = ?, username = ?, password = ?, has_grid_meter = ?, has_battery = ?, battery_capacity = ?, charge_mode = ?, battery_mode = ? WHERE id = ?",
+				d.Name, d.Template, d.Host, d.Port, d.ModbusID, d.Username, d.Password, d.HasGridMeter, d.HasBattery, d.BatteryCapacity, d.ChargeMode, d.BatteryMode, id)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return

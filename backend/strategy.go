@@ -21,6 +21,13 @@ var chargerCurrentSetpoints = make(map[int]float64)
 var batteryForceChargeW = make(map[int]float64)
 var evSmartChargeActive = make(map[int]bool)
 
+// Kwartierpiek (15-min sliding window) Tracking
+type TimeValue struct {
+	Time  time.Time
+	Value float64
+}
+var gridImportSamples []TimeValue
+
 var currentCachedPrice float64 = 999.0
 var isCachedCheapestHour bool = false
 var lastPricingCacheUpdate time.Time
@@ -158,13 +165,30 @@ func (sc *StrategyController) executeControlLoop(settings models.SiteSettings) {
 	desiredBatteryForceChargeW := make(map[int]float64)
 	desiredBatteryDischargeW := make(map[int]float64)
 
+	// 1.5 Calculate Kwartierpiek (15-min sliding average for Flanders mode)
+	now := time.Now()
+	gridImportSamples = append(gridImportSamples, TimeValue{Time: now, Value: totalGridImport})
+	var recentSamples []TimeValue
+	var sumImport float64
+	for _, sample := range gridImportSamples {
+		if now.Sub(sample.Time) <= 15*time.Minute {
+			recentSamples = append(recentSamples, sample)
+			sumImport += sample.Value
+		}
+	}
+	gridImportSamples = recentSamples
+	avg15MinImport := 0.0
+	if len(gridImportSamples) > 0 {
+		avg15MinImport = sumImport / float64(len(gridImportSamples))
+	}
+
 	// Step 2: Apply Dynamic Tariffs Base Intent
 	// Battery Arbitrage Intent
 	if currentCachedPrice < settings.ForceChargeBelowEuro {
 		for id, poller := range pollers {
 			if _, ok := poller.(models.BatteryController); ok {
 				dev := poller.GetDevice()
-				if dev.HasBattery {
+				if dev.HasBattery && dev.BatteryMode != "hold" {
 					// Initially set intent to max grid capacity or physical limit
 					// If we are in Flanders mode, available capacity is threshold - current import
 					// If not Flanders, we can just command max available (100000)
@@ -175,12 +199,12 @@ func (sc *StrategyController) executeControlLoop(settings models.SiteSettings) {
 						}
 						threshold := (settings.CapacityPeakLimitKw * 1000) - buffer
 						// Add current battery charge power back to available capacity calculation
-						// because if it is currently charging, that power is already included in totalGridImport
+						// because if it is currently charging, that power is already included in avg15MinImport
 						currentChargePower := cache[id].BatteryPowerW
 						if currentChargePower < 0 {
 							currentChargePower = 0 // Ignore discharging
 						}
-						availableGridCapacity := threshold - totalGridImport + currentChargePower
+						availableGridCapacity := threshold - avg15MinImport + currentChargePower
 						if availableGridCapacity < 0 {
 							availableGridCapacity = 0
 						}
@@ -337,7 +361,8 @@ func (sc *StrategyController) executeControlLoop(settings models.SiteSettings) {
 			if excess > 0 {
 				for id, poller := range pollers {
 					if _, ok := poller.(models.BatteryController); ok {
-						if desiredBatteryForceChargeW[id] == 0 {
+						dev := poller.GetDevice()
+						if desiredBatteryForceChargeW[id] == 0 && dev.BatteryMode != "hold" && dev.BatteryMode != "force_charge" {
 							desiredBatteryDischargeW[id] = excess
 							excess = 0
 							break
@@ -422,7 +447,9 @@ func (sc *StrategyController) executeControlLoop(settings models.SiteSettings) {
 	// Issue Relay Commands
 	for _, poller := range pollers {
 		if relay, ok := poller.(models.RelayController); ok {
-			if settings.ApplianceTurnOnExcessW > 0 {
+			if isCachedCheapestHour && settings.SmartEvCheapestHours > 0 {
+				relay.SetState(true)
+			} else if settings.ApplianceTurnOnExcessW > 0 {
 				if totalGridExport > settings.ApplianceTurnOnExcessW {
 					relay.SetState(true)
 				} else {
