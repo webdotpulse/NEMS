@@ -55,6 +55,9 @@
                 MAC Address
               </th>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Vendor
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Open Ports
               </th>
             </tr>
@@ -81,6 +84,9 @@
                 {{ device.mac }}
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                {{ device.vendor }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                 <div class="flex flex-wrap gap-1">
                   <span v-for="port in device.open_ports" :key="port" class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
                     {{ port }}
@@ -103,6 +109,7 @@ interface DiscoveredDevice {
   ip: string;
   hostname: string;
   mac: string;
+  vendor: string;
   open_ports: number[];
 }
 

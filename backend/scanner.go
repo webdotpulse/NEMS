@@ -16,7 +16,52 @@ type DiscoveredDevice struct {
 	IP        string `json:"ip"`
 	Hostname  string `json:"hostname"`
 	MAC       string `json:"mac"`
+	Vendor    string `json:"vendor"`
 	OpenPorts []int  `json:"open_ports"`
+}
+
+var ouiLookup = map[string]string{
+	"00:01:42": "Cisco",
+	"00:0C:29": "VMware",
+	"00:11:32": "Synology",
+	"00:1E:06": "WIBO",
+	"00:24:14": "Cisco",
+	"00:25:9C": "Cisco",
+	"00:50:56": "VMware",
+	"04:D4:C4": "Raspberry Pi",
+	"08:00:27": "VirtualBox",
+	"10:27:F5": "Ubiquiti",
+	"18:E8:29": "Ubiquiti",
+	"28:EE:52": "Ubiquiti",
+	"3C:3B:4D": "Apple",
+	"44:D9:E7": "Ubiquiti",
+	"48:E7:29": "Ubiquiti",
+	"50:E5:49": "Giga-Byte",
+	"54:E1:AD": "Cisco",
+	"5C:F9:DD": "Dell",
+	"60:22:32": "Ubiquiti",
+	"68:D7:9A": "Ubiquiti",
+	"70:A7:41": "Ubiquiti",
+	"74:83:C2": "Ubiquiti",
+	"80:2A:A8": "Ubiquiti",
+	"A4:2B:B0": "Apple",
+	"B8:27:EB": "Raspberry Pi",
+	"D4:CA:6D": "Raspberry Pi",
+	"DC:A6:32": "Raspberry Pi",
+	"E0:63:DA": "Ubiquiti",
+	"E4:5F:01": "Raspberry Pi",
+	"F0:9F:C2": "Ubiquiti",
+	"FC:EC:DA": "Ubiquiti",
+}
+
+func getVendorFromMAC(mac string) string {
+	if len(mac) >= 8 {
+		oui := strings.ToUpper(mac[:8])
+		if vendor, ok := ouiLookup[oui]; ok {
+			return vendor
+		}
+	}
+	return "Unknown"
 }
 
 func getLocalSubnet() (*net.IPNet, error) {
@@ -166,8 +211,10 @@ func handleNetworkScan(w http.ResponseWriter, r *http.Request) {
 	for ip, dev := range devices {
 		if mac, ok := arpTable[ip]; ok {
 			dev.MAC = mac
+			dev.Vendor = getVendorFromMAC(mac)
 		} else {
 			dev.MAC = "Unknown"
+			dev.Vendor = "Unknown"
 		}
 
 		names, err := net.LookupAddr(ip)

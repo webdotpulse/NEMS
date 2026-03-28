@@ -7,9 +7,10 @@ import (
 )
 
 type TemplateMetadata struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
-	Type string `json:"type"` // "modbus", "rest", "cloud", "cloud_rest", "demo"
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	Type     string `json:"type"` // "modbus", "rest", "cloud", "cloud_rest", "demo"
+	Category string `json:"category"`
 }
 
 type Template struct {

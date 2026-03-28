@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"log"
+	"strings"
 	"sync"
 	"time"
 
@@ -171,6 +172,15 @@ func (pm *PollerManager) Start() {
 					if err != nil {
 						log.Printf("PollerManager: Error polling device %d: %v", id, err)
 
+						errStr := err.Error()
+						if strings.Contains(errStr, "broken pipe") || strings.Contains(errStr, "EOF") || strings.Contains(errStr, "connection reset") {
+							log.Printf("PollerManager: Connection drop detected for device %d, attempting to reconnect...", id)
+							poller.Close()
+							if connErr := poller.Connect(); connErr != nil {
+								log.Printf("PollerManager: Reconnect failed for device %d: %v", id, connErr)
+							}
+						}
+
 						pm.cacheMu.Lock()
 						pm.deviceCache[id] = DeviceData{
 							PowerW:        0,
@@ -228,6 +238,15 @@ func (pm *PollerManager) Start() {
 					powerW, batteryPowerW, gridPowerW, energyKwh, soc, err := poller.Poll()
 					if err != nil {
 						log.Printf("PollerManager: Error polling device %d: %v", id, err)
+
+						errStr := err.Error()
+						if strings.Contains(errStr, "broken pipe") || strings.Contains(errStr, "EOF") || strings.Contains(errStr, "connection reset") {
+							log.Printf("PollerManager: Connection drop detected for device %d, attempting to reconnect...", id)
+							poller.Close()
+							if connErr := poller.Connect(); connErr != nil {
+								log.Printf("PollerManager: Reconnect failed for device %d: %v", id, connErr)
+							}
+						}
 
 						pm.cacheMu.Lock()
 						pm.deviceCache[id] = DeviceData{

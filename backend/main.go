@@ -269,6 +269,7 @@ func main() {
 	mux.HandleFunc("/api/daily", handleDailyAggregates)
 	mux.HandleFunc("/api/logs", handleLogs)
 	mux.HandleFunc("/api/system/info", handleSystemInfo)
+	mux.HandleFunc("/api/system/reboot", handleSystemReboot)
 	mux.HandleFunc("/api/network/scan", handleNetworkScan)
 
 	mux.HandleFunc("/api/tariffs/today", handleTariffsToday)

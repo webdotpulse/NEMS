@@ -1,11 +1,14 @@
 package main
 
 import (
+	"bufio"
 	"database/sql"
 	"encoding/json"
-	"net/http"
+	"fmt"
 	"net"
+	"net/http"
 	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 	"time"
@@ -47,13 +50,105 @@ func handleSystemInfo(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Default values
+	gateway := "unknown"
+	cpuInfo := "unknown"
+	memInfo := "unknown"
+	diskInfo := "unknown"
+
+	// Get gateway
+	out, err := exec.Command("ip", "route").Output()
+	if err == nil {
+		lines := strings.Split(string(out), "\n")
+		for _, line := range lines {
+			if strings.HasPrefix(line, "default via") {
+				parts := strings.Fields(line)
+				if len(parts) >= 3 {
+					gateway = parts[2]
+					break
+				}
+			}
+		}
+	}
+
+	// Get CPU info
+	file, err := os.Open("/proc/cpuinfo")
+	if err == nil {
+		defer file.Close()
+		scanner := bufio.NewScanner(file)
+		for scanner.Scan() {
+			line := scanner.Text()
+			if strings.HasPrefix(line, "model name") {
+				parts := strings.SplitN(line, ":", 2)
+				if len(parts) == 2 {
+					cpuInfo = strings.TrimSpace(parts[1])
+					break
+				}
+			}
+		}
+	}
+
+	// Get Memory Info
+	memFile, err := os.Open("/proc/meminfo")
+	if err == nil {
+		defer memFile.Close()
+		scanner := bufio.NewScanner(memFile)
+		var totalMem, freeMem int64
+		for scanner.Scan() {
+			line := scanner.Text()
+			if strings.HasPrefix(line, "MemTotal:") {
+				fmt.Sscanf(line, "MemTotal: %d kB", &totalMem)
+			} else if strings.HasPrefix(line, "MemAvailable:") {
+				fmt.Sscanf(line, "MemAvailable: %d kB", &freeMem)
+			}
+		}
+		if totalMem > 0 {
+			usedMem := totalMem - freeMem
+			memInfo = fmt.Sprintf("%.1f GB / %.1f GB", float64(usedMem)/(1024*1024), float64(totalMem)/(1024*1024))
+		}
+	}
+
+	// Get Disk Info
+	diskOut, err := exec.Command("df", "-h", "/").Output()
+	if err == nil {
+		lines := strings.Split(string(diskOut), "\n")
+		if len(lines) >= 2 {
+			parts := strings.Fields(lines[1])
+			if len(parts) >= 5 {
+				diskInfo = fmt.Sprintf("%s / %s (%s used)", parts[2], parts[1], parts[4])
+			}
+		}
+	}
+
 	info := map[string]string{
 		"hostname": hostname,
 		"ip":       primaryIP,
 		"netmask":  primaryNetmask,
+		"gateway":  gateway,
+		"cpu":      cpuInfo,
+		"memory":   memInfo,
+		"disk":     diskInfo,
 	}
 
 	json.NewEncoder(w).Encode(info)
+}
+
+// handleSystemReboot is the HTTP handler for the /api/system/reboot endpoint.
+func handleSystemReboot(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"status": "rebooting"}`))
+
+	// Give the HTTP response time to be sent before rebooting
+	go func() {
+		time.Sleep(2 * time.Second)
+		_ = exec.Command("sudo", "reboot").Run()
+	}()
 }
 
 // handleStatus is the HTTP handler for the /api/status endpoint.

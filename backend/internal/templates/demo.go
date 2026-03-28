@@ -16,6 +16,7 @@ func init() {
 			ID:   "demo_inverter",
 			Name: "Demo Inverter",
 			Type: "demo",
+			Category: "demo",
 		},
 		NewPoller: func(device models.Device) models.DevicePoller {
 			return &DemoInverterPoller{Device: device}
@@ -26,6 +27,7 @@ func init() {
 			ID:   "demo_dongle",
 			Name: "Demo Grid Meter",
 			Type: "demo",
+			Category: "demo",
 		},
 		NewPoller: func(device models.Device) models.DevicePoller {
 			return &DemoDonglePoller{Device: device}
@@ -36,6 +38,7 @@ func init() {
 			ID:   "demo_charger",
 			Name: "Demo EV Charger",
 			Type: "demo",
+			Category: "demo",
 		},
 		NewPoller: func(device models.Device) models.DevicePoller {
 			return &DemoChargerPoller{Device: device}
@@ -46,6 +49,7 @@ func init() {
 			ID:   "demo_battery",
 			Name: "Demo Battery",
 			Type: "demo",
+			Category: "demo",
 		},
 		NewPoller: func(device models.Device) models.DevicePoller {
 			return &DemoBatteryPoller{Device: device}

@@ -23,6 +23,7 @@ func init() {
 			ID:   "homewizard_meter",
 			Name: "HomeWizard Meter",
 			Type: "rest",
+			Category: "meter",
 		},
 		NewPoller: func(device models.Device) models.DevicePoller {
 			return &HomeWizardMeterPoller{Device: device}
