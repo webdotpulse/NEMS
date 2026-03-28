@@ -4,10 +4,11 @@ import NavBar from './components/NavBar.vue'
 import Dashboard from './components/Dashboard.vue'
 import Settings from './components/Settings.vue'
 import Logger from './components/Logger.vue'
+import Scanner from './components/Scanner.vue'
 import { getApiBase } from './api'
 
 const isConnected = ref(false)
-const currentView = ref('dashboard') // 'dashboard' | 'settings' | 'logger'
+const currentView = ref('dashboard') // 'dashboard' | 'settings' | 'logger' | 'scanner'
 let pollingInterval: number | undefined
 
 const checkConnection = async () => {
@@ -48,6 +49,7 @@ const setView = (view: string) => {
     <Dashboard v-if="currentView === 'dashboard'" />
     <Settings v-if="currentView === 'settings'" />
     <Logger v-if="currentView === 'logger'" />
+    <Scanner v-if="currentView === 'scanner'" />
   </div>
 </template>
 
