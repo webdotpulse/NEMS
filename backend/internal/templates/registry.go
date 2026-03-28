@@ -45,6 +45,15 @@ func GetTemplates() []TemplateMetadata {
 	return list
 }
 
+func GetCategory(id string) string {
+	mu.RLock()
+	defer mu.RUnlock()
+	if t, ok := templates[id]; ok {
+		return t.Metadata.Category
+	}
+	return ""
+}
+
 func CreatePoller(id string, device models.Device) models.DevicePoller {
 	mu.RLock()
 	defer mu.RUnlock()
