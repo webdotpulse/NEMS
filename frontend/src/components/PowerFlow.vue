@@ -112,6 +112,19 @@
           </div>
         </div>
 
+        <!-- Bottom Right: Appliance (Relay) -->
+        <template v-for="(device, index) in applianceDevices" :key="device.id">
+          <div class="absolute flex flex-col items-center justify-center transform -translate-x-1/2 -translate-y-1/2" :style="`left: ${80 + (index * 12)}%; top: ${80 - (index * 8)}%;`">
+            <div @click="openChart('appliance')" class="z-10 flex flex-col items-center justify-center w-28 h-28 bg-white dark:bg-gray-800 rounded-full border-[4px] border-[#F97316] shadow-sm cursor-pointer hover:scale-105 transition-transform mb-2 relative">
+              <span class="text-xs font-medium text-gray-500 mb-1 absolute -top-6">{{ device.name }}</span>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-700 dark:text-gray-300 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+              <div class="text-gray-800 dark:text-gray-200 text-sm font-medium">
+                <span class="text-orange-500 font-bold uppercase tracking-wide">{{ device.status === 'online' ? 'ON' : 'OFF' }}</span>
+              </div>
+            </div>
+          </div>
+        </template>
+
         <!-- Bottom Row: Battery -->
         <template v-if="batteryDevices.length > 0">
           <template v-for="(device, index) in batteryDevices" :key="device.id">
@@ -283,10 +296,11 @@ onMounted(() => {
   fetchDevices()
 })
 
-const gridDevices = computed(() => devices.value.filter(d => d.template === 'huawei_dongle' || d.template === 'demo_dongle' || (d.template === 'huawei_inverter' && (d as any).has_grid_meter)))
+const gridDevices = computed(() => devices.value.filter(d => d.template === 'huawei_dongle' || d.template === 'demo_dongle' || d.template === 'p1_serial' || (d.template === 'huawei_inverter' && (d as any).has_grid_meter)))
 const solarDevices = computed(() => devices.value.filter(d => d.template === 'huawei_inverter' || d.template === 'demo_inverter'))
 const batteryDevices = computed(() => devices.value.filter(d => d.has_battery))
 const evDevices = computed(() => devices.value.filter(d => ['raedian_charger', 'demo_charger', 'alfen_charger', 'easee_charger', 'bender_charger', 'peblar_charger', 'phoenix_charger'].includes(d.template)))
+const applianceDevices = computed(() => devices.value.filter(d => d.template === 'generic_relay'))
 const homeLoad = computed(() => {
   if (!props.state || props.state.total_load_w === null || props.state.total_load_w === undefined) return 0
   return props.state.total_load_w - (props.state.ev_charger_power_w || 0)

@@ -25,6 +25,7 @@ type Device struct {
 	Username        string  `json:"username,omitempty"`
 	Password        string  `json:"password,omitempty"`
 	ChargeMode      string  `json:"charge_mode,omitempty"`
+	BatteryMode     string  `json:"battery_mode,omitempty"`
 	Status          string  `json:"status"`
 	HasGridMeter    bool    `json:"has_grid_meter"`
 	HasBattery      bool    `json:"has_battery"`
