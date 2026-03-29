@@ -106,91 +106,120 @@
       </div>
 
 
-      <!-- Daily Aggregates Section -->
-      <div v-if="dailyAggregates" class="mt-8 mb-8">
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:text-3xl sm:truncate">
-            Daily Summary
-          </h2>
-          <input type="date" v-model="selectedDate" @change="fetchDailyAggregates" class="block w-48 rounded-md border-0 py-1.5 px-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6 dark:bg-gray-700 dark:text-white dark:ring-gray-600" />
+      <!-- Daily Aggregates Section (Energy Management) -->
+      <div v-if="dailyAggregates" class="mt-8 mb-8 space-y-6">
+
+        <!-- Top Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-6">
+            <div class="flex items-baseline space-x-2">
+              <span class="text-2xl font-bold text-gray-900 dark:text-white">{{ consTotal.toFixed(2) }}</span>
+              <span class="text-sm text-gray-500 dark:text-gray-400">kWh</span>
+            </div>
+            <div class="text-sm text-gray-500 dark:text-gray-400 mt-1">Consumption today</div>
+          </div>
+          <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-6">
+            <div class="flex items-baseline space-x-2">
+              <span class="text-2xl font-bold text-gray-900 dark:text-white">{{ prodConsumed.toFixed(2) }}</span>
+              <span class="text-sm text-gray-500 dark:text-gray-400">kWh</span>
+            </div>
+            <div class="text-sm text-gray-500 dark:text-gray-400 mt-1">Self-consumption energy</div>
+          </div>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <!-- Grid Card -->
-          <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-            <div class="p-5">
-              <div class="flex items-center">
-                <div class="flex-shrink-0">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z"/><path d="m13 6-6 7h4v5l6-7h-4z"/></svg>
-                </div>
-                <div class="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Grid</dt>
-                    <dd class="text-sm text-gray-900 dark:text-gray-100 flex flex-col mt-1">
-                      <div class="flex justify-between"><span>Import:</span> <span class="font-semibold text-red-500">{{ dailyAggregates.grid_import_kwh.toFixed(2) }} kWh</span></div>
-                      <div class="flex justify-between"><span>Export:</span> <span class="font-semibold text-green-500">{{ dailyAggregates.grid_export_kwh.toFixed(2) }} kWh</span></div>
-                    </dd>
-                  </dl>
-                </div>
+
+        <!-- Energy Management Card -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+
+          <!-- Navigation -->
+          <div class="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
+            <div class="bg-gray-100 dark:bg-gray-700 p-1 rounded-full flex w-full sm:w-auto">
+              <button class="flex-1 sm:flex-none px-6 py-1.5 rounded-full bg-white dark:bg-gray-600 shadow-sm text-sm font-medium text-gray-900 dark:text-white">Day</button>
+              <button class="flex-1 sm:flex-none px-6 py-1.5 rounded-full text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-300">Month</button>
+              <button class="flex-1 sm:flex-none px-6 py-1.5 rounded-full text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-300">Year</button>
+              <button class="flex-1 sm:flex-none px-6 py-1.5 rounded-full text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-300">Lifetime</button>
+            </div>
+
+            <div class="flex items-center space-x-4">
+              <button @click="changeDate(-1)" class="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
+                <svg class="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+              </button>
+              <input type="date" v-model="selectedDate" @change="fetchDailyAggregates" class="font-medium text-gray-900 dark:text-white bg-transparent border-none focus:ring-0 cursor-pointer p-0" />
+              <button @click="changeDate(1)" class="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
+                <svg class="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+              </button>
+            </div>
+          </div>
+
+          <h3 class="text-xl font-medium text-gray-900 dark:text-white mb-6">Energy Management</h3>
+
+          <!-- Production Block -->
+          <div class="mb-8">
+            <div class="flex items-center text-gray-500 dark:text-gray-400 mb-4">
+              <span class="mr-1">Production</span>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+
+            <div class="bg-gray-50 dark:bg-gray-900 rounded-xl p-4 flex items-center justify-between relative">
+              <div class="flex-1 text-center pr-12">
+                <div class="text-lg font-semibold text-green-600"><span class="text-xl">{{ prodConsumed.toFixed(2) }}</span> <span class="text-sm font-normal">kWh</span></div>
+                <div class="text-xs text-gray-500">Consumed</div>
+                <div class="text-xs text-gray-400">({{ prodTotal > 0 ? ((prodConsumed / prodTotal) * 100).toFixed(2) : '0.00' }}%)</div>
+              </div>
+
+              <!-- Center Ring -->
+              <div class="relative w-28 h-28 flex-shrink-0 z-10 flex flex-col items-center justify-center bg-white dark:bg-gray-800 rounded-full shadow-sm">
+                <svg class="absolute inset-0 w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                  <!-- Background circle (light green for Fed to grid) -->
+                  <path class="text-green-200 dark:text-green-900" stroke-dasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+                  <!-- Foreground circle (dark green for Consumed) -->
+                  <path class="text-green-600" :stroke-dasharray="`${prodTotal > 0 ? (prodConsumed / prodTotal) * 100 : 0}, 100`" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+                </svg>
+                <div class="text-xl font-bold text-gray-900 dark:text-white">{{ prodTotal.toFixed(2) }}</div>
+                <div class="text-sm text-gray-500">kWh</div>
+              </div>
+
+              <div class="flex-1 text-center pl-12">
+                <div class="text-lg font-semibold text-green-400"><span class="text-xl">{{ prodFedToGrid.toFixed(2) }}</span> <span class="text-sm font-normal">kWh</span></div>
+                <div class="text-xs text-gray-500">Fed to grid</div>
+                <div class="text-xs text-gray-400">({{ prodTotal > 0 ? ((prodFedToGrid / prodTotal) * 100).toFixed(2) : '0.00' }}%)</div>
               </div>
             </div>
           </div>
-          <!-- Solar Yield Card -->
-          <div v-if="state?.solar_power_w !== null && state?.solar_power_w !== undefined" class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-            <div class="p-5">
-              <div class="flex items-center">
-                <div class="flex-shrink-0">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-400" fill="currentColor" viewBox="0 0 24 24"><path d="M6.993 12c0 2.761 2.246 5.007 5.007 5.007s5.007-2.246 5.007-5.007S14.761 6.993 12 6.993 6.993 9.239 6.993 12zM12 8.993c1.658 0 3.007 1.349 3.007 3.007S13.658 15.007 12 15.007 8.993 13.658 8.993 12 10.342 8.993 12 8.993zM10.998 19h2v3h-2zm0-17h2v3h-2zm-9 9h3v2h-3zm17 0h3v2h-3zM4.219 18.363l2.12-2.122 1.415 1.414-2.12 2.122zM16.24 6.344l2.122-2.122 1.414 1.414-2.122 2.122zM6.342 7.759 4.22 5.637l1.415-1.414 2.12 2.122zm13.434 10.605-1.414 1.414-2.122-2.122 1.414-1.414z"/></svg>
-                </div>
-                <div class="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Solar Yield</dt>
-                    <dd class="text-sm text-gray-900 dark:text-gray-100 flex flex-col mt-1">
-                      <div class="flex justify-between"><span>Production:</span> <span class="font-semibold text-yellow-500">{{ dailyAggregates.solar_yield_kwh.toFixed(2) }} kWh</span></div>
-                    </dd>
-                  </dl>
-                </div>
+
+          <!-- Consumption Block -->
+          <div>
+            <div class="flex items-center text-gray-500 dark:text-gray-400 mb-4">
+              <span class="mr-1">Consumption</span>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+
+            <div class="bg-gray-50 dark:bg-gray-900 rounded-xl p-4 flex items-center justify-between relative">
+              <div class="flex-1 text-center pr-12">
+                <div class="text-lg font-semibold text-orange-500"><span class="text-xl">{{ consFromPV.toFixed(2) }}</span> <span class="text-sm font-normal">kWh</span></div>
+                <div class="text-xs text-gray-500">From PV</div>
+                <div class="text-xs text-gray-400">({{ consTotal > 0 ? ((consFromPV / consTotal) * 100).toFixed(2) : '0.00' }}%)</div>
+              </div>
+
+              <!-- Center Ring -->
+              <div class="relative w-28 h-28 flex-shrink-0 z-10 flex flex-col items-center justify-center bg-white dark:bg-gray-800 rounded-full shadow-sm">
+                <svg class="absolute inset-0 w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                  <!-- Background circle (yellow for From grid) -->
+                  <path class="text-yellow-400" stroke-dasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+                  <!-- Foreground circle (orange for From PV) -->
+                  <path class="text-orange-500" :stroke-dasharray="`${consTotal > 0 ? (consFromPV / consTotal) * 100 : 0}, 100`" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+                </svg>
+                <div class="text-xl font-bold text-gray-900 dark:text-white">{{ consTotal.toFixed(2) }}</div>
+                <div class="text-sm text-gray-500">kWh</div>
+              </div>
+
+              <div class="flex-1 text-center pl-12">
+                <div class="text-lg font-semibold text-yellow-500"><span class="text-xl">{{ consFromGrid.toFixed(2) }}</span> <span class="text-sm font-normal">kWh</span></div>
+                <div class="text-xs text-gray-500">From grid</div>
+                <div class="text-xs text-gray-400">({{ consTotal > 0 ? ((consFromGrid / consTotal) * 100).toFixed(2) : '0.00' }}%)</div>
               </div>
             </div>
           </div>
-          <!-- Battery Card -->
-          <div v-if="state?.battery_power_w !== null && state?.battery_power_w !== undefined" class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-            <div class="p-5">
-              <div class="flex items-center">
-                <div class="flex-shrink-0">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-400" fill="currentColor" viewBox="0 0 24 24"><path d="M4 18h14c1.103 0 2-.897 2-2v-2h2v-4h-2V8c0-1.103-.897-2-2-2H4c-1.103 0-2 .897-2 2v8c0 1.103.897 2 2 2zM4 8h14l.002 8H4V8z"/></svg>
-                </div>
-                <div class="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Battery</dt>
-                    <dd class="text-sm text-gray-900 dark:text-gray-100 flex flex-col mt-1">
-                      <div class="flex justify-between"><span>Charged:</span> <span class="font-semibold text-green-500">{{ dailyAggregates.battery_charge_kwh.toFixed(2) }} kWh</span></div>
-                      <div class="text-xs text-gray-500 dark:text-gray-400 ml-2">Solar: {{ dailyAggregates.battery_charge_solar_kwh.toFixed(2) }} kWh</div>
-                      <div class="text-xs text-gray-500 dark:text-gray-400 ml-2">Grid: {{ dailyAggregates.battery_charge_grid_kwh.toFixed(2) }} kWh</div>
-                      <div class="flex justify-between mt-1"><span>Discharged:</span> <span class="font-semibold text-blue-500">{{ dailyAggregates.battery_discharge_kwh.toFixed(2) }} kWh</span></div>
-                    </dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </div>
-          <!-- House Card -->
-          <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-            <div class="p-5">
-              <div class="flex items-center">
-                <div class="flex-shrink-0">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-purple-400" fill="currentColor" viewBox="0 0 24 24"><path d="M3 13h1v7c0 1.103.897 2 2 2h12c1.103 0 2-.897 2-2v-7h1a1 1 0 0 0 .707-1.707l-9-9a.999.999 0 0 0-1.414 0l-9 9A1 1 0 0 0 3 13zm7 7v-5h4v5h-4zm2-15.586 6 6V15l.001 5H16v-5c0-1.103-.897-2-2-2h-4c-1.103 0-2 .897-2 2v5H6v-9.586l6-6z"/></svg>
-                </div>
-                <div class="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">House</dt>
-                    <dd class="text-sm text-gray-900 dark:text-gray-100 flex flex-col mt-1">
-                      <div class="flex justify-between"><span>Consumption:</span> <span class="font-semibold text-purple-500">{{ dailyAggregates.house_consumption_kwh.toFixed(2) }} kWh</span></div>
-                    </dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </div>
+
         </div>
       </div>
 
@@ -211,7 +240,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import PowerFlow from './PowerFlow.vue'
 import { getApiBase } from '../api'
 import type { SiteState, DailyAggregates } from '../types'
@@ -220,6 +249,21 @@ const state = ref<SiteState | null>(null)
 const dailyAggregates = ref<DailyAggregates | null>(null)
 const selectedDate = ref<string>(new Date().toISOString().split('T')[0])
 let eventSource: EventSource | null = null
+
+const prodTotal = computed(() => dailyAggregates.value?.solar_yield_kwh || 0);
+const prodFedToGrid = computed(() => dailyAggregates.value?.grid_export_kwh || 0);
+const prodConsumed = computed(() => Math.max(0, prodTotal.value - prodFedToGrid.value));
+
+const consTotal = computed(() => dailyAggregates.value?.house_consumption_kwh || 0);
+const consFromGrid = computed(() => dailyAggregates.value?.grid_import_kwh || 0);
+const consFromPV = computed(() => Math.max(0, consTotal.value - consFromGrid.value));
+
+const changeDate = (offsetDays: number) => {
+  const d = new Date(selectedDate.value);
+  d.setDate(d.getDate() + offsetDays);
+  selectedDate.value = d.toISOString().split('T')[0];
+  fetchDailyAggregates();
+}
 
 const fetchDailyAggregates = async () => {
   try {
