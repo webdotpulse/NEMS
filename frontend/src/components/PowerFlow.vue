@@ -79,7 +79,7 @@
                   </span>
                   <span v-else class="text-teal-500 dark:text-teal-400 text-xs">&uarr; 0.0 kW</span>
                 </div>
-                <select @change="setBatteryModeDevice(device, ($event.target as HTMLSelectElement).value)" class="text-xs mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded pointer-events-auto shadow-sm z-30 relative absolute -top-8" @click.stop>
+                <select @change="setBatteryModeDevice(device, ($event.target as HTMLSelectElement).value)" class="text-xs mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded pointer-events-auto shadow-sm z-30 absolute -top-10" @click.stop>
                   <option value="auto" :selected="device.battery_mode === 'auto' || !device.battery_mode">Auto</option>
                   <option value="hold" :selected="device.battery_mode === 'hold'">Hold</option>
                   <option value="force_charge" :selected="device.battery_mode === 'force_charge'">Force Charge</option>

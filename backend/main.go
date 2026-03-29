@@ -265,6 +265,8 @@ func main() {
 	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN peak_shaving_buffer_w REAL DEFAULT 200.0")
 	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN peak_shaving_rampup_w REAL DEFAULT 500.0")
 	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN timezone TEXT DEFAULT 'Europe/Brussels'")
+	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN latitude REAL DEFAULT 50.8503")
+	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN longitude REAL DEFAULT 4.3517")
 
 	log.Println("Database schema initialized")
 
