@@ -108,9 +108,12 @@
 
       <!-- Daily Aggregates Section -->
       <div v-if="dailyAggregates" class="mt-8 mb-8">
-        <h2 class="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:text-3xl sm:truncate mb-4">
-          Daily Summary
-        </h2>
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:text-3xl sm:truncate">
+            Daily Summary
+          </h2>
+          <input type="date" v-model="selectedDate" @change="fetchDailyAggregates" class="block w-48 rounded-md border-0 py-1.5 px-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6 dark:bg-gray-700 dark:text-white dark:ring-gray-600" />
+        </div>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <!-- Grid Card -->
           <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
@@ -215,7 +218,19 @@ import type { SiteState, DailyAggregates } from '../types'
 
 const state = ref<SiteState | null>(null)
 const dailyAggregates = ref<DailyAggregates | null>(null)
+const selectedDate = ref<string>(new Date().toISOString().split('T')[0])
 let eventSource: EventSource | null = null
+
+const fetchDailyAggregates = async () => {
+  try {
+    const res = await fetch(`${getApiBase()}/api/daily?date=${selectedDate.value}`)
+    if (res.ok) {
+      dailyAggregates.value = await res.json()
+    }
+  } catch (e) {
+    console.error("Failed to fetch daily aggregates:", e)
+  }
+}
 
 onMounted(async () => {
 
@@ -244,14 +259,7 @@ onMounted(async () => {
   }
 
   // Fetch daily aggregates
-  try {
-    const res = await fetch(`${getApiBase()}/api/daily`)
-    if (res.ok) {
-      dailyAggregates.value = await res.json()
-    }
-  } catch (e) {
-    console.error("Failed to fetch daily aggregates:", e)
-  }
+  await fetchDailyAggregates()
 
 })
 

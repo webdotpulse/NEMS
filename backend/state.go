@@ -127,7 +127,18 @@ func handleDailyAggregates(w http.ResponseWriter, r *http.Request) {
 		loc = time.UTC
 	}
 	now := time.Now().In(loc)
+
 	startOfToday := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc).UTC()
+
+	// Parse optional date parameter
+	dateParam := r.URL.Query().Get("date")
+	if dateParam != "" {
+		parsedDate, err := time.ParseInLocation("2006-01-02", dateParam, loc)
+		if err == nil {
+			startOfToday = parsedDate.UTC()
+		}
+	}
+	endOfDay := startOfToday.Add(24 * time.Hour)
 
 	// Group by minute to do the charge source calculation properly.
 	// This determines if a battery was charged from excess solar or from the grid.
@@ -142,7 +153,7 @@ func handleDailyAggregates(w http.ResponseWriter, r *http.Request) {
 				SUM(CASE WHEN ((d.template IN ('huawei_inverter', 'demo_inverter') AND d.name LIKE '%battery%') OR d.template = 'demo_battery') AND m.power_w > 0 THEN (m.power_w / 60000.0) ELSE 0 END) as battery_discharge
 			FROM measurements m
 			JOIN devices d ON m.device_id = d.id
-			WHERE m.timestamp >= ?
+			WHERE m.timestamp >= ? AND m.timestamp < ?
 			GROUP BY ts
 		)
 		SELECT
@@ -166,7 +177,7 @@ func handleDailyAggregates(w http.ResponseWriter, r *http.Request) {
 		FROM minute_aggs
 	`
 
-	row := db.QueryRow(query, startOfToday.Format("2006-01-02 15:04:05"))
+	row := db.QueryRow(query, startOfToday.Format("2006-01-02 15:04:05"), endOfDay.Format("2006-01-02 15:04:05"))
 
 	var agg DailyAggregates
 	var gImport, gExport, sYield, bCharge, bDischarge, bChargeSolar, bChargeGrid *float64
@@ -273,7 +284,7 @@ func handleHistory(w http.ResponseWriter, r *http.Request) {
 					END
 				) / COUNT(DISTINCT d.id) as avg_power
 			FROM measurements m
-			JOIN devices d ON m.device_id = d.id
+			JOIN devices d ON CAST(m.device_id AS INTEGER) = d.id
 			WHERE %s
 			GROUP BY ts
 			ORDER BY ts ASC
@@ -322,7 +333,7 @@ func handleHistory(w http.ResponseWriter, r *http.Request) {
 			if i > 0 {
 				inClause += ","
 			}
-			inClause += fmt.Sprintf("%d", id)
+			inClause += fmt.Sprintf("'%d'", id)
 		}
 
 		query = fmt.Sprintf(`
