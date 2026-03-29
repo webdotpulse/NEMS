@@ -16,7 +16,7 @@
             </button>
           </div>
           <div class="flex-shrink-0 flex items-center">
-            <span class="text-xl font-bold text-gray-900 dark:text-white mr-8">Pulse EMS</span>
+            <img src="../assets/logo.png" alt="Pulse EMS" class="h-8 w-auto mr-8">
           </div>
           <div class="hidden sm:-my-px sm:ml-6 sm:flex sm:space-x-8">
             <a href="#"

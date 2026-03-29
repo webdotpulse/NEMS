@@ -48,14 +48,14 @@
               <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-700 dark:text-gray-300 mb-1" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z"/><path d="m13 6-6 7h4v5l6-7h-4z"/></svg>
               <div class="text-sm font-medium flex flex-col items-center leading-tight">
                 <span v-if="state?.grid_power_w !== null && state?.grid_power_w !== undefined" class="text-purple-600 dark:text-purple-400 text-xs">
-                  &larr; {{ state.grid_power_w < 0 ? (Math.abs(state.grid_power_w / gridDevices.length) / 1000).toFixed(1) : '0.0' }} kW
+                  &larr; {{ state.grid_power_w < 0 ? formatPowerSimple(Math.abs(state.grid_power_w / gridDevices.length)) : '0 W' }}
                 </span>
-                <span v-else class="text-purple-600 dark:text-purple-400 text-xs">&larr; 0.0 kW</span>
+                <span v-else class="text-purple-600 dark:text-purple-400 text-xs">&larr; 0 W</span>
 
                 <span v-if="state?.grid_power_w !== null && state?.grid_power_w !== undefined" class="text-blue-500 dark:text-blue-400 text-xs">
-                  &rarr; {{ state.grid_power_w > 0 ? ((state.grid_power_w / gridDevices.length) / 1000).toFixed(1) : '0.0' }} kW
+                  &rarr; {{ state.grid_power_w > 0 ? formatPowerSimple(state.grid_power_w / gridDevices.length) : '0 W' }}
                 </span>
-                <span v-else class="text-blue-500 dark:text-blue-400 text-xs">&rarr; 0.0 kW</span>
+                <span v-else class="text-blue-500 dark:text-blue-400 text-xs">&rarr; 0 W</span>
               </div>
             </div>
           </div>
@@ -70,14 +70,14 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-700 dark:text-gray-300 mb-1" fill="currentColor" viewBox="0 0 24 24"><path d="M4 18h14c1.103 0 2-.897 2-2v-2h2v-4h-2V8c0-1.103-.897-2-2-2H4c-1.103 0-2 .897-2 2v8c0 1.103.897 2 2 2zM4 8h14l.002 8H4V8z"/></svg>
                 <div class="text-sm font-medium flex flex-col items-center leading-tight">
                   <span v-if="state?.battery_power_w !== null && state?.battery_power_w !== undefined" class="text-pink-500 dark:text-pink-400 text-xs">
-                    &darr; {{ state.battery_power_w < 0 ? (Math.abs(state.battery_power_w / batteryDevices.length) / 1000).toFixed(1) : '0.0' }} kW
+                    &darr; {{ state.battery_power_w < 0 ? formatPowerSimple(Math.abs(state.battery_power_w / batteryDevices.length)) : '0 W' }}
                   </span>
-                  <span v-else class="text-pink-500 dark:text-pink-400 text-xs">&darr; 0.0 kW</span>
+                  <span v-else class="text-pink-500 dark:text-pink-400 text-xs">&darr; 0 W</span>
 
                   <span v-if="state?.battery_power_w !== null && state?.battery_power_w !== undefined" class="text-teal-500 dark:text-teal-400 text-xs">
-                    &uarr; {{ state.battery_power_w > 0 ? ((state.battery_power_w / batteryDevices.length) / 1000).toFixed(1) : '0.0' }} kW
+                    &uarr; {{ state.battery_power_w > 0 ? formatPowerSimple(state.battery_power_w / batteryDevices.length) : '0 W' }}
                   </span>
-                  <span v-else class="text-teal-500 dark:text-teal-400 text-xs">&uarr; 0.0 kW</span>
+                  <span v-else class="text-teal-500 dark:text-teal-400 text-xs">&uarr; 0 W</span>
                 </div>
                 <select @change="setBatteryModeDevice(device, ($event.target as HTMLSelectElement).value)" class="text-xs mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded pointer-events-auto shadow-sm z-30 absolute -top-10" @click.stop>
                   <option value="auto" :selected="device.battery_mode === 'auto' || !device.battery_mode">Auto</option>
@@ -100,7 +100,7 @@
               <span v-if="state?.total_load_w !== null && state?.total_load_w !== undefined">
                  {{ formatPowerSimple(homeLoad) }}
               </span>
-              <span v-else>0.0 kW</span>
+              <span v-else>0 W</span>
             </div>
           </div>
         </div>
@@ -115,7 +115,7 @@
                 <span v-if="state?.solar_power_w !== null && state?.solar_power_w !== undefined">
                    {{ formatPowerSimple(state.solar_power_w / solarDevices.length) }}
                 </span>
-                <span v-else>0.0 kW</span>
+                <span v-else>0 W</span>
               </div>
             </div>
           </div>
@@ -131,7 +131,7 @@
                 <span v-if="state?.ev_charger_power_w !== null && state?.ev_charger_power_w !== undefined">
                   {{ formatPowerSimple(state.ev_charger_power_w / evDevices.length) }}
                 </span>
-                <span v-else>0.0 kW</span>
+                <span v-else>0 W</span>
                 <span class="text-[10px] font-bold text-purple-600 uppercase mt-0.5">{{ device.charge_mode || 'ECO' }}</span>
               </div>
               <select @change="setEvModeDevice(device, ($event.target as HTMLSelectElement).value)" class="text-xs mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded pointer-events-auto shadow-sm absolute -top-8" @click.stop>
@@ -576,6 +576,9 @@ return segments;
 
 const formatPowerSimple = (powerW: number) => {
   const absPower = Math.abs(powerW)
+  if (absPower < 1000) {
+    return `${Math.round(absPower)} W`
+  }
   const valKw = (absPower / 1000).toFixed(1)
   return `${valKw} kW`
 }
