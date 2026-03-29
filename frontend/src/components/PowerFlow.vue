@@ -17,7 +17,7 @@
         <path v-for="(device, index) in batteryDevices" :key="'static-battery-center-'+device.id" :d="`M ${15 + (index * 15 - (batteryDevices.length-1)*7.5)} 50 L 50 50`" vector-effect="non-scaling-stroke" stroke-linecap="round" fill="none" stroke="#E5E7EB" stroke-width="2" />
 
         <!-- Home -> EV -->
-        <path v-for="(device, index) in evDevices" :key="'static-home-ev-'+device.id" :d="`M 50 85 L ${20 - (index * 12)} 85`" vector-effect="non-scaling-stroke" stroke-linecap="round" fill="none" stroke="#E5E7EB" stroke-width="2" />
+        <path v-for="(device, index) in evDevices" :key="'static-home-ev-'+device.id" :d="`M 50 85 L ${32.5 - (index * 12)} 85`" vector-effect="non-scaling-stroke" stroke-linecap="round" fill="none" stroke="#E5E7EB" stroke-width="2" />
 
         <!-- Home -> Appliance -->
         <path v-for="(device, index) in applianceDevices" :key="'static-home-appliance-'+device.id" :d="`M 50 85 L ${80 + (index * 12)} 85`" vector-effect="non-scaling-stroke" stroke-linecap="round" fill="none" stroke="#E5E7EB" stroke-width="2" />
@@ -66,7 +66,7 @@
           <template v-for="(device, index) in batteryDevices" :key="device.id">
             <div class="absolute flex flex-col items-center justify-center transform -translate-x-1/2 -translate-y-1/2" :style="`left: ${15 + (index * 15 - (batteryDevices.length-1)*7.5)}%; top: 50%;`">
               <div @click="openChart('battery')" class="z-10 flex flex-col items-center justify-center w-28 h-28 bg-white dark:bg-gray-800 rounded-full border-[4px] border-[#EC4899] shadow-sm cursor-pointer hover:scale-105 transition-transform mb-2 relative">
-                <span class="text-xs font-medium text-gray-500 mb-1 absolute -top-6">Battery</span>
+                <span class="text-xs font-medium text-gray-500 mb-1 absolute -bottom-6">Battery</span>
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-700 dark:text-gray-300 mb-1" fill="currentColor" viewBox="0 0 24 24"><path d="M4 18h14c1.103 0 2-.897 2-2v-2h2v-4h-2V8c0-1.103-.897-2-2-2H4c-1.103 0-2 .897-2 2v8c0 1.103.897 2 2 2zM4 8h14l.002 8H4V8z"/></svg>
                 <div class="text-sm font-medium flex flex-col items-center leading-tight">
                   <span v-if="state?.battery_power_w !== null && state?.battery_power_w !== undefined" class="text-pink-500 dark:text-pink-400 text-xs">
@@ -79,7 +79,7 @@
                   </span>
                   <span v-else class="text-teal-500 dark:text-teal-400 text-xs">&uarr; 0.0 kW</span>
                 </div>
-                <select @change="setBatteryModeDevice(device, ($event.target as HTMLSelectElement).value)" class="text-xs mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded pointer-events-auto shadow-sm z-30 relative absolute -bottom-8" @click.stop>
+                <select @change="setBatteryModeDevice(device, ($event.target as HTMLSelectElement).value)" class="text-xs mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded pointer-events-auto shadow-sm z-30 relative absolute -top-8" @click.stop>
                   <option value="auto" :selected="device.battery_mode === 'auto' || !device.battery_mode">Auto</option>
                   <option value="hold" :selected="device.battery_mode === 'hold'">Hold</option>
                   <option value="force_charge" :selected="device.battery_mode === 'force_charge'">Force Charge</option>
@@ -123,9 +123,9 @@
 
         <!-- Bottom Left: EV Charger -->
         <template v-for="(device, index) in evDevices" :key="device.id">
-          <div class="absolute flex flex-col items-center justify-center transform -translate-x-1/2 -translate-y-1/2" :style="`left: ${20 - (index * 12)}%; top: 85%;`">
+          <div class="absolute flex flex-col items-center justify-center transform -translate-x-1/2 -translate-y-1/2" :style="`left: ${32.5 - (index * 12)}%; top: 85%;`">
             <div @click="openChart('ev_charger')" class="z-10 flex flex-col items-center justify-center w-28 h-28 bg-white dark:bg-gray-800 rounded-full border-[4px] border-[#A855F7] shadow-sm cursor-pointer hover:scale-105 transition-transform mb-2 relative">
-              <span class="text-xs font-medium text-gray-500 mb-1 absolute -top-6">EV Charger</span>
+              <span class="text-xs font-medium text-gray-500 mb-1 absolute -bottom-6">EV Charger</span>
               <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-700 dark:text-gray-300 mb-1" fill="currentColor" viewBox="0 0 24 24"><path d="m20.772 10.156-1.368-4.105A2.995 2.995 0 0 0 16.559 4H7.441a2.995 2.995 0 0 0-2.845 2.051l-1.368 4.105A2.003 2.003 0 0 0 2 12v5c0 .753.423 1.402 1.039 1.743-.013.066-.039.126-.039.195V21a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-2h12v2a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-2.062c0-.069-.026-.13-.039-.195A1.993 1.993 0 0 0 22 17v-5c0-.829-.508-1.541-1.228-1.844zM4 17v-5h16l.002 5H4zM7.441 6h9.117c.431 0 .813.274.949.684L18.613 10H5.387l1.105-3.316A1 1 0 0 1 7.441 6z"/><circle cx="6.5" cy="14.5" r="1.5"/><circle cx="17.5" cy="14.5" r="1.5"/></svg>
               <div class="text-gray-800 dark:text-gray-200 text-sm font-medium flex flex-col items-center">
                 <span v-if="state?.ev_charger_power_w !== null && state?.ev_charger_power_w !== undefined">
@@ -134,7 +134,7 @@
                 <span v-else>0.0 kW</span>
                 <span class="text-[10px] font-bold text-purple-600 uppercase mt-0.5">{{ device.charge_mode || 'ECO' }}</span>
               </div>
-              <select @change="setEvModeDevice(device, ($event.target as HTMLSelectElement).value)" class="text-xs mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded pointer-events-auto shadow-sm absolute -bottom-8" @click.stop>
+              <select @change="setEvModeDevice(device, ($event.target as HTMLSelectElement).value)" class="text-xs mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded pointer-events-auto shadow-sm absolute -top-8" @click.stop>
                 <option value="off" :selected="device.charge_mode === 'off'">Off</option>
                 <option value="eco" :selected="device.charge_mode === 'eco' || !device.charge_mode">Eco</option>
                 <option value="now" :selected="device.charge_mode === 'now'">Now</option>
@@ -380,7 +380,7 @@ const activeSegments = computed<Segment[]>(() => {
         if (targetType === 'home') path = `M ${startX} 50 L 50 50 L 50 85`;
         else if (targetType === 'ev') {
             evDevices.value.forEach((ev, evIndex) => {
-                const targetX = 20 - (evIndex * 12);
+                const targetX = 32.5 - (evIndex * 12);
                 path = `M ${startX} 50 L 50 50 L 50 85 L ${targetX} 85`;
                 segments.push({
                   id: `solar-${targetType}-${d.id}-${ev.id}`,
@@ -425,7 +425,7 @@ const activeSegments = computed<Segment[]>(() => {
         if (targetType === 'home') path = `M ${startX} 50 L 50 50 L 50 85`;
         else if (targetType === 'ev') {
             evDevices.value.forEach((ev, evIndex) => {
-                const targetX = 20 - (evIndex * 12);
+                const targetX = 32.5 - (evIndex * 12);
                 path = `M ${startX} 50 L 50 50 L 50 85 L ${targetX} 85`;
                 segments.push({
                   id: `battery-${targetType}-${d.id}-${ev.id}`,
@@ -459,7 +459,7 @@ const activeSegments = computed<Segment[]>(() => {
         if (targetType === 'home') path = `M 50 ${startY} L 50 85`;
         else if (targetType === 'ev') {
              evDevices.value.forEach((ev, evIndex) => {
-                const targetX = 20 - (evIndex * 12);
+                const targetX = 32.5 - (evIndex * 12);
                 path = `M 50 ${startY} L 50 85 L ${targetX} 85`;
                 segments.push({
                   id: `grid-${targetType}-${d.id}-${ev.id}`,
