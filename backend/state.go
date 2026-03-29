@@ -196,13 +196,27 @@ func handleDailyAggregates(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Safe pointer dereferencing for aggregate sum columns (which can be NULL if CTE result is empty)
-	if gImport != nil { agg.GridImportKwh = *gImport }
-	if gExport != nil { agg.GridExportKwh = *gExport }
-	if sYield != nil { agg.SolarYieldKwh = *sYield }
-	if bCharge != nil { agg.BatteryChargeKwh = *bCharge }
-	if bDischarge != nil { agg.BatteryDischargeKwh = *bDischarge }
-	if bChargeSolar != nil { agg.BatteryChargeSolarKwh = *bChargeSolar }
-	if bChargeGrid != nil { agg.BatteryChargeGridKwh = *bChargeGrid }
+	if gImport != nil {
+		agg.GridImportKwh = *gImport
+	}
+	if gExport != nil {
+		agg.GridExportKwh = *gExport
+	}
+	if sYield != nil {
+		agg.SolarYieldKwh = *sYield
+	}
+	if bCharge != nil {
+		agg.BatteryChargeKwh = *bCharge
+	}
+	if bDischarge != nil {
+		agg.BatteryDischargeKwh = *bDischarge
+	}
+	if bChargeSolar != nil {
+		agg.BatteryChargeSolarKwh = *bChargeSolar
+	}
+	if bChargeGrid != nil {
+		agg.BatteryChargeGridKwh = *bChargeGrid
+	}
 
 	// Calculate net house consumption
 	agg.HouseConsumptionKwh = agg.GridImportKwh + agg.SolarYieldKwh + agg.BatteryDischargeKwh - agg.GridExportKwh - agg.BatteryChargeKwh
@@ -367,4 +381,218 @@ func handleHistory(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(data)
+}
+
+type EnergySeriesPoint struct {
+	Timestamp string `json:"timestamp"`
+	DailyAggregates
+}
+
+type EnergyResponse struct {
+	Totals DailyAggregates     `json:"totals"`
+	Series []EnergySeriesPoint `json:"series"`
+}
+
+// handleEnergy computes historical energy statistics dynamically.
+func handleEnergy(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+	loc, err := time.LoadLocation("Europe/Amsterdam")
+	if err != nil {
+		loc = time.UTC
+	}
+	now := time.Now().In(loc)
+
+	period := r.URL.Query().Get("period")
+	if period == "" {
+		period = "day"
+	}
+
+	dateParam := r.URL.Query().Get("date")
+	var startDate, endDate time.Time
+
+	switch period {
+	case "day":
+		if dateParam != "" {
+			parsedDate, err := time.ParseInLocation("2006-01-02", dateParam, loc)
+			if err == nil {
+				startDate = parsedDate.UTC()
+			} else {
+				startDate = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc).UTC()
+			}
+		} else {
+			startDate = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc).UTC()
+		}
+		endDate = startDate.AddDate(0, 0, 1)
+
+	case "month":
+		if dateParam != "" {
+			parsedDate, err := time.ParseInLocation("2006-01", dateParam[:7], loc)
+			if err == nil {
+				startDate = time.Date(parsedDate.Year(), parsedDate.Month(), 1, 0, 0, 0, 0, loc).UTC()
+			} else {
+				startDate = time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, loc).UTC()
+			}
+		} else {
+			startDate = time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, loc).UTC()
+		}
+		endDate = startDate.AddDate(0, 1, 0)
+
+	case "year":
+		if dateParam != "" {
+			parsedDate, err := time.ParseInLocation("2006", dateParam[:4], loc)
+			if err == nil {
+				startDate = time.Date(parsedDate.Year(), 1, 1, 0, 0, 0, 0, loc).UTC()
+			} else {
+				startDate = time.Date(now.Year(), 1, 1, 0, 0, 0, 0, loc).UTC()
+			}
+		} else {
+			startDate = time.Date(now.Year(), 1, 1, 0, 0, 0, 0, loc).UTC()
+		}
+		endDate = startDate.AddDate(1, 0, 0)
+
+	case "lifetime":
+		var firstRecord sql.NullTime
+		err := db.QueryRow("SELECT MIN(timestamp) FROM measurements").Scan(&firstRecord)
+		if err != nil || !firstRecord.Valid {
+			startDate = time.Date(now.Year(), 1, 1, 0, 0, 0, 0, loc).UTC()
+		} else {
+			firstRecordLoc := firstRecord.Time.In(loc)
+			startDate = time.Date(firstRecordLoc.Year(), 1, 1, 0, 0, 0, 0, loc).UTC()
+		}
+		endDate = time.Date(now.Year()+1, 1, 1, 0, 0, 0, 0, loc).UTC()
+	default:
+		startDate = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc).UTC()
+		endDate = startDate.AddDate(0, 0, 1)
+	}
+
+	var groupByClause string
+	switch period {
+	case "day":
+		groupByClause = "strftime('%Y-%m-%dT%H:00:00Z', m.timestamp)"
+	case "month":
+		groupByClause = "strftime('%Y-%m-%dT00:00:00Z', m.timestamp)"
+	case "year", "lifetime":
+		groupByClause = "strftime('%Y-%m-01T00:00:00Z', m.timestamp)"
+	}
+
+	query := fmt.Sprintf(`
+		WITH minute_aggs AS (
+			SELECT
+				%s as bucket,
+				SUM(CASE WHEN (d.template IN ('huawei_dongle', 'demo_dongle', 'homewizard_meter', 'p1_serial', 'p1_network') OR (d.template = 'huawei_inverter' AND d.has_grid_meter = 1)) AND m.power_w > 0 THEN (m.power_w / 60000.0) ELSE 0 END) as grid_import,
+				SUM(CASE WHEN (d.template IN ('huawei_dongle', 'demo_dongle', 'homewizard_meter', 'p1_serial', 'p1_network') OR (d.template = 'huawei_inverter' AND d.has_grid_meter = 1)) AND m.power_w < 0 THEN ABS(m.power_w / 60000.0) ELSE 0 END) as grid_export,
+				SUM(CASE WHEN d.template IN ('huawei_inverter', 'solis_inverter', 'sma_inverter', 'demo_inverter') AND d.name NOT LIKE '%%battery%%' AND m.power_w > 0 THEN (m.power_w / 60000.0) ELSE 0 END) as solar_yield,
+				SUM(CASE WHEN ((d.template IN ('huawei_inverter', 'demo_inverter') AND d.name LIKE '%%battery%%') OR d.template = 'demo_battery') AND m.power_w < 0 THEN ABS(m.power_w / 60000.0) ELSE 0 END) as battery_charge,
+				SUM(CASE WHEN ((d.template IN ('huawei_inverter', 'demo_inverter') AND d.name LIKE '%%battery%%') OR d.template = 'demo_battery') AND m.power_w > 0 THEN (m.power_w / 60000.0) ELSE 0 END) as battery_discharge
+			FROM measurements m
+			JOIN devices d ON CAST(m.device_id AS INTEGER) = d.id
+			WHERE m.timestamp >= ? AND m.timestamp < ?
+			GROUP BY strftime('%%Y-%%m-%%dT%%H:%%M:00Z', m.timestamp), bucket
+		),
+		bucket_aggs AS (
+			SELECT
+				bucket,
+				SUM(grid_import) as grid_import,
+				SUM(grid_export) as grid_export,
+				SUM(solar_yield) as solar_yield,
+				SUM(battery_charge) as battery_charge,
+				SUM(battery_discharge) as battery_discharge,
+				SUM(CASE WHEN battery_charge > 0 AND solar_yield > 0 THEN MIN(battery_charge, solar_yield) ELSE 0 END) as battery_charge_solar,
+				SUM(CASE
+					WHEN battery_charge > 0 AND solar_yield > 0 THEN MAX(0, battery_charge - solar_yield)
+					WHEN battery_charge > 0 AND solar_yield <= 0 THEN battery_charge
+					ELSE 0
+				END) as battery_charge_grid
+			FROM minute_aggs
+			GROUP BY bucket
+		)
+		SELECT
+			bucket,
+			grid_import,
+			grid_export,
+			solar_yield,
+			battery_charge,
+			battery_discharge,
+			battery_charge_solar,
+			battery_charge_grid
+		FROM bucket_aggs
+		ORDER BY bucket ASC
+	`, groupByClause)
+
+	rows, err := db.Query(query, startDate.Format("2006-01-02 15:04:05"), endDate.Format("2006-01-02 15:04:05"))
+	if err != nil {
+		log.Printf("Error querying energy data: %v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var resp EnergyResponse
+	resp.Series = make([]EnergySeriesPoint, 0)
+	var tImport, tExport, tYield, tCharge, tDischarge, tChargeSolar, tChargeGrid float64
+
+	for rows.Next() {
+		var agg EnergySeriesPoint
+		var bucket string
+		var gImport, gExport, sYield, bCharge, bDischarge, bChargeSolar, bChargeGrid *float64
+
+		if err := rows.Scan(&bucket, &gImport, &gExport, &sYield, &bCharge, &bDischarge, &bChargeSolar, &bChargeGrid); err != nil {
+			log.Printf("Error scanning row: %v", err)
+			continue
+		}
+
+		agg.Timestamp = bucket
+		if gImport != nil {
+			agg.GridImportKwh = *gImport
+			tImport += *gImport
+		}
+		if gExport != nil {
+			agg.GridExportKwh = *gExport
+			tExport += *gExport
+		}
+		if sYield != nil {
+			agg.SolarYieldKwh = *sYield
+			tYield += *sYield
+		}
+		if bCharge != nil {
+			agg.BatteryChargeKwh = *bCharge
+			tCharge += *bCharge
+		}
+		if bDischarge != nil {
+			agg.BatteryDischargeKwh = *bDischarge
+			tDischarge += *bDischarge
+		}
+		if bChargeSolar != nil {
+			agg.BatteryChargeSolarKwh = *bChargeSolar
+			tChargeSolar += *bChargeSolar
+		}
+		if bChargeGrid != nil {
+			agg.BatteryChargeGridKwh = *bChargeGrid
+			tChargeGrid += *bChargeGrid
+		}
+
+		agg.HouseConsumptionKwh = agg.GridImportKwh + agg.SolarYieldKwh + agg.BatteryDischargeKwh - agg.GridExportKwh - agg.BatteryChargeKwh
+		if agg.HouseConsumptionKwh < 0 {
+			agg.HouseConsumptionKwh = 0
+		}
+
+		resp.Series = append(resp.Series, agg)
+	}
+
+	resp.Totals.GridImportKwh = tImport
+	resp.Totals.GridExportKwh = tExport
+	resp.Totals.SolarYieldKwh = tYield
+	resp.Totals.BatteryChargeKwh = tCharge
+	resp.Totals.BatteryDischargeKwh = tDischarge
+	resp.Totals.BatteryChargeSolarKwh = tChargeSolar
+	resp.Totals.BatteryChargeGridKwh = tChargeGrid
+
+	resp.Totals.HouseConsumptionKwh = tImport + tYield + tDischarge - tExport - tCharge
+	if resp.Totals.HouseConsumptionKwh < 0 {
+		resp.Totals.HouseConsumptionKwh = 0
+	}
+
+	json.NewEncoder(w).Encode(resp)
 }

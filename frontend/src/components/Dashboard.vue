@@ -133,17 +133,19 @@
           <!-- Navigation -->
           <div class="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
             <div class="bg-gray-100 dark:bg-gray-700 p-1 rounded-full flex w-full sm:w-auto">
-              <button class="flex-1 sm:flex-none px-6 py-1.5 rounded-full bg-white dark:bg-gray-600 shadow-sm text-sm font-medium text-gray-900 dark:text-white">Day</button>
-              <button class="flex-1 sm:flex-none px-6 py-1.5 rounded-full text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-300">Month</button>
-              <button class="flex-1 sm:flex-none px-6 py-1.5 rounded-full text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-300">Year</button>
-              <button class="flex-1 sm:flex-none px-6 py-1.5 rounded-full text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-300">Lifetime</button>
+    <button @click="setPeriod('day')" :class="['flex-1 sm:flex-none px-6 py-1.5 rounded-full text-sm font-medium', selectedPeriod === 'day' ? 'bg-white dark:bg-gray-600 shadow-sm text-gray-900 dark:text-white' : 'text-gray-500 hover:text-gray-700 dark:text-gray-300']">Day</button>
+    <button @click="setPeriod('month')" :class="['flex-1 sm:flex-none px-6 py-1.5 rounded-full text-sm font-medium', selectedPeriod === 'month' ? 'bg-white dark:bg-gray-600 shadow-sm text-gray-900 dark:text-white' : 'text-gray-500 hover:text-gray-700 dark:text-gray-300']">Month</button>
+    <button @click="setPeriod('year')" :class="['flex-1 sm:flex-none px-6 py-1.5 rounded-full text-sm font-medium', selectedPeriod === 'year' ? 'bg-white dark:bg-gray-600 shadow-sm text-gray-900 dark:text-white' : 'text-gray-500 hover:text-gray-700 dark:text-gray-300']">Year</button>
+    <button @click="setPeriod('lifetime')" :class="['flex-1 sm:flex-none px-6 py-1.5 rounded-full text-sm font-medium', selectedPeriod === 'lifetime' ? 'bg-white dark:bg-gray-600 shadow-sm text-gray-900 dark:text-white' : 'text-gray-500 hover:text-gray-700 dark:text-gray-300']">Lifetime</button>
             </div>
 
-            <div class="flex items-center space-x-4">
+  <div class="flex items-center space-x-4" v-if="selectedPeriod !== 'lifetime'">
               <button @click="changeDate(-1)" class="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
                 <svg class="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
               </button>
-              <input type="date" v-model="selectedDate" @change="fetchDailyAggregates" class="font-medium text-gray-900 dark:text-white bg-transparent border-none focus:ring-0 cursor-pointer p-0" />
+    <input v-if="selectedPeriod === 'day'" type="date" v-model="selectedDate" @change="fetchEnergyData" class="font-medium text-gray-900 dark:text-white bg-transparent border-none focus:ring-0 cursor-pointer p-0" />
+    <input v-else-if="selectedPeriod === 'month'" type="month" v-model="selectedDate" @change="fetchEnergyData" class="font-medium text-gray-900 dark:text-white bg-transparent border-none focus:ring-0 cursor-pointer p-0" />
+    <span v-else-if="selectedPeriod === 'year'" class="font-medium text-gray-900 dark:text-white">{{ selectedDate.substring(0,4) }}</span>
               <button @click="changeDate(1)" class="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
                 <svg class="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
               </button>
@@ -221,6 +223,12 @@
           </div>
 
         </div>
+
+        <!-- Chart Section -->
+        <div v-if="energySeries && energySeries.length > 0" class="mt-8 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 h-96">
+           <Bar :data="chartData" :options="chartOptions" />
+        </div>
+
       </div>
 
       <div v-else class="border-4 border-dashed border-gray-200 dark:border-gray-700 rounded-lg h-96 flex flex-col items-center justify-center mt-6">
@@ -244,11 +252,125 @@ import { ref, onMounted, onUnmounted, computed } from 'vue'
 import PowerFlow from './PowerFlow.vue'
 import { getApiBase } from '../api'
 import type { SiteState, DailyAggregates } from '../types'
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  TimeScale
+} from 'chart.js'
+import { Bar } from 'vue-chartjs'
+import 'chartjs-adapter-date-fns'
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  TimeScale
+)
 
 const state = ref<SiteState | null>(null)
 const dailyAggregates = ref<DailyAggregates | null>(null)
 const selectedDate = ref<string>(new Date().toISOString().split('T')[0])
+const selectedPeriod = ref<string>('day')
+const energySeries = ref<any[]>([])
 let eventSource: EventSource | null = null
+
+const setPeriod = (period: string) => {
+  selectedPeriod.value = period
+  if (period === 'day') {
+    selectedDate.value = new Date().toISOString().split('T')[0]
+  } else if (period === 'month') {
+    selectedDate.value = new Date().toISOString().substring(0, 7)
+  } else if (period === 'year') {
+    selectedDate.value = new Date().getFullYear().toString() + '-01-01'
+  } else {
+    selectedDate.value = ''
+  }
+  fetchEnergyData()
+}
+
+const changeDate = (offset: number) => {
+  const d = new Date(selectedDate.value || new Date().toISOString())
+  if (selectedPeriod.value === 'day') {
+    d.setDate(d.getDate() + offset)
+    selectedDate.value = d.toISOString().split('T')[0]
+  } else if (selectedPeriod.value === 'month') {
+    d.setMonth(d.getMonth() + offset)
+    selectedDate.value = d.toISOString().substring(0, 7)
+  } else if (selectedPeriod.value === 'year') {
+    d.setFullYear(d.getFullYear() + offset)
+    selectedDate.value = d.getFullYear().toString() + '-01-01'
+  }
+  fetchEnergyData()
+}
+
+const chartData = computed(() => {
+  const series = energySeries.value || [];
+  return {
+    datasets: [
+      {
+        label: 'Solar Yield',
+        data: series.map(d => ({ x: new Date(d.timestamp).getTime(), y: d.solar_yield_kwh || 0 })),
+        backgroundColor: '#FBBF24',
+        stack: 'Stack 0',
+      },
+      {
+        label: 'Grid Import',
+        data: series.map(d => ({ x: new Date(d.timestamp).getTime(), y: d.grid_import_kwh || 0 })),
+        backgroundColor: '#3B82F6',
+        stack: 'Stack 1',
+      },
+      {
+        label: 'Battery Discharge',
+        data: series.map(d => ({ x: new Date(d.timestamp).getTime(), y: d.battery_discharge_kwh || 0 })),
+        backgroundColor: '#34D399',
+        stack: 'Stack 1',
+      },
+      {
+        label: 'House Consumption',
+        data: series.map(d => ({ x: new Date(d.timestamp).getTime(), y: d.house_consumption_kwh || 0 })),
+        backgroundColor: '#F97316',
+        stack: 'Stack 2',
+      }
+    ]
+  } as any;
+});
+
+const chartOptions = computed(() => ({
+  responsive: true,
+  maintainAspectRatio: false,
+  scales: {
+    x: {
+      type: 'time' as const,
+      time: {
+        unit: selectedPeriod.value === 'day' ? 'hour' as const : selectedPeriod.value === 'month' ? 'day' as const : 'month' as const,
+        tooltipFormat: 'PPp'
+      },
+      stacked: true,
+      ticks: { color: '#9CA3AF' },
+      grid: { display: false }
+    },
+    y: {
+      stacked: true,
+      title: { display: true, text: 'Energy (kWh)', color: '#9CA3AF' },
+      ticks: { color: '#9CA3AF' },
+      grid: { color: '#374151' }
+    }
+  },
+  plugins: {
+    legend: {
+      position: 'top' as const,
+      labels: { color: '#9CA3AF' }
+    }
+  }
+}));
 
 const prodTotal = computed(() => dailyAggregates.value?.solar_yield_kwh || 0);
 const prodFedToGrid = computed(() => dailyAggregates.value?.grid_export_kwh || 0);
@@ -258,21 +380,16 @@ const consTotal = computed(() => dailyAggregates.value?.house_consumption_kwh ||
 const consFromGrid = computed(() => dailyAggregates.value?.grid_import_kwh || 0);
 const consFromPV = computed(() => Math.max(0, consTotal.value - consFromGrid.value));
 
-const changeDate = (offsetDays: number) => {
-  const d = new Date(selectedDate.value);
-  d.setDate(d.getDate() + offsetDays);
-  selectedDate.value = d.toISOString().split('T')[0];
-  fetchDailyAggregates();
-}
-
-const fetchDailyAggregates = async () => {
+const fetchEnergyData = async () => {
   try {
-    const res = await fetch(`${getApiBase()}/api/daily?date=${selectedDate.value}`)
+    const res = await fetch(`${getApiBase()}/api/energy?period=${selectedPeriod.value}&date=${selectedDate.value}`)
     if (res.ok) {
-      dailyAggregates.value = await res.json()
+      const data = await res.json()
+      dailyAggregates.value = data.totals
+      energySeries.value = data.series
     }
   } catch (e) {
-    console.error("Failed to fetch daily aggregates:", e)
+    console.error("Failed to fetch energy data:", e)
   }
 }
 
@@ -303,7 +420,7 @@ onMounted(async () => {
   }
 
   // Fetch daily aggregates
-  await fetchDailyAggregates()
+  await fetchEnergyData()
 
 })
 

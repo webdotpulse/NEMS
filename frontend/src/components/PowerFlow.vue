@@ -27,10 +27,21 @@
           <!-- Outline/glow -->
           <path :d="segment.path" stroke-linecap="round"
                 fill="none" :stroke="segment.color" stroke-width="8" stroke-opacity="0.2" class="flow-glow" vector-effect="non-scaling-stroke" />
-          <!-- Animated flow line -->
+
+          <!-- Animated flow multi-lines with dots -->
           <path :d="segment.path" stroke-linecap="round"
-                fill="none" :stroke="segment.color" stroke-width="4" stroke-dasharray="8 8" class="flow-path"
+                fill="none" :stroke="segment.color" stroke-width="3" stroke-dasharray="0 15" class="flow-path"
                 vector-effect="non-scaling-stroke"
+                transform="translate(-2, -2)"
+                :style="getFlowStyle(segment.power, segment.normalIsPositive)" />
+          <path :d="segment.path" stroke-linecap="round"
+                fill="none" :stroke="segment.color" stroke-width="3" stroke-dasharray="0 15" class="flow-path"
+                vector-effect="non-scaling-stroke"
+                :style="getFlowStyle(segment.power, segment.normalIsPositive)" />
+          <path :d="segment.path" stroke-linecap="round"
+                fill="none" :stroke="segment.color" stroke-width="3" stroke-dasharray="0 15" class="flow-path"
+                vector-effect="non-scaling-stroke"
+                transform="translate(2, 2)"
                 :style="getFlowStyle(segment.power, segment.normalIsPositive)" />
         </template>
 
@@ -740,7 +751,7 @@ const fetchHistory = async () => {
 
 @keyframes flow {
   from {
-    stroke-dashoffset: 100;
+    stroke-dashoffset: 300;
   }
   to {
     stroke-dashoffset: 0;

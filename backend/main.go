@@ -276,6 +276,7 @@ func main() {
 
 	mux.HandleFunc("/api/live", handleLiveStream)
 	mux.HandleFunc("/api/daily", handleDailyAggregates)
+	mux.HandleFunc("/api/energy", handleEnergy)
 	mux.HandleFunc("/api/logs", handleLogs)
 	mux.HandleFunc("/api/system/info", handleSystemInfo)
 	mux.HandleFunc("/api/system/reboot", handleSystemReboot)
