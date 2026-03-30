@@ -55,6 +55,7 @@ func (r *LogRingBuffer) ClearLogs() {
 }
 
 var logBuffer *LogRingBuffer
+var BuildNumber = "development"
 
 func InitLogger() {
 	logBuffer = &LogRingBuffer{

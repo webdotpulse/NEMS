@@ -64,6 +64,10 @@
                 <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Disk</dt>
                 <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ sysInfo.disk }}</dd>
               </div>
+              <div>
+                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Build Number</dt>
+                <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ sysInfo.build }}</dd>
+              </div>
             </div>
           </div>
         </div>

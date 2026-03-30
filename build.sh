@@ -17,7 +17,7 @@ cd ..
 
 echo "2/3 Compiling Go Backend for linux/arm64..."
 cd backend
-GOOS=linux GOARCH=arm64 go build -o ../build/nems-server *.go
+GOOS=linux GOARCH=arm64 go build -ldflags "-X main.BuildNumber=$(git rev-parse --short HEAD)" -o ../build/nems-server *.go
 cd ..
 
 echo "3/3 Bundling release archive..."

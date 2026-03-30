@@ -11,7 +11,16 @@
           </span>
         </div>
 
-        <div class="flex space-x-2">
+        <div class="flex space-x-4 items-center">
+          <select v-model="selectedLogLevel" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-32 sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+            <option value="ALL">All Levels</option>
+            <option value="FATAL">Fatal</option>
+            <option value="ERROR">Error</option>
+            <option value="WARN">Warn</option>
+            <option value="INFO">Info</option>
+            <option value="DEBUG">Debug</option>
+          </select>
+          <div class="flex space-x-2">
           <button @click="togglePause" :class="[isPaused ? 'bg-green-600 hover:bg-green-700' : 'bg-yellow-600 hover:bg-yellow-700', 'inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors']">
             <svg v-if="isPaused" class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
               <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
@@ -42,15 +51,16 @@
             </svg>
             Remove Logs
           </button>
+          </div>
         </div>
       </div>
 
       <div class="bg-gray-900 dark:bg-black rounded-lg shadow overflow-hidden h-[600px] flex flex-col">
         <div class="p-4 flex-1 overflow-y-auto font-mono text-xs sm:text-sm text-gray-300" ref="logContainer" @scroll="handleScroll">
-          <div v-if="parsedLogs.length === 0" class="text-gray-500 italic">No logs available...</div>
+          <div v-if="filteredLogs.length === 0" class="text-gray-500 italic">No logs available for selected filter...</div>
           <table v-else class="min-w-full divide-y divide-gray-800">
             <tbody class="divide-y divide-gray-800/50">
-              <tr v-for="(log, index) in parsedLogs" :key="index" class="hover:bg-gray-800/50 transition-colors">
+              <tr v-for="(log, index) in filteredLogs" :key="index" class="hover:bg-gray-800/50 transition-colors">
                 <td class="py-1 pr-2 whitespace-nowrap text-gray-500 align-top w-1 shrink-0">
                   {{ log.timestamp }}
                 </td>
@@ -130,8 +140,30 @@ const parseLogLine = (line: string): ParsedLog => {
   return parsed
 }
 
+const selectedLogLevel = ref('ALL')
+
 const parsedLogs = computed(() => {
   return logs.value.map(parseLogLine)
+})
+
+const getSeverity = (level: string) => {
+  const severities: { [key: string]: number } = {
+    'FATAL': 50,
+    'ERROR': 40,
+    'WARN': 30,
+    'INFO': 20,
+    'DEBUG': 10,
+    'TRACE': 0
+  }
+  return severities[level] || 20 // Default unknown levels to INFO
+}
+
+const filteredLogs = computed(() => {
+  if (selectedLogLevel.value === 'ALL') {
+    return parsedLogs.value
+  }
+  const minSeverity = getSeverity(selectedLogLevel.value)
+  return parsedLogs.value.filter(log => getSeverity(log.level) >= minSeverity)
 })
 
 const getLevelClass = (level: string) => {
