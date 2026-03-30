@@ -152,7 +152,7 @@ func handleDailyAggregates(w http.ResponseWriter, r *http.Request) {
 				SUM(CASE WHEN ((d.template IN ('huawei_inverter', 'enerlution_inverter', 'demo_inverter') AND d.name LIKE '%battery%') OR d.template = 'demo_battery') AND m.power_w < 0 THEN ABS(m.power_w / 60000.0) ELSE 0 END) as battery_charge,
 				SUM(CASE WHEN ((d.template IN ('huawei_inverter', 'enerlution_inverter', 'demo_inverter') AND d.name LIKE '%battery%') OR d.template = 'demo_battery') AND m.power_w > 0 THEN (m.power_w / 60000.0) ELSE 0 END) as battery_discharge
 			FROM measurements m
-			JOIN devices d ON m.device_id = d.id
+			JOIN devices d ON CAST(m.device_id AS INTEGER) = d.id
 			WHERE m.timestamp >= ? AND m.timestamp < ?
 			GROUP BY ts
 		)
