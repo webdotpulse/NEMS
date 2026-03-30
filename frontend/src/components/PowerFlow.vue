@@ -6,42 +6,34 @@
       <svg class="absolute inset-0 w-full h-full z-0 pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="none">
 
 
-        <!-- Static Background Lines (Direct Routing) -->
+                <!-- Static Background Lines (Direct Routing) -->
         <!-- Center line (Grid to Home) -->
-        <path v-for="(device, index) in gridDevices" :key="'static-grid-center-'+device.id" :d="`M 50 ${20 - (index * 10 - (gridDevices.length-1)*5)} L 50 85`" vector-effect="non-scaling-stroke" stroke-linecap="round" fill="none" stroke="#E5E7EB" stroke-width="2" />
+        <path v-for="device in gridDevices" :key="'static-grid-center-'+device.id" :d="`M 15 50 L 85 50`" vector-effect="non-scaling-stroke" stroke-linecap="round" fill="none" stroke="#E5E7EB" stroke-width="1.5" stroke-opacity="0.5" />
 
-        <!-- Solar -> Center -->
-        <path v-for="(device, index) in solarDevices" :key="'static-solar-center-'+device.id" :d="`M ${85 - (index * 15 - (solarDevices.length-1)*7.5)} 50 L 50 50`" vector-effect="non-scaling-stroke" stroke-linecap="round" fill="none" stroke="#E5E7EB" stroke-width="2" />
+        <!-- Solar -> Home -->
+        <path v-for="device in solarDevices" :key="'static-solar-center-'+device.id" :d="`M 50 20 C 50 45, 55 45, 85 45`" vector-effect="non-scaling-stroke" stroke-linecap="round" fill="none" stroke="#E5E7EB" stroke-width="1.5" stroke-opacity="0.5" />
 
-        <!-- Battery -> Center -->
-        <path v-for="(device, index) in batteryDevices" :key="'static-battery-center-'+device.id" :d="`M ${15 + (index * 15 - (batteryDevices.length-1)*7.5)} 50 L 50 50`" vector-effect="non-scaling-stroke" stroke-linecap="round" fill="none" stroke="#E5E7EB" stroke-width="2" />
+        <!-- Solar -> Grid -->
+        <path v-for="device in solarDevices" :key="'static-solar-grid-'+device.id" :d="`M 50 20 C 50 48, 45 48, 15 48`" vector-effect="non-scaling-stroke" stroke-linecap="round" fill="none" stroke="#E5E7EB" stroke-width="1.5" stroke-opacity="0.5" />
+
+        <!-- Battery -> Home -->
+        <path v-for="device in batteryDevices" :key="'static-battery-center-'+device.id" :d="`M 50 80 C 50 55, 55 55, 85 55`" vector-effect="non-scaling-stroke" stroke-linecap="round" fill="none" stroke="#E5E7EB" stroke-width="1.5" stroke-opacity="0.5" />
+
+        <!-- Grid -> Battery -->
+        <path v-for="device in batteryDevices" :key="'static-grid-battery-'+device.id" :d="`M 15 52 C 45 52, 45 52, 50 80`" vector-effect="non-scaling-stroke" stroke-linecap="round" fill="none" stroke="#E5E7EB" stroke-width="1.5" stroke-opacity="0.5" />
 
         <!-- Home -> EV -->
-        <path v-for="(device, index) in evDevices" :key="'static-home-ev-'+device.id" :d="`M 50 85 L ${32.5 - (index * 12)} 85`" vector-effect="non-scaling-stroke" stroke-linecap="round" fill="none" stroke="#E5E7EB" stroke-width="2" />
+        <path v-for="device in evDevices" :key="'static-home-ev-'+device.id" :d="`M 85 50 L 85 80`" vector-effect="non-scaling-stroke" stroke-linecap="round" fill="none" stroke="#E5E7EB" stroke-width="1.5" stroke-opacity="0.5" />
 
         <!-- Home -> Appliance -->
-        <path v-for="(device, index) in applianceDevices" :key="'static-home-appliance-'+device.id" :d="`M 50 85 L ${80 + (index * 12)} 85`" vector-effect="non-scaling-stroke" stroke-linecap="round" fill="none" stroke="#E5E7EB" stroke-width="2" />
+        <path v-for="device in applianceDevices" :key="'static-home-appliance-'+device.id" :d="`M 85 50 L 85 20`" vector-effect="non-scaling-stroke" stroke-linecap="round" fill="none" stroke="#E5E7EB" stroke-width="1.5" stroke-opacity="0.5" />
 
         <!-- Flow lines -->
         <template v-for="segment in activeSegments" :key="segment.id">
-          <!-- Outline/glow -->
+          <!-- Single perfectly round animated dot per flow line -->
           <path :d="segment.path" stroke-linecap="round"
-                fill="none" :stroke="segment.color" stroke-width="8" stroke-opacity="0.2" class="flow-glow" vector-effect="non-scaling-stroke" />
-
-          <!-- Animated flow multi-lines with dots -->
-          <path :d="segment.path" stroke-linecap="round"
-                fill="none" :stroke="segment.color" stroke-width="3" stroke-dasharray="0 15" class="flow-path"
+                fill="none" :stroke="segment.color" stroke-width="8" stroke-dasharray="0.1 200" class="flow-dot"
                 vector-effect="non-scaling-stroke"
-                transform="translate(-2, -2)"
-                :style="getFlowStyle(segment.power, segment.normalIsPositive)" />
-          <path :d="segment.path" stroke-linecap="round"
-                fill="none" :stroke="segment.color" stroke-width="3" stroke-dasharray="0 15" class="flow-path"
-                vector-effect="non-scaling-stroke"
-                :style="getFlowStyle(segment.power, segment.normalIsPositive)" />
-          <path :d="segment.path" stroke-linecap="round"
-                fill="none" :stroke="segment.color" stroke-width="3" stroke-dasharray="0 15" class="flow-path"
-                vector-effect="non-scaling-stroke"
-                transform="translate(2, 2)"
                 :style="getFlowStyle(segment.power, segment.normalIsPositive)" />
         </template>
 
@@ -53,7 +45,7 @@
 
         <!-- Grid (Top) -->
         <template v-for="(device, index) in gridDevices" :key="device.id">
-          <div class="absolute flex flex-col items-center justify-center transform -translate-x-1/2 -translate-y-1/2" :style="`left: 50%; top: ${20 - (index * 10 - (gridDevices.length-1)*5)}%;`">
+          <div class="absolute flex flex-col items-center justify-center transform -translate-x-1/2 -translate-y-1/2" :style="`left: 15%; top: ${50 - (index * 15 - (gridDevices.length-1)*7.5)}%;`">
             <div @click="openChart('grid')" class="z-10 flex flex-col items-center justify-center w-28 h-28 bg-white dark:bg-gray-800 rounded-full border-[4px] border-[#3B82F6] shadow-sm cursor-pointer hover:scale-105 transition-transform mb-2 relative">
               <span class="text-xs font-medium text-gray-500 mb-1 absolute -top-6">Grid</span>
               <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-700 dark:text-gray-300 mb-1" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z"/><path d="m13 6-6 7h4v5l6-7h-4z"/></svg>
@@ -75,7 +67,7 @@
         <!-- Battery (Left) -->
         <template v-if="batteryDevices.length > 0">
           <template v-for="(device, index) in batteryDevices" :key="device.id">
-            <div class="absolute flex flex-col items-center justify-center transform -translate-x-1/2 -translate-y-1/2" :style="`left: ${15 + (index * 15 - (batteryDevices.length-1)*7.5)}%; top: 50%;`">
+            <div class="absolute flex flex-col items-center justify-center transform -translate-x-1/2 -translate-y-1/2" :style="`left: ${50 - (index * 15 - (batteryDevices.length-1)*7.5)}%; top: 80%;`">
               <div @click="openChart('battery')" class="z-10 flex flex-col items-center justify-center w-28 h-28 bg-white dark:bg-gray-800 rounded-full border-[4px] border-[#EC4899] shadow-sm cursor-pointer hover:scale-105 transition-transform mb-2 relative">
                 <span class="text-xs font-medium text-gray-500 mb-1 absolute -bottom-6">Battery</span>
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-700 dark:text-gray-300 mb-1" fill="currentColor" viewBox="0 0 24 24"><path d="M4 18h14c1.103 0 2-.897 2-2v-2h2v-4h-2V8c0-1.103-.897-2-2-2H4c-1.103 0-2 .897-2 2v8c0 1.103.897 2 2 2zM4 8h14l.002 8H4V8z"/></svg>
@@ -103,22 +95,26 @@
         </template>
 
         <!-- Home (Bottom Center) -->
-        <div class="absolute flex flex-col items-center justify-center transform -translate-x-1/2 -translate-y-1/2" style="left: 50%; top: 85%;">
-          <div @click="openChart('home')" class="z-10 flex flex-col items-center justify-center w-28 h-28 bg-white dark:bg-gray-800 rounded-full border-[4px] border-[#10B981] shadow-sm cursor-pointer hover:scale-105 transition-transform mb-2 relative">
-             <span class="text-xs font-medium text-gray-500 mb-1 absolute -bottom-6">Home</span>
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-700 dark:text-gray-300 mb-1" fill="currentColor" viewBox="0 0 24 24"><path d="M3 13h1v7c0 1.103.897 2 2 2h12c1.103 0 2-.897 2-2v-7h1a1 1 0 0 0 .707-1.707l-9-9a.999.999 0 0 0-1.414 0l-9 9A1 1 0 0 0 3 13zm7 7v-5h4v5h-4zm2-15.586 6 6V15l.001 5H16v-5c0-1.103-.897-2-2-2h-4c-1.103 0-2 .897-2 2v5H6v-9.586l6-6z"/></svg>
-            <div class="text-gray-800 dark:text-gray-200 text-sm font-medium">
-              <span v-if="state?.total_load_w !== null && state?.total_load_w !== undefined">
-                 {{ formatPowerSimple(homeLoad) }}
-              </span>
-              <span v-else>0 W</span>
+        <div class="absolute flex flex-col items-center justify-center transform -translate-x-1/2 -translate-y-1/2" style="left: 85%; top: 50%;">
+          <!-- Remove direct border, add conic gradient background based on percentages -->
+          <div @click="openChart('home')" class="z-10 flex flex-col items-center justify-center w-[120px] h-[120px] rounded-full shadow-sm cursor-pointer hover:scale-105 transition-transform mb-2 relative" :style="homeBorderStyle">
+            <span class="text-xs font-medium text-gray-500 mb-1 absolute -bottom-6">Home</span>
+            <!-- Inner white circle to create the border effect -->
+            <div class="absolute flex flex-col items-center justify-center w-[104px] h-[104px] bg-white dark:bg-gray-800 rounded-full top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-700 dark:text-gray-300 mb-1" fill="currentColor" viewBox="0 0 24 24"><path d="M3 13h1v7c0 1.103.897 2 2 2h12c1.103 0 2-.897 2-2v-7h1a1 1 0 0 0 .707-1.707l-9-9a.999.999 0 0 0-1.414 0l-9 9A1 1 0 0 0 3 13zm7 7v-5h4v5h-4zm2-15.586 6 6V15l.001 5H16v-5c0-1.103-.897-2-2-2h-4c-1.103 0-2 .897-2 2v5H6v-9.586l6-6z"/></svg>
+              <div class="text-gray-800 dark:text-gray-200 text-sm font-medium">
+                <span v-if="state?.total_load_w !== null && state?.total_load_w !== undefined">
+                   {{ formatPowerSimple(homeLoad) }}
+                </span>
+                <span v-else>0 W</span>
+              </div>
             </div>
           </div>
         </div>
 
         <!-- Solar (Right) -->
         <template v-for="(device, index) in solarDevices" :key="device.id">
-          <div class="absolute flex flex-col items-center justify-center transform -translate-x-1/2 -translate-y-1/2" :style="`left: ${85 - (index * 15 - (solarDevices.length-1)*7.5)}%; top: 50%;`">
+          <div class="absolute flex flex-col items-center justify-center transform -translate-x-1/2 -translate-y-1/2" :style="`left: ${50 + (index * 15 - (solarDevices.length-1)*7.5)}%; top: 20%;`">
             <div @click="openChart('solar')" class="z-10 flex flex-col items-center justify-center w-28 h-28 bg-white dark:bg-gray-800 rounded-full border-[4px] border-[#FBBF24] shadow-sm cursor-pointer hover:scale-105 transition-transform mb-2 relative">
               <span class="text-xs font-medium text-gray-500 mb-1 absolute -top-6">Solar</span>
               <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-700 dark:text-gray-300 mb-1 relative" fill="currentColor" viewBox="0 0 24 24"><path d="M6.993 12c0 2.761 2.246 5.007 5.007 5.007s5.007-2.246 5.007-5.007S14.761 6.993 12 6.993 6.993 9.239 6.993 12zM12 8.993c1.658 0 3.007 1.349 3.007 3.007S13.658 15.007 12 15.007 8.993 13.658 8.993 12 10.342 8.993 12 8.993zM10.998 19h2v3h-2zm0-17h2v3h-2zm-9 9h3v2h-3zm17 0h3v2h-3zM4.219 18.363l2.12-2.122 1.415 1.414-2.12 2.122zM16.24 6.344l2.122-2.122 1.414 1.414-2.122 2.122zM6.342 7.759 4.22 5.637l1.415-1.414 2.12 2.122zm13.434 10.605-1.414 1.414-2.122-2.122 1.414-1.414z"/></svg>
@@ -134,7 +130,7 @@
 
         <!-- Bottom Left: EV Charger -->
         <template v-for="(device, index) in evDevices" :key="device.id">
-          <div class="absolute flex flex-col items-center justify-center transform -translate-x-1/2 -translate-y-1/2" :style="`left: ${32.5 - (index * 12)}%; top: 85%;`">
+          <div class="absolute flex flex-col items-center justify-center transform -translate-x-1/2 -translate-y-1/2" :style="`left: 85%; top: ${80 + (index * 15)}%;`">
             <div @click="openChart('ev_charger')" class="z-10 flex flex-col items-center justify-center w-28 h-28 bg-white dark:bg-gray-800 rounded-full border-[4px] border-[#A855F7] shadow-sm cursor-pointer hover:scale-105 transition-transform mb-2 relative">
               <span class="text-xs font-medium text-gray-500 mb-1 absolute -bottom-6">EV Charger</span>
               <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-700 dark:text-gray-300 mb-1" fill="currentColor" viewBox="0 0 24 24"><path d="m20.772 10.156-1.368-4.105A2.995 2.995 0 0 0 16.559 4H7.441a2.995 2.995 0 0 0-2.845 2.051l-1.368 4.105A2.003 2.003 0 0 0 2 12v5c0 .753.423 1.402 1.039 1.743-.013.066-.039.126-.039.195V21a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-2h12v2a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-2.062c0-.069-.026-.13-.039-.195A1.993 1.993 0 0 0 22 17v-5c0-.829-.508-1.541-1.228-1.844zM4 17v-5h16l.002 5H4zM7.441 6h9.117c.431 0 .813.274.949.684L18.613 10H5.387l1.105-3.316A1 1 0 0 1 7.441 6z"/><circle cx="6.5" cy="14.5" r="1.5"/><circle cx="17.5" cy="14.5" r="1.5"/></svg>
@@ -155,7 +151,7 @@
         </template>
         <!-- Bottom Right: Appliance (Relay) -->
         <template v-for="(device, index) in applianceDevices" :key="device.id">
-          <div class="absolute flex flex-col items-center justify-center transform -translate-x-1/2 -translate-y-1/2" :style="`left: ${80 + (index * 12)}%; top: 85%;`">
+          <div class="absolute flex flex-col items-center justify-center transform -translate-x-1/2 -translate-y-1/2" :style="`left: 85%; top: ${20 - (index * 15)}%;`">
             <div @click="openChart('appliance')" class="z-10 flex flex-col items-center justify-center w-28 h-28 bg-white dark:bg-gray-800 rounded-full border-[4px] border-[#F97316] shadow-sm cursor-pointer hover:scale-105 transition-transform mb-2 relative">
               <span class="text-xs font-medium text-gray-500 mb-1 absolute -top-6">Appliance</span>
               <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-700 dark:text-gray-300 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
@@ -317,6 +313,60 @@ const ranges = [
 ]
 
 // Use a dynamic maximum to calculate a relative flow percentage
+const homeBorderStyle = computed(() => {
+  if (!props.state || !homeLoad.value) {
+    return { background: '#10B981' }; // default green
+  }
+
+  // Determine what is supplying the home load based on the same logic in activeSegments
+  const homeLoadRemaining = homeLoad.value;
+  if (homeLoadRemaining <= 0) return { background: '#10B981' };
+
+  let remainingSolar = props.state.solar_power_w !== null ? Math.max(0, props.state.solar_power_w) : 0;
+  let remainingBattery = props.state.battery_power_w !== null && props.state.battery_power_w > 0 ? props.state.battery_power_w : 0;
+  let remainingGrid = props.state.grid_power_w !== null && props.state.grid_power_w > 0 ? props.state.grid_power_w : 0;
+
+  const solarToHome = Math.min(remainingSolar, homeLoadRemaining);
+  const batteryToHome = Math.min(remainingBattery, homeLoadRemaining - solarToHome);
+  const gridToHome = Math.min(remainingGrid, homeLoadRemaining - solarToHome - batteryToHome);
+
+  const totalSupplied = solarToHome + batteryToHome + gridToHome;
+
+  if (totalSupplied <= 0) return { background: '#10B981' };
+
+  const solarPct = (solarToHome / totalSupplied) * 100;
+  const gridPct = (gridToHome / totalSupplied) * 100;
+  const batteryPct = (batteryToHome / totalSupplied) * 100;
+
+  // Colors: Solar #FBBF24, Grid #3B82F6, Battery #34D399 (or #10B981)
+  let gradient = 'conic-gradient(';
+  let currentStop = 0;
+
+  if (solarPct > 0) {
+    gradient += `#FBBF24 ${currentStop}% ${currentStop + solarPct}%, `;
+    currentStop += solarPct;
+  }
+  if (gridPct > 0) {
+    gradient += `#3B82F6 ${currentStop}% ${currentStop + gridPct}%, `;
+    currentStop += gridPct;
+  }
+  if (batteryPct > 0) {
+    gradient += `#34D399 ${currentStop}% ${currentStop + batteryPct}%, `;
+    currentStop += batteryPct;
+  }
+
+  // fallback if less than 100% due to precision
+  if (currentStop < 100) {
+      gradient += `#10B981 ${currentStop}% 100%`;
+  } else {
+      gradient = gradient.slice(0, -2); // remove last comma and space
+  }
+
+  gradient += ')';
+
+  return { background: gradient };
+});
+
 const flowPercentage = computed(() => {
   if (!props.state) return 0;
 
@@ -383,16 +433,15 @@ const activeSegments = computed<Segment[]>(() => {
   const addSegment = (sourceType: string, targetType: string, powerFlow: number, color: string) => {
     if (powerFlow < 10) return;
 
+    let path = '';
+
+    // We assume 1 device for now for path logic, but keep loop for ID generation
     if (sourceType === 'solar') {
-      solarDevices.value.forEach((d, index) => {
-        let path = '';
-        const startX = 85 - (index * 15 - (solarDevices.value.length-1)*7.5);
-        // Solar -> Center(50,50) -> Target
-        if (targetType === 'home') path = `M ${startX} 50 L 50 50 L 50 85`;
+      solarDevices.value.forEach((d) => {
+        if (targetType === 'home') path = `M 50 20 C 50 45, 55 45, 85 45`;
         else if (targetType === 'ev') {
-            evDevices.value.forEach((ev, evIndex) => {
-                const targetX = 32.5 - (evIndex * 12);
-                path = `M ${startX} 50 L 50 50 L 50 85 L ${targetX} 85`;
+            evDevices.value.forEach((ev) => {
+                path = `M 50 20 C 50 45, 55 45, 85 45 L 85 80`;
                 segments.push({
                   id: `solar-${targetType}-${d.id}-${ev.id}`,
                   path, power: (powerFlow / solarDevices.value.length) / evDevices.value.length, color, normalIsPositive: true
@@ -401,9 +450,8 @@ const activeSegments = computed<Segment[]>(() => {
             return;
         }
         else if (targetType === 'battery') {
-             batteryDevices.value.forEach((bat, batIndex) => {
-                 const targetX = 15 + (batIndex * 15 - (batteryDevices.value.length-1)*7.5);
-                 path = `M ${startX} 50 L ${targetX} 50`;
+             batteryDevices.value.forEach((bat) => {
+                 path = `M 50 20 C 40 40, 40 60, 50 80`; // Optional: solar to battery direct curve
                  segments.push({
                    id: `solar-${targetType}-${d.id}-${bat.id}`,
                    path, power: (powerFlow / solarDevices.value.length) / batteryDevices.value.length, color, normalIsPositive: true
@@ -412,9 +460,8 @@ const activeSegments = computed<Segment[]>(() => {
              return;
         }
         else if (targetType === 'grid') {
-            gridDevices.value.forEach((gd, gdIndex) => {
-                 const targetY = 20 - (gdIndex * 10 - (gridDevices.value.length-1)*5);
-                 path = `M ${startX} 50 L 50 50 L 50 ${targetY}`;
+            gridDevices.value.forEach((gd) => {
+                 path = `M 50 20 C 50 48, 45 48, 15 48`;
                  segments.push({
                    id: `solar-${targetType}-${d.id}-${gd.id}`,
                    path, power: (powerFlow / solarDevices.value.length) / gridDevices.value.length, color, normalIsPositive: true
@@ -429,15 +476,11 @@ const activeSegments = computed<Segment[]>(() => {
         });
       });
     } else if (sourceType === 'battery') {
-       batteryDevices.value.forEach((d, index) => {
-        let path = '';
-        const startX = 15 + (index * 15 - (batteryDevices.value.length-1)*7.5);
-        // Battery -> Center(50,50) -> Target
-        if (targetType === 'home') path = `M ${startX} 50 L 50 50 L 50 85`;
+       batteryDevices.value.forEach((d) => {
+        if (targetType === 'home') path = `M 50 80 C 50 55, 55 55, 85 55`;
         else if (targetType === 'ev') {
-            evDevices.value.forEach((ev, evIndex) => {
-                const targetX = 32.5 - (evIndex * 12);
-                path = `M ${startX} 50 L 50 50 L 50 85 L ${targetX} 85`;
+            evDevices.value.forEach((ev) => {
+                path = `M 50 80 C 50 55, 55 55, 85 55 L 85 80`;
                 segments.push({
                   id: `battery-${targetType}-${d.id}-${ev.id}`,
                   path, power: (powerFlow / batteryDevices.value.length) / evDevices.value.length, color, normalIsPositive: true
@@ -446,9 +489,8 @@ const activeSegments = computed<Segment[]>(() => {
             return;
         }
         else if (targetType === 'grid') {
-             gridDevices.value.forEach((gd, gdIndex) => {
-                 const targetY = 20 - (gdIndex * 10 - (gridDevices.value.length-1)*5);
-                 path = `M ${startX} 50 L 50 50 L 50 ${targetY}`;
+             gridDevices.value.forEach((gd) => {
+                 path = `M 50 80 C 45 52, 45 52, 15 52`; // Reverse of grid->battery
                  segments.push({
                    id: `battery-${targetType}-${d.id}-${gd.id}`,
                    path, power: (powerFlow / batteryDevices.value.length) / gridDevices.value.length, color, normalIsPositive: true
@@ -463,15 +505,11 @@ const activeSegments = computed<Segment[]>(() => {
         });
       });
     } else if (sourceType === 'grid') {
-      gridDevices.value.forEach((d, index) => {
-        let path = '';
-        const startY = 20 - (index * 10 - (gridDevices.value.length-1)*5);
-        // Grid -> Center(50,50) -> Target
-        if (targetType === 'home') path = `M 50 ${startY} L 50 85`;
+      gridDevices.value.forEach((d) => {
+        if (targetType === 'home') path = `M 15 50 L 85 50`;
         else if (targetType === 'ev') {
-             evDevices.value.forEach((ev, evIndex) => {
-                const targetX = 32.5 - (evIndex * 12);
-                path = `M 50 ${startY} L 50 85 L ${targetX} 85`;
+             evDevices.value.forEach((ev) => {
+                path = `M 15 50 L 85 50 L 85 80`;
                 segments.push({
                   id: `grid-${targetType}-${d.id}-${ev.id}`,
                   path, power: (powerFlow / gridDevices.value.length) / evDevices.value.length, color, normalIsPositive: true
@@ -480,9 +518,8 @@ const activeSegments = computed<Segment[]>(() => {
             return;
         }
         else if (targetType === 'battery') {
-             batteryDevices.value.forEach((bat, batIndex) => {
-                 const targetX = 15 + (batIndex * 15 - (batteryDevices.value.length-1)*7.5);
-                 path = `M 50 ${startY} L 50 50 L ${targetX} 50`;
+             batteryDevices.value.forEach((bat) => {
+                 path = `M 15 52 C 45 52, 45 52, 50 80`;
                  segments.push({
                    id: `grid-${targetType}-${d.id}-${bat.id}`,
                    path, power: (powerFlow / gridDevices.value.length) / batteryDevices.value.length, color, normalIsPositive: true
@@ -745,13 +782,13 @@ const fetchHistory = async () => {
 </script>
 
 <style scoped>
-.flow-path {
+.flow-dot {
   animation: flow linear infinite;
 }
 
 @keyframes flow {
   from {
-    stroke-dashoffset: 300;
+    stroke-dashoffset: 200;
   }
   to {
     stroke-dashoffset: 0;
