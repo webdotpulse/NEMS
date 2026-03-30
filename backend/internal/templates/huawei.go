@@ -12,9 +12,16 @@ import (
 )
 
 type HuaweiInverterPoller struct {
-	Device models.Device
-	client *modbus.ModbusClient
-	status string
+	Device              models.Device
+	client              *modbus.ModbusClient
+	status              string
+	lastPollTime        time.Time
+	cachedPowerW        float64
+	cachedBatteryPowerW float64
+	cachedGridPowerW    float64
+	cachedEnergyKwh     float64
+	cachedSoc           float64
+	cachedError         error
 }
 
 func init() {
@@ -66,6 +73,12 @@ func (p *HuaweiInverterPoller) Status() string {
 }
 
 func (p *HuaweiInverterPoller) Poll() (float64, float64, float64, float64, float64, error) {
+	if time.Since(p.lastPollTime) < 15*time.Second {
+		return p.cachedPowerW, p.cachedBatteryPowerW, p.cachedGridPowerW, p.cachedEnergyKwh, p.cachedSoc, p.cachedError
+	}
+
+	p.lastPollTime = time.Now()
+
 	if p.status != "online" || p.client == nil {
 		powerW := 1000.0 + rand.Float64()*3000.0
 		batteryPowerW := 0.0
@@ -79,11 +92,20 @@ func (p *HuaweiInverterPoller) Poll() (float64, float64, float64, float64, float
 			gridPowerW = -2000.0 + rand.Float64()*4000.0
 		}
 		energyKwh := powerW * (5.0 / 3600.0) / 1000.0
+
+		p.cachedPowerW = powerW
+		p.cachedBatteryPowerW = batteryPowerW
+		p.cachedGridPowerW = gridPowerW
+		p.cachedEnergyKwh = energyKwh
+		p.cachedSoc = soc
+		p.cachedError = nil
+
 		return powerW, batteryPowerW, gridPowerW, energyKwh, soc, nil
 	}
 
 	powerRegs, err := p.client.ReadRegisters(32080, 2, modbus.HOLDING_REGISTER)
 	if err != nil {
+		p.cachedError = err
 		return 0, 0, 0, 0, 0, err
 	}
 	powerW := float64(int32(uint32(powerRegs[0])<<16 | uint32(powerRegs[1])))
@@ -114,6 +136,13 @@ func (p *HuaweiInverterPoller) Poll() (float64, float64, float64, float64, float
 			gridPowerW = float64(int32(uint32(gridRegs[0])<<16|uint32(gridRegs[1]))) * -1.0
 		}
 	}
+
+	p.cachedPowerW = powerW
+	p.cachedBatteryPowerW = batteryPowerW
+	p.cachedGridPowerW = gridPowerW
+	p.cachedEnergyKwh = energyKwh
+	p.cachedSoc = soc
+	p.cachedError = nil
 
 	return powerW, batteryPowerW, gridPowerW, energyKwh, soc, nil
 }
