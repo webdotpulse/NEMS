@@ -50,21 +50,21 @@ func init() {
 
 func (p *RaedianChargerPoller) Connect() error {
 	addr := "tcp://" + p.Device.Host + ":" + strconv.Itoa(p.Device.Port)
-	log.Printf("RaedianChargerPoller: Attempting Modbus TCP connection to %s (ID: %d)", addr, p.Device.ModbusID)
+	log.Printf("[INFO] RaedianChargerPoller: Attempting Modbus TCP connection to %s (ID: %d)", addr, p.Device.ModbusID)
 
 	client, err := modbus.NewClient(&modbus.ClientConfiguration{
 		URL:     addr,
 		Timeout: 2 * time.Second,
 	})
 	if err != nil {
-		log.Printf("RaedianChargerPoller: Client setup failed (%v)", err)
+		log.Printf("[ERROR] RaedianChargerPoller: Client setup failed (%v)", err)
 		p.status = "error"
 		return nil
 	}
 	client.SetUnitId(uint8(p.Device.ModbusID))
 
 	if err := client.Open(); err != nil {
-		log.Printf("RaedianChargerPoller: Connection failed (%v)", err)
+		log.Printf("[ERROR] RaedianChargerPoller: Connection failed (%v)", err)
 		p.status = "error"
 		return nil
 	}
@@ -85,7 +85,7 @@ func (p *RaedianChargerPoller) Connect() error {
 		maxCurrentRaw := uint32(devRegs[6])<<16 | uint32(devRegs[7])
 		p.MaxRatedCurrent = float64(maxCurrentRaw) * 0.001
 	} else {
-		log.Printf("RaedianChargerPoller: Failed to read device info: %v", err)
+		log.Printf("[ERROR] RaedianChargerPoller: Failed to read device info: %v", err)
 	}
 
 	return nil
@@ -130,7 +130,7 @@ func (p *RaedianChargerPoller) Poll() (float64, float64, float64, float64, float
 	// 32798: Energy Delivered in Session (2)
 	regs, err := p.client.ReadRegisters(32778, 22, modbus.HOLDING_REGISTER)
 	if err != nil {
-		log.Printf("RaedianChargerPoller: Failed to read telemetry: %v", err)
+		log.Printf("[ERROR] RaedianChargerPoller: Failed to read telemetry: %v", err)
 		if strings.HasPrefix(err.Error(), "modbus:") || strings.Contains(err.Error(), "timeout") || strings.Contains(err.Error(), "EOF") || strings.Contains(err.Error(), "connection reset") {
 			p.status = "error"
 			p.client.Close()
@@ -189,7 +189,7 @@ func (p *RaedianChargerPoller) SetChargeCurrent(amps float64) error {
 	// Since Size is 2 (32-bit value), we need to write multiple registers
 	err := p.client.WriteRegisters(33024, []uint16{uint16(val >> 16), uint16(val & 0xFFFF)})
 	if err != nil {
-		log.Printf("RaedianChargerPoller: Failed to set charge current %.2f: %v", amps, err)
+		log.Printf("[ERROR] RaedianChargerPoller: Failed to set charge current %.2f: %v", amps, err)
 		return err
 	}
 

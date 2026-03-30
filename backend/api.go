@@ -173,7 +173,7 @@ func handleSystemReboot(w http.ResponseWriter, r *http.Request) {
 		time.Sleep(2 * time.Second)
 		out, err := exec.Command("sudo", "reboot").CombinedOutput()
 		if err != nil {
-			log.Printf("Reboot failed: %v, output: %s", err, string(out))
+			log.Printf("[ERROR] Reboot failed: %v, output: %s", err, string(out))
 		}
 	}()
 }

@@ -68,7 +68,7 @@ func (sc *StrategyController) updatePricingCache(settings models.SiteSettings) {
 	var newPrice float64
 	err := db.QueryRow("SELECT price_per_kwh FROM epex_prices WHERE timestamp = ?", startOfHour).Scan(&newPrice)
 	if err != nil && err != sql.ErrNoRows {
-		log.Printf("StrategyController: Error fetching current EPEX price: %v", err)
+		log.Printf("[ERROR] StrategyController: Error fetching current EPEX price: %v", err)
 		newPrice = 999.0
 	} else if err == sql.ErrNoRows {
 		newPrice = 999.0
@@ -126,7 +126,7 @@ func (sc *StrategyController) Start() {
 							PeakShavingRampupW: 500.0,
 						}
 					} else {
-						log.Printf("StrategyController: Error fetching site settings: %v", err)
+						log.Printf("[ERROR] StrategyController: Error fetching site settings: %v", err)
 						continue
 					}
 				}
@@ -143,7 +143,7 @@ func (sc *StrategyController) Start() {
 				sc.executeControlLoop(settings)
 
 			case <-sc.stopCh:
-				log.Println("StrategyController stopped")
+				log.Println("[INFO] StrategyController stopped")
 				return
 			}
 		}
@@ -480,7 +480,7 @@ func (sc *StrategyController) executeControlLoop(settings models.SiteSettings) {
 			currentSp := chargerCurrentSetpoints[id]
 			strategyMapsMu.Unlock()
 			if currentSp != desiredSp {
-				log.Printf("Control Loop: Changing EV Charger %d from %.1f A to %.1f A", id, currentSp, desiredSp)
+				log.Printf("[INFO] Control Loop: Changing EV Charger %d from %.1f A to %.1f A", id, currentSp, desiredSp)
 				err := charger.SetChargeCurrent(desiredSp)
 				if err == nil {
 					strategyMapsMu.Lock()
@@ -492,7 +492,7 @@ func (sc *StrategyController) executeControlLoop(settings models.SiteSettings) {
 					}
 					strategyMapsMu.Unlock()
 				} else {
-					log.Printf("Control Loop: Failed to execute EV charger command for %d: %v", id, err)
+					log.Printf("[ERROR] Control Loop: Failed to execute EV charger command for %d: %v", id, err)
 				}
 			}
 		}
@@ -528,10 +528,10 @@ func (sc *StrategyController) executeControlLoop(settings models.SiteSettings) {
 				if !exists || desiredChargeW != lastChargeW {
 					var err error
 					if desiredChargeW > 0 {
-						log.Printf("Control Loop: Setting Battery Force Charge for %d to %.1f W", id, desiredChargeW)
+						log.Printf("[INFO] Control Loop: Setting Battery Force Charge for %d to %.1f W", id, desiredChargeW)
 						err = battery.ChargeBattery(desiredChargeW)
 					} else if exists && lastChargeW > 0 {
-						log.Printf("Control Loop: Stopping Battery Force Charge for %d", id)
+						log.Printf("[INFO] Control Loop: Stopping Battery Force Charge for %d", id)
 						err = battery.ChargeBattery(0)
 					}
 
@@ -540,7 +540,7 @@ func (sc *StrategyController) executeControlLoop(settings models.SiteSettings) {
 						batteryForceChargeW[id] = desiredChargeW
 						strategyMapsMu.Unlock()
 					} else {
-						log.Printf("Control Loop: Failed to execute battery charge command for %d: %v", id, err)
+						log.Printf("[ERROR] Control Loop: Failed to execute battery charge command for %d: %v", id, err)
 					}
 				}
 
@@ -552,7 +552,7 @@ func (sc *StrategyController) executeControlLoop(settings models.SiteSettings) {
 					// or we could track last discharge command.
 					err := battery.DischargeBattery(dischargeW)
 					if err != nil {
-						log.Printf("Control Loop: Failed to execute battery discharge command for %d: %v", id, err)
+						log.Printf("[ERROR] Control Loop: Failed to execute battery discharge command for %d: %v", id, err)
 					}
 				}
 			}
@@ -592,7 +592,7 @@ func (sc *StrategyController) applyNetherlandsMode(activeCurtailment bool) {
 	}
 
 	if totalGridExport > 0 {
-		log.Printf("Netherlands Mode: Grid export (%.1f W). Attempting to sink power.", totalGridExport)
+		log.Printf("[INFO] Netherlands Mode: Grid export (%.1f W). Attempting to sink power.", totalGridExport)
 
 		// Action 1: Ramp up EV Chargers
 		for id, poller := range pollers {
@@ -615,7 +615,7 @@ func (sc *StrategyController) applyNetherlandsMode(activeCurtailment bool) {
 					}
 
 					if newSetpoint > currentSetpoint {
-						log.Printf("Netherlands Mode: Ramping up charger %d current from %.1f A to %.1f A to sink export", id, currentSetpoint, newSetpoint)
+						log.Printf("[INFO] Netherlands Mode: Ramping up charger %d current from %.1f A to %.1f A to sink export", id, currentSetpoint, newSetpoint)
 						charger.SetChargeCurrent(newSetpoint)
 						strategyMapsMu.Lock()
 						chargerCurrentSetpoints[id] = newSetpoint
@@ -640,7 +640,7 @@ func (sc *StrategyController) applyNetherlandsMode(activeCurtailment bool) {
 					if dev.HasBattery {
 						soc := cache[id].Soc
 						if soc < 100 {
-							log.Printf("Netherlands Mode: Charging battery %d with %.1f W to sink export", id, totalGridExport)
+							log.Printf("[INFO] Netherlands Mode: Charging battery %d with %.1f W to sink export", id, totalGridExport)
 							battery.ChargeBattery(totalGridExport)
 							totalGridExport = 0
 							break
@@ -673,7 +673,7 @@ func (sc *StrategyController) applyNetherlandsMode(activeCurtailment bool) {
 				totalHouseLoad := totalSolar + totalBattery + totalGrid
 				for _, poller := range pollers {
 					if inverter, ok := poller.(models.InverterController); ok {
-						log.Printf("Netherlands Mode: Actively curtailing inverter. Setting limit to %.1f W", totalHouseLoad)
+						log.Printf("[INFO] Netherlands Mode: Actively curtailing inverter. Setting limit to %.1f W", totalHouseLoad)
 						inverter.SetActivePowerLimit(totalHouseLoad)
 					}
 				}

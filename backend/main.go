@@ -71,7 +71,7 @@ func ensureCertificates(certFile, keyFile string) error {
 		return nil
 	}
 
-	log.Println("Generating self-signed certificate...")
+	log.Println("[INFO] Generating self-signed certificate...")
 	priv, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
 		return err
@@ -125,7 +125,7 @@ func ensureCertificates(certFile, keyFile string) error {
 		return err
 	}
 
-	log.Println("Self-signed certificate generated.")
+	log.Println("[INFO] Self-signed certificate generated.")
 	return nil
 }
 
@@ -156,16 +156,16 @@ func main() {
 	var err error
 	db, err = sql.Open("sqlite3", "./nems.db")
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("[FATAL] %v", err)
 	}
 	defer db.Close()
 
 	// Ensure connection is established
 	err = db.Ping()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("[FATAL] %v", err)
 	}
-	log.Println("Connected to SQLite database")
+	log.Println("[INFO] Connected to SQLite database")
 
 	// Set connection pool for WAL mode safety
 	db.SetMaxOpenConns(1)
@@ -173,17 +173,17 @@ func main() {
 	// Configure WAL mode for SD-card optimization
 	_, err = db.Exec("PRAGMA journal_mode=WAL;")
 	if err != nil {
-		log.Fatal("Failed to set WAL mode:", err)
+		log.Fatal("[FATAL] Failed to set WAL mode:", err)
 	}
 	_, err = db.Exec("PRAGMA synchronous=NORMAL;")
 	if err != nil {
-		log.Fatal("Failed to set synchronous mode:", err)
+		log.Fatal("[FATAL] Failed to set synchronous mode:", err)
 	}
 	_, err = db.Exec("PRAGMA temp_store=MEMORY;")
 	if err != nil {
-		log.Fatal("Failed to set temp_store:", err)
+		log.Fatal("[FATAL] Failed to set temp_store:", err)
 	}
-	log.Println("SQLite WAL mode, synchronous=NORMAL, and temp_store=MEMORY enabled for SD card optimization")
+	log.Println("[INFO] SQLite WAL mode, synchronous=NORMAL, and temp_store=MEMORY enabled for SD card optimization")
 
 	// Create measurements table
 	createMeasurementsSQL := `
@@ -197,7 +197,7 @@ func main() {
 	`
 	_, err = db.Exec(createMeasurementsSQL)
 	if err != nil {
-		log.Fatal("Failed to create measurements table:", err)
+		log.Fatal("[FATAL] Failed to create measurements table:", err)
 	}
 
 	createDevicesSQL := `
@@ -217,7 +217,7 @@ func main() {
 	`
 	_, err = db.Exec(createDevicesSQL)
 	if err != nil {
-		log.Fatal("Failed to create devices table:", err)
+		log.Fatal("[FATAL] Failed to create devices table:", err)
 	}
 
 	// Add new columns if they don't exist (for existing databases)
@@ -237,7 +237,7 @@ func main() {
 	`
 	_, err = db.Exec(createEpexPricesSQL)
 	if err != nil {
-		log.Fatal("Failed to create epex_prices table:", err)
+		log.Fatal("[FATAL] Failed to create epex_prices table:", err)
 	}
 
 	createSettingsSQL := `
@@ -250,7 +250,7 @@ func main() {
 	`
 	_, err = db.Exec(createSettingsSQL)
 	if err != nil {
-		log.Fatal("Failed to create site_settings table:", err)
+		log.Fatal("[FATAL] Failed to create site_settings table:", err)
 	}
 	// Insert default if not exists
 	_, _ = db.Exec("INSERT OR IGNORE INTO site_settings (id, strategy_mode, capacity_peak_limit_kw, active_inverter_curtailment) VALUES (1, 'eco', 2.5, 0)")
@@ -269,7 +269,7 @@ func main() {
 	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN latitude REAL DEFAULT 50.8503")
 	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN longitude REAL DEFAULT 4.3517")
 
-	log.Println("Database schema initialized")
+	log.Println("[INFO] Database schema initialized")
 
 	mux := http.NewServeMux()
 
@@ -330,28 +330,28 @@ func main() {
 	handler := enableCORS(mux)
 
 	go func() {
-		log.Println("Starting HTTP server on :80 (fallback to :8080)")
+		log.Println("[INFO] Starting HTTP server on :80 (fallback to :8080)")
 		err := http.ListenAndServe(httpPort, handler)
 		if err != nil {
-			log.Printf("Failed to bind to :80 (%v). Trying :8080 instead.", err)
+			log.Printf("[ERROR] Failed to bind to :80 (%v). Trying :8080 instead.", err)
 			err = http.ListenAndServe(":8080", handler)
 			if err != nil {
-				log.Fatal(err)
+				log.Fatalf("[FATAL] %v", err)
 			}
 		}
 	}()
 
 	err = ensureCertificates("cert.pem", "key.pem")
 	if err != nil {
-		log.Printf("Failed to ensure certificates: %v. HTTPS disabled.", err)
+		log.Printf("[ERROR] Failed to ensure certificates: %v. HTTPS disabled.", err)
 	} else {
-		log.Println("Starting HTTPS server on :443 (fallback to :8443)")
+		log.Println("[INFO] Starting HTTPS server on :443 (fallback to :8443)")
 		err = http.ListenAndServeTLS(httpsPort, "cert.pem", "key.pem", handler)
 		if err != nil {
-			log.Printf("Failed to bind to :443 (%v). Trying :8443 instead.", err)
+			log.Printf("[ERROR] Failed to bind to :443 (%v). Trying :8443 instead.", err)
 			err = http.ListenAndServeTLS(":8443", "cert.pem", "key.pem", handler)
 			if err != nil {
-				log.Fatal(err)
+				log.Fatalf("[FATAL] %v", err)
 			}
 		}
 	}

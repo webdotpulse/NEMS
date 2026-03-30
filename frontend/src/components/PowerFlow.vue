@@ -82,11 +82,6 @@
                   </span>
                   <span v-else class="text-teal-500 dark:text-teal-400 text-xs">&uarr; 0 W</span>
                 </div>
-                <select @change="setBatteryModeDevice(device, ($event.target as HTMLSelectElement).value)" class="text-xs mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded pointer-events-auto shadow-sm z-30 absolute -top-10" @click.stop>
-                  <option value="auto" :selected="device.battery_mode === 'auto' || !device.battery_mode">Auto</option>
-                  <option value="hold" :selected="device.battery_mode === 'hold'">Hold</option>
-                  <option value="force_charge" :selected="device.battery_mode === 'force_charge'">Force Charge</option>
-                </select>
                 <!-- Battery SOC Circle Overlay -->
                 <div v-if="state?.battery_soc !== null && state?.battery_soc !== undefined" class="absolute inset-0 rounded-full border-[4px] border-[#EC4899] opacity-50" :style="`clip-path: polygon(0 ${100 - state.battery_soc}%, 100% ${100 - state.battery_soc}%, 100% 100%, 0 100%); border-color: #34D399; z-index: 20;`"></div>
               </div>
@@ -141,11 +136,6 @@
                 <span v-else>0 W</span>
                 <span class="text-[10px] font-bold text-purple-600 uppercase mt-0.5">{{ device.charge_mode || 'ECO' }}</span>
               </div>
-              <select @change="setEvModeDevice(device, ($event.target as HTMLSelectElement).value)" class="text-xs mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded pointer-events-auto shadow-sm absolute -top-8" @click.stop>
-                <option value="off" :selected="device.charge_mode === 'off'">Off</option>
-                <option value="eco" :selected="device.charge_mode === 'eco' || !device.charge_mode">Eco</option>
-                <option value="now" :selected="device.charge_mode === 'now'">Now</option>
-              </select>
             </div>
           </div>
         </template>

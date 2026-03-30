@@ -34,21 +34,21 @@ func init() {
 
 func (p *HuaweiInverterPoller) Connect() error {
 	addr := "tcp://" + p.Device.Host + ":" + strconv.Itoa(p.Device.Port)
-	log.Printf("HuaweiInverterPoller: Attempting Modbus TCP connection to %s (ID: %d)", addr, p.Device.ModbusID)
+	log.Printf("[INFO] HuaweiInverterPoller: Attempting Modbus TCP connection to %s (ID: %d)", addr, p.Device.ModbusID)
 
 	client, err := modbus.NewClient(&modbus.ClientConfiguration{
 		URL:     addr,
 		Timeout: 2 * time.Second,
 	})
 	if err != nil {
-		log.Printf("HuaweiInverterPoller: Client setup failed (%v)", err)
+		log.Printf("[ERROR] HuaweiInverterPoller: Client setup failed (%v)", err)
 		p.status = "error"
 		return nil
 	}
 	client.SetUnitId(uint8(p.Device.ModbusID))
 
 	if err := client.Open(); err != nil {
-		log.Printf("HuaweiInverterPoller: Connection failed, falling back to simulation mode (%v)", err)
+		log.Printf("[ERROR] HuaweiInverterPoller: Connection failed, falling back to simulation mode (%v)", err)
 		p.status = "error"
 		return nil
 	}
@@ -123,17 +123,17 @@ func (p *HuaweiInverterPoller) GetDevice() models.Device {
 }
 
 func (p *HuaweiInverterPoller) DischargeBattery(powerW float64) error {
-	log.Printf("HuaweiInverterPoller: Commanding battery discharge at %.2f W (Simulated)", powerW)
+	log.Printf("[INFO] HuaweiInverterPoller: Commanding battery discharge at %.2f W (Simulated)", powerW)
 	return nil
 }
 
 func (p *HuaweiInverterPoller) ChargeBattery(powerW float64) error {
-	log.Printf("HuaweiInverterPoller: Commanding battery charge at %.2f W (Simulated)", powerW)
+	log.Printf("[INFO] HuaweiInverterPoller: Commanding battery charge at %.2f W (Simulated)", powerW)
 	return nil
 }
 
 func (p *HuaweiInverterPoller) SetActivePowerLimit(powerW float64) error {
-	log.Printf("HuaweiInverterPoller: Setting active power limit to %.2f W (Simulated)", powerW)
+	log.Printf("[INFO] HuaweiInverterPoller: Setting active power limit to %.2f W (Simulated)", powerW)
 	return nil
 }
 
