@@ -53,16 +53,16 @@
                 <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ sysInfo.gateway }}</dd>
               </div>
               <div>
-                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">CPU</dt>
-                <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ sysInfo.cpu }}</dd>
-              </div>
-              <div>
                 <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Memory</dt>
                 <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ sysInfo.memory }}</dd>
               </div>
               <div>
                 <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Disk</dt>
                 <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ sysInfo.disk }}</dd>
+              </div>
+              <div>
+                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Build Number</dt>
+                <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ sysInfo.build_number }}</dd>
               </div>
             </div>
           </div>
@@ -101,6 +101,20 @@
                         <option value="single_phase_230v">Single Phase 230V</option>
                         <option value="three_phase_400v">Three Phase 400V</option>
                         <option value="three_phase_230v_delta">Three Phase 230V Delta</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="sm:col-span-3">
+                    <label for="log_level" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Log Level</label>
+                    <div class="mt-1">
+                      <select id="log_level" v-model="siteSettings.log_level"
+                              class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
+                        <option value="fatal">Fatal</option>
+                        <option value="error">Error</option>
+                        <option value="warn">Warn</option>
+                        <option value="info">Info</option>
+                        <option value="debug">Debug</option>
                       </select>
                     </div>
                   </div>
@@ -675,7 +689,8 @@ const siteSettings = ref<SiteSettings>({
   appliance_turn_on_excess_w: 0.0,
   peak_shaving_buffer_w: 200.0,
   peak_shaving_rampup_w: 500.0,
-  timezone: 'Europe/Brussels'
+  timezone: 'Europe/Brussels',
+  log_level: 'info'
 })
 const saveSettingsSuccess = ref(false)
 

@@ -59,9 +59,9 @@ func handleSystemInfo(w http.ResponseWriter, r *http.Request) {
 
 	// Default values
 	gateway := "unknown"
-	cpuInfo := "unknown"
 	memInfo := "unknown"
 	diskInfo := "unknown"
+	buildNumber := "1.0.0"
 
 	// Get gateway
 	out, err := exec.Command("ip", "route").Output()
@@ -72,23 +72,6 @@ func handleSystemInfo(w http.ResponseWriter, r *http.Request) {
 				parts := strings.Fields(line)
 				if len(parts) >= 3 {
 					gateway = parts[2]
-					break
-				}
-			}
-		}
-	}
-
-	// Get CPU info
-	file, err := os.Open("/proc/cpuinfo")
-	if err == nil {
-		defer file.Close()
-		scanner := bufio.NewScanner(file)
-		for scanner.Scan() {
-			line := scanner.Text()
-			if strings.HasPrefix(line, "model name") {
-				parts := strings.SplitN(line, ":", 2)
-				if len(parts) == 2 {
-					cpuInfo = strings.TrimSpace(parts[1])
 					break
 				}
 			}
@@ -128,13 +111,13 @@ func handleSystemInfo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	info := map[string]string{
-		"hostname": hostname,
-		"ip":       primaryIP,
-		"netmask":  primaryNetmask,
-		"gateway":  gateway,
-		"cpu":      cpuInfo,
-		"memory":   memInfo,
-		"disk":     diskInfo,
+		"hostname":     hostname,
+		"ip":           primaryIP,
+		"netmask":      primaryNetmask,
+		"gateway":      gateway,
+		"memory":       memInfo,
+		"disk":         diskInfo,
+		"build_number": buildNumber,
 	}
 
 	json.NewEncoder(w).Encode(info)
