@@ -35,6 +35,7 @@ export interface SiteSettings {
   peak_shaving_buffer_w: number;
   peak_shaving_rampup_w: number;
   timezone: string;
+  log_level: string;
 }
 
 export interface SiteState {

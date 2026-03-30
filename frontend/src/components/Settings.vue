@@ -268,6 +268,36 @@
               </div>
             </div>
 
+            <!-- Logging Settings Card -->
+            <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg mb-6">
+              <div class="px-4 py-5 sm:p-6">
+                <div class="mb-4 border-b border-gray-200 dark:border-gray-700 pb-4">
+                  <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-gray-100">
+                    System Logging
+                  </h3>
+                  <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    Configure the detail level of system logs.
+                  </p>
+                </div>
+                <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                  <div class="sm:col-span-3">
+                    <label for="log_level" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Log Level</label>
+                    <div class="mt-1">
+                      <select id="log_level" v-model="siteSettings.log_level"
+                              class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
+                        <option value="TRACE">Trace</option>
+                        <option value="DEBUG">Debug</option>
+                        <option value="INFO">Info</option>
+                        <option value="WARN">Warn</option>
+                        <option value="ERROR">Error</option>
+                        <option value="FATAL">Fatal</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <!-- Save Actions Card -->
             <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg">
               <div class="px-4 py-5 sm:p-6 flex items-center justify-between">
@@ -428,9 +458,9 @@
                   </div>
 
                   <!-- Conditional Fields for Huawei Hybrid Inverter Combo -->
-                  <template v-if="form.template === 'huawei_inverter'">
+                  <template v-if="form.template === 'huawei_inverter' || form.template === 'enerlution_inverter'">
                     <div class="sm:col-span-6 border-t border-gray-200 dark:border-gray-700 pt-4 mt-2">
-                      <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-4">Huawei Inverter Features</h4>
+                      <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-4">Hybrid Inverter Features</h4>
 
                       <div class="flex items-center mb-4">
                         <input id="has_grid_meter" type="checkbox" v-model="form.has_grid_meter"
@@ -541,9 +571,9 @@
               </div>
 
               <!-- Conditional Fields for Huawei Hybrid Inverter Combo -->
-              <template v-if="editForm.template === 'huawei_inverter'">
+              <template v-if="editForm.template === 'huawei_inverter' || editForm.template === 'enerlution_inverter'">
                 <div class="sm:col-span-6 border-t border-gray-200 dark:border-gray-700 pt-4 mt-2">
-                  <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-4">Huawei Inverter Features</h4>
+                  <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-4">Hybrid Inverter Features</h4>
 
                   <div class="flex items-center mb-4">
                     <input id="edit_has_grid_meter" type="checkbox" v-model="editForm.has_grid_meter"
@@ -679,7 +709,8 @@ const siteSettings = ref<SiteSettings>({
   appliance_turn_on_excess_w: 0.0,
   peak_shaving_buffer_w: 200.0,
   peak_shaving_rampup_w: 500.0,
-  timezone: 'Europe/Brussels'
+  timezone: 'Europe/Brussels',
+  log_level: 'INFO'
 })
 const saveSettingsSuccess = ref(false)
 
