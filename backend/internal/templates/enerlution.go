@@ -140,9 +140,16 @@ func (p *EnerlutionPoller) Poll() (float64, float64, float64, float64, float64, 
 
 	if t != nil {
 		powerW = t.OutputActivePowerW
-		batteryPowerW = t.BatteryPowerW
-		soc = t.BatterySOC
-		gridPowerW = t.ThirdPartyMeterPowerW
+
+		if p.Device.HasBattery {
+			batteryPowerW = t.BatteryPowerW
+			soc = t.BatterySOC
+		}
+
+		if p.Device.HasGridMeter {
+			gridPowerW = t.ThirdPartyMeterPowerW
+		}
+
 		energyKwh = t.TotalEnergyYieldKwh
 	}
 
@@ -326,35 +333,39 @@ func (p *EnerlutionPoller) FetchTelemetry() (*EnerlutionTelemetry, error) {
 	if len(regs) == 2 { t.TotalPVEnergyKwh = float64(decodeFloat32(regs)) }
 
 	// D. Battery Integration
-	if regs, err = read(30161, 1); err != nil { return nil, err }
-	if len(regs) == 1 { t.BatteryState = regs[0] }
+	if p.Device.HasBattery {
+		if regs, err = read(30161, 1); err != nil { return nil, err }
+		if len(regs) == 1 { t.BatteryState = regs[0] }
 
-	if regs, err = read(30162, 2); err != nil { return nil, err }
-	if len(regs) == 2 { t.BatteryPowerW = float64(decodeS32(regs)) }
+		if regs, err = read(30162, 2); err != nil { return nil, err }
+		if len(regs) == 2 { t.BatteryPowerW = float64(decodeS32(regs)) }
 
-	if regs, err = read(30164, 2); err != nil { return nil, err }
-	if len(regs) == 2 {
-		t.BatteryVoltageV = float64(regs[0]) * 0.1
-		t.BatteryCurrentA = float64(decodeS16(regs[1])) * 0.1
+		if regs, err = read(30164, 2); err != nil { return nil, err }
+		if len(regs) == 2 {
+			t.BatteryVoltageV = float64(regs[0]) * 0.1
+			t.BatteryCurrentA = float64(decodeS16(regs[1])) * 0.1
+		}
+
+		if regs, err = read(30182, 1); err != nil { return nil, err }
+		if len(regs) == 1 { t.BatterySOC = float64(regs[0]) }
+
+		if regs, err = read(30249, 1); err != nil { return nil, err }
+		if len(regs) == 1 { t.BatterySOH = float64(regs[0]) }
 	}
 
-	if regs, err = read(30182, 1); err != nil { return nil, err }
-	if len(regs) == 1 { t.BatterySOC = float64(regs[0]) }
-
-	if regs, err = read(30249, 1); err != nil { return nil, err }
-	if len(regs) == 1 { t.BatterySOH = float64(regs[0]) }
-
 	// E. Grid Metering
-	if regs, err = read(30110, 2); err != nil { return nil, err }
-	if len(regs) == 2 { t.ThirdPartyMeterPowerW = float64(decodeS32(regs)) }
+	if p.Device.HasGridMeter {
+		if regs, err = read(30110, 2); err != nil { return nil, err }
+		if len(regs) == 2 { t.ThirdPartyMeterPowerW = float64(decodeS32(regs)) }
 
-	if regs, err = read(30112, 2); err != nil { return nil, err }
-	if len(regs) == 2 { t.ThirdPartyMeterEnergyKwh = float64(decodeFloat32(regs)) }
+		if regs, err = read(30112, 2); err != nil { return nil, err }
+		if len(regs) == 2 { t.ThirdPartyMeterEnergyKwh = float64(decodeFloat32(regs)) }
 
-	if regs, err = read(30156, 4); err != nil { return nil, err }
-	if len(regs) == 4 {
-		t.ImportEnergyKwh = float64(decodeFloat32(regs[0:2]))
-		t.ExportEnergyKwh = float64(decodeFloat32(regs[2:4]))
+		if regs, err = read(30156, 4); err != nil { return nil, err }
+		if len(regs) == 4 {
+			t.ImportEnergyKwh = float64(decodeFloat32(regs[0:2]))
+			t.ExportEnergyKwh = float64(decodeFloat32(regs[2:4]))
+		}
 	}
 
 	// F. Writeable Settings & Controls
