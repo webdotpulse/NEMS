@@ -75,4 +75,5 @@ export interface SystemInfo {
   cpu: string;
   memory: string;
   disk: string;
+  build: string;
 }
