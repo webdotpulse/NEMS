@@ -34,21 +34,21 @@ func init() {
 
 func (p *SmaInverterPoller) Connect() error {
 	addr := "tcp://" + p.Device.Host + ":" + strconv.Itoa(p.Device.Port)
-	log.Printf("SmaInverterPoller: Attempting Modbus TCP connection to %s (ID: %d)", addr, p.Device.ModbusID)
+	log.Printf("[INFO] SmaInverterPoller: Attempting Modbus TCP connection to %s (ID: %d)", addr, p.Device.ModbusID)
 
 	client, err := modbus.NewClient(&modbus.ClientConfiguration{
 		URL:     addr,
 		Timeout: 2 * time.Second,
 	})
 	if err != nil {
-		log.Printf("SmaInverterPoller: Client setup failed (%v)", err)
+		log.Printf("[ERROR] SmaInverterPoller: Client setup failed (%v)", err)
 		p.status = "error"
 		return nil
 	}
 	client.SetUnitId(uint8(p.Device.ModbusID))
 
 	if err := client.Open(); err != nil {
-		log.Printf("SmaInverterPoller: Connection failed, falling back to simulation mode (%v)", err)
+		log.Printf("[ERROR] SmaInverterPoller: Connection failed, falling back to simulation mode (%v)", err)
 		p.status = "error"
 		return nil
 	}
@@ -100,7 +100,7 @@ func (p *SmaInverterPoller) GetDevice() models.Device {
 }
 
 func (p *SmaInverterPoller) SetActivePowerLimit(powerW float64) error {
-	log.Printf("SmaInverterPoller: Setting active power limit to %.2f W (Simulated)", powerW)
+	log.Printf("[INFO] SmaInverterPoller: Setting active power limit to %.2f W (Simulated)", powerW)
 	return nil
 }
 

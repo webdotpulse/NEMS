@@ -28,7 +28,7 @@ func init() {
 }
 
 func (p *EaseeChargerPoller) Connect() error {
-	log.Printf("EaseeChargerPoller: Authenticating with cloud using user %s", p.Device.Username)
+	log.Printf("[INFO] EaseeChargerPoller: Authenticating with cloud using user %s", p.Device.Username)
 	time.Sleep(500 * time.Millisecond)
 	p.status = "online"
 	return nil
@@ -55,7 +55,7 @@ func (p *EaseeChargerPoller) GetDevice() models.Device {
 }
 
 func (p *EaseeChargerPoller) SetChargeCurrent(amps float64) error {
-	log.Printf("EaseeChargerPoller: Setting charge current to %.2f A (Simulated)", amps)
+	log.Printf("[INFO] EaseeChargerPoller: Setting charge current to %.2f A (Simulated)", amps)
 	return nil
 }
 

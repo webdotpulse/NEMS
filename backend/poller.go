@@ -86,12 +86,12 @@ func (pm *PollerManager) SyncDevices() {
 	pm.mu.Lock()
 	defer pm.mu.Unlock()
 
-	log.Println("PollerManager: Syncing devices...")
+	log.Println("[INFO] PollerManager: Syncing devices...")
 
 	// Fetch current devices from DB
 	rows, err := db.Query("SELECT id, name, template, host, port, modbus_id, username, password, has_grid_meter, has_battery, battery_capacity FROM devices")
 	if err != nil {
-		log.Printf("PollerManager: Error fetching devices: %v", err)
+		log.Printf("[ERROR] PollerManager: Error fetching devices: %v", err)
 		return
 	}
 	defer rows.Close()
@@ -103,7 +103,7 @@ func (pm *PollerManager) SyncDevices() {
 		var username sql.NullString
 		var password sql.NullString
 		if err := rows.Scan(&d.ID, &d.Name, &d.Template, &d.Host, &d.Port, &d.ModbusID, &username, &password, &d.HasGridMeter, &d.HasBattery, &d.BatteryCapacity); err != nil {
-			log.Printf("PollerManager: Error scanning device: %v", err)
+			log.Printf("[ERROR] PollerManager: Error scanning device: %v", err)
 			continue
 		}
 		if username.Valid {
@@ -118,16 +118,16 @@ func (pm *PollerManager) SyncDevices() {
 		if _, exists := pm.pollers[d.ID]; !exists {
 			poller := templates.CreatePoller(d.Template, d)
 			if poller == nil {
-				log.Printf("PollerManager: Unknown template %s for device %d", d.Template, d.ID)
+				log.Printf("[INFO] PollerManager: Unknown template %s for device %d", d.Template, d.ID)
 				continue
 			}
 
 			err := poller.Connect()
 			if err != nil {
-				log.Printf("PollerManager: Failed to connect device %d: %v", d.ID, err)
+				log.Printf("[ERROR] PollerManager: Failed to connect device %d: %v", d.ID, err)
 			}
 			pm.pollers[d.ID] = poller
-			log.Printf("PollerManager: Added poller for device %d (%s)", d.ID, d.Name)
+			log.Printf("[INFO] PollerManager: Added poller for device %d (%s)", d.ID, d.Name)
 		}
 	}
 
@@ -140,7 +140,7 @@ func (pm *PollerManager) SyncDevices() {
 			pm.cacheMu.Lock()
 			delete(pm.deviceCache, id)
 			pm.cacheMu.Unlock()
-			log.Printf("PollerManager: Removed poller for device %d", id)
+			log.Printf("[INFO] PollerManager: Removed poller for device %d", id)
 		}
 	}
 }
@@ -172,14 +172,14 @@ func (pm *PollerManager) Start() {
 
 					powerW, batteryPowerW, gridPowerW, energyKwh, soc, err := poller.Poll()
 					if err != nil {
-						log.Printf("PollerManager: Error polling device %d: %v", id, err)
+						log.Printf("[ERROR] PollerManager: Error polling device %d: %v", id, err)
 
 						errStr := err.Error()
 						if strings.Contains(errStr, "broken pipe") || strings.Contains(errStr, "EOF") || strings.Contains(errStr, "connection reset") {
-							log.Printf("PollerManager: Connection drop detected for device %d, attempting to reconnect...", id)
+							log.Printf("[INFO] PollerManager: Connection drop detected for device %d, attempting to reconnect...", id)
 							poller.Close()
 							if connErr := poller.Connect(); connErr != nil {
-								log.Printf("PollerManager: Reconnect failed for device %d: %v", id, connErr)
+								log.Printf("[ERROR] PollerManager: Reconnect failed for device %d: %v", id, connErr)
 							}
 						}
 
@@ -248,14 +248,14 @@ func (pm *PollerManager) Start() {
 
 					powerW, batteryPowerW, gridPowerW, energyKwh, soc, err := poller.Poll()
 					if err != nil {
-						log.Printf("PollerManager: Error polling device %d: %v", id, err)
+						log.Printf("[ERROR] PollerManager: Error polling device %d: %v", id, err)
 
 						errStr := err.Error()
 						if strings.Contains(errStr, "broken pipe") || strings.Contains(errStr, "EOF") || strings.Contains(errStr, "connection reset") {
-							log.Printf("PollerManager: Connection drop detected for device %d, attempting to reconnect...", id)
+							log.Printf("[INFO] PollerManager: Connection drop detected for device %d, attempting to reconnect...", id)
 							poller.Close()
 							if connErr := poller.Connect(); connErr != nil {
-								log.Printf("PollerManager: Reconnect failed for device %d: %v", id, connErr)
+								log.Printf("[ERROR] PollerManager: Reconnect failed for device %d: %v", id, connErr)
 							}
 						}
 
@@ -311,7 +311,7 @@ func (pm *PollerManager) Start() {
 				pm.broadcastState()
 
 			case <-pm.stopCh:
-				log.Println("PollerManager: Polling stopped")
+				log.Println("[INFO] PollerManager: Polling stopped")
 				return
 			}
 		}
@@ -327,7 +327,7 @@ func (pm *PollerManager) Start() {
 			case <-flushTicker.C:
 				pm.flushBuffer()
 			case <-pm.stopCh:
-				log.Println("PollerManager: DB Flush stopped")
+				log.Println("[INFO] PollerManager: DB Flush stopped")
 				return
 			}
 		}
@@ -468,14 +468,14 @@ func (pm *PollerManager) flushBuffer() {
 	// Transactional insert to limit SD card I/O
 	tx, err := db.Begin()
 	if err != nil {
-		log.Printf("PollerManager DB Flush: Error starting transaction: %v", err)
+		log.Printf("[ERROR] PollerManager DB Flush: Error starting transaction: %v", err)
 		return
 	}
 
 	stmt, err := tx.Prepare("INSERT INTO measurements (device_id, power_w, energy_kwh) VALUES (?, ?, ?)")
 	if err != nil {
 		tx.Rollback()
-		log.Printf("PollerManager DB Flush: Error preparing statement: %v", err)
+		log.Printf("[ERROR] PollerManager DB Flush: Error preparing statement: %v", err)
 		return
 	}
 	defer stmt.Close()
@@ -486,13 +486,13 @@ func (pm *PollerManager) flushBuffer() {
 
 		_, err := stmt.Exec(id, avgPower, totalEnergy)
 		if err != nil {
-			log.Printf("PollerManager DB Flush: Error executing statement for device %d: %v", id, err)
+			log.Printf("[ERROR] PollerManager DB Flush: Error executing statement for device %d: %v", id, err)
 		}
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		log.Printf("PollerManager DB Flush: Error committing transaction: %v", err)
+		log.Printf("[ERROR] PollerManager DB Flush: Error committing transaction: %v", err)
 	}
 }
 

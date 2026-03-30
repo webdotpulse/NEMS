@@ -56,18 +56,18 @@ func (p *EnerlutionPoller) Connect() error {
 		}
 	}
 
-	log.Printf("EnerlutionPoller: Attempting Modbus connection to %s (ID: %d)", addr, p.Device.ModbusID)
+	log.Printf("[INFO] EnerlutionPoller: Attempting Modbus connection to %s (ID: %d)", addr, p.Device.ModbusID)
 
 	client, err := modbus.NewClient(conf)
 	if err != nil {
-		log.Printf("EnerlutionPoller: Client setup failed (%v)", err)
+		log.Printf("[ERROR] EnerlutionPoller: Client setup failed (%v)", err)
 		p.status = "error"
 		return err
 	}
 	client.SetUnitId(uint8(p.Device.ModbusID))
 
 	if err := client.Open(); err != nil {
-		log.Printf("EnerlutionPoller: Connection failed (%v)", err)
+		log.Printf("[ERROR] EnerlutionPoller: Connection failed (%v)", err)
 		p.status = "error"
 		return err
 	}
@@ -160,14 +160,14 @@ func (p *EnerlutionPoller) Poll() (float64, float64, float64, float64, float64, 
 func (p *EnerlutionPoller) SetActivePowerLimit(powerW float64) error {
 	if p.client == nil || p.status != "online" {
 		err := fmt.Errorf("device offline")
-		log.Printf("EnerlutionPoller: Cannot set active power limit, device offline")
+		log.Printf("[INFO] EnerlutionPoller: Cannot set active power limit, device offline")
 		return err
 	}
 
 	// Active Power Control Mode (40400) -> 1 (Fixed active power)
 	err := p.client.WriteRegister(40400, 1)
 	if err != nil {
-		log.Printf("EnerlutionPoller: Failed to set Active Power Control Mode (%v)", err)
+		log.Printf("[ERROR] EnerlutionPoller: Failed to set Active Power Control Mode (%v)", err)
 		return err
 	}
 
@@ -181,11 +181,11 @@ func (p *EnerlutionPoller) SetActivePowerLimit(powerW float64) error {
 
 	err = p.client.WriteRegisters(40441, []uint16{highWord, lowWord})
 	if err != nil {
-		log.Printf("EnerlutionPoller: Failed to write Fixed Active Power Value (%v)", err)
+		log.Printf("[ERROR] EnerlutionPoller: Failed to write Fixed Active Power Value (%v)", err)
 		return err
 	}
 
-	log.Printf("EnerlutionPoller: Successfully set active power limit to %.2f W", powerW)
+	log.Printf("[INFO] EnerlutionPoller: Successfully set active power limit to %.2f W", powerW)
 	return nil
 }
 

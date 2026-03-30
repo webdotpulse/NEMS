@@ -37,13 +37,13 @@ func (p *HomeWizardMeterPoller) Connect() error {
 	if p.Device.Port != 80 && p.Device.Port != 0 {
 		addr = addr + ":" + strconv.Itoa(p.Device.Port)
 	}
-	log.Printf("HomeWizardMeterPoller: Attempting local REST API connection to http://%s/api/v1/data", addr)
+	log.Printf("[INFO] HomeWizardMeterPoller: Attempting local REST API connection to http://%s/api/v1/data", addr)
 
 	url := fmt.Sprintf("http://%s/api/v1/data", addr)
 	client := http.Client{Timeout: 2 * time.Second}
 	_, err := client.Get(url)
 	if err != nil {
-		log.Printf("HomeWizardMeterPoller: Connection failed, falling back to simulation (%v)", err)
+		log.Printf("[ERROR] HomeWizardMeterPoller: Connection failed, falling back to simulation (%v)", err)
 		p.status = "error"
 		return nil
 	}

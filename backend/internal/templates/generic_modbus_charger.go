@@ -59,21 +59,21 @@ func init() {
 
 func (p *GenericModbusChargerPoller) Connect() error {
 	addr := "tcp://" + p.Device.Host + ":" + strconv.Itoa(p.Device.Port)
-	log.Printf("%s: Attempting Modbus TCP connection to %s (ID: %d)", p.Prefix, addr, p.Device.ModbusID)
+	log.Printf("[INFO] %s: Attempting Modbus TCP connection to %s (ID: %d)", p.Prefix, addr, p.Device.ModbusID)
 
 	client, err := modbus.NewClient(&modbus.ClientConfiguration{
 		URL:     addr,
 		Timeout: 2 * time.Second,
 	})
 	if err != nil {
-		log.Printf("%s: Client setup failed (%v)", p.Prefix, err)
+		log.Printf("[ERROR] %s: Client setup failed (%v)", p.Prefix, err)
 		p.status = "error"
 		return nil
 	}
 	client.SetUnitId(uint8(p.Device.ModbusID))
 
 	if err := client.Open(); err != nil {
-		log.Printf("%s: Connection failed, falling back to simulation mode (%v)", p.Prefix, err)
+		log.Printf("[ERROR] %s: Connection failed, falling back to simulation mode (%v)", p.Prefix, err)
 		p.status = "error"
 		return nil
 	}
@@ -115,7 +115,7 @@ func (p *GenericModbusChargerPoller) GetDevice() models.Device {
 }
 
 func (p *GenericModbusChargerPoller) SetChargeCurrent(amps float64) error {
-	log.Printf("%s: Setting charge current to %.2f A (Simulated)", p.Prefix, amps)
+	log.Printf("[INFO] %s: Setting charge current to %.2f A (Simulated)", p.Prefix, amps)
 	return nil
 }
 

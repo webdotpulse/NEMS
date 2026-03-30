@@ -57,7 +57,7 @@ func (p *P1SerialPoller) Connect() error {
 
 	port, err := serial.Open(portName, mode)
 	if err != nil {
-		log.Printf("P1Serial [%s]: Failed to open serial port %s: %v", p.Device.Name, portName, err)
+		log.Printf("[ERROR] P1Serial [%s]: Failed to open serial port %s: %v", p.Device.Name, portName, err)
 		p.status = "error"
 		return err
 	}

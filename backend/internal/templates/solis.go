@@ -34,21 +34,21 @@ func init() {
 
 func (p *SolisInverterPoller) Connect() error {
 	addr := "tcp://" + p.Device.Host + ":" + strconv.Itoa(p.Device.Port)
-	log.Printf("SolisInverterPoller: Attempting Modbus TCP connection to %s (ID: %d)", addr, p.Device.ModbusID)
+	log.Printf("[INFO] SolisInverterPoller: Attempting Modbus TCP connection to %s (ID: %d)", addr, p.Device.ModbusID)
 
 	client, err := modbus.NewClient(&modbus.ClientConfiguration{
 		URL:     addr,
 		Timeout: 2 * time.Second,
 	})
 	if err != nil {
-		log.Printf("SolisInverterPoller: Client setup failed (%v)", err)
+		log.Printf("[ERROR] SolisInverterPoller: Client setup failed (%v)", err)
 		p.status = "error"
 		return nil
 	}
 	client.SetUnitId(uint8(p.Device.ModbusID))
 
 	if err := client.Open(); err != nil {
-		log.Printf("SolisInverterPoller: Connection failed, falling back to simulation mode (%v)", err)
+		log.Printf("[ERROR] SolisInverterPoller: Connection failed, falling back to simulation mode (%v)", err)
 		p.status = "error"
 		return nil
 	}
@@ -100,7 +100,7 @@ func (p *SolisInverterPoller) GetDevice() models.Device {
 }
 
 func (p *SolisInverterPoller) SetActivePowerLimit(powerW float64) error {
-	log.Printf("SolisInverterPoller: Setting active power limit to %.2f W (Simulated)", powerW)
+	log.Printf("[INFO] SolisInverterPoller: Setting active power limit to %.2f W (Simulated)", powerW)
 	return nil
 }
 

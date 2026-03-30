@@ -95,7 +95,7 @@ func (tm *TariffManager) Stop() {
 func (tm *TariffManager) fetchIfNeeded() {
 	loc, err := time.LoadLocation("Europe/Amsterdam")
 	if err != nil {
-		log.Printf("TariffManager: error loading location: %v", err)
+		log.Printf("[ERROR] TariffManager: error loading location: %v", err)
 		loc = time.UTC
 	}
 
@@ -110,7 +110,7 @@ func (tm *TariffManager) fetchIfNeeded() {
 
 	if countToday == 0 {
 		// Fetch immediately if we have zero data for today (e.g. fresh install)
-		log.Println("TariffManager: No data for today found, bypassing 13:30 check")
+		log.Println("[INFO] TariffManager: No data for today found, bypassing 13:30 check")
 	} else if now.Hour() < 13 || (now.Hour() == 13 && now.Minute() < 30) {
 		return // Too early, EPEX prices for tomorrow aren't published yet (usually 13:00 or 13:30)
 	}
@@ -120,7 +120,7 @@ func (tm *TariffManager) fetchIfNeeded() {
 	var count int
 	err = db.QueryRow("SELECT count(*) FROM epex_prices WHERE timestamp = ?", tomorrowEnd.UTC()).Scan(&count)
 	if err != nil {
-		log.Printf("TariffManager: error checking epex_prices: %v", err)
+		log.Printf("[ERROR] TariffManager: error checking epex_prices: %v", err)
 		return
 	}
 
@@ -129,7 +129,7 @@ func (tm *TariffManager) fetchIfNeeded() {
 		return
 	}
 
-	log.Println("TariffManager: Fetching EPEX prices...")
+	log.Println("[INFO] TariffManager: Fetching EPEX prices...")
 
 	// Fetch today and tomorrow
 	startOfToday = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
@@ -137,7 +137,7 @@ func (tm *TariffManager) fetchIfNeeded() {
 
 	prices, err := tm.provider.FetchPrices(startOfToday, endOfTomorrow)
 	if err != nil {
-		log.Printf("TariffManager: Failed to fetch prices: %v", err)
+		log.Printf("[ERROR] TariffManager: Failed to fetch prices: %v", err)
 		return
 	}
 
@@ -145,9 +145,9 @@ func (tm *TariffManager) fetchIfNeeded() {
 	for _, p := range prices {
 		_, err := db.Exec("INSERT OR REPLACE INTO epex_prices (timestamp, price_per_kwh) VALUES (?, ?)", p.Timestamp.UTC(), p.PricePerKwh)
 		if err != nil {
-			log.Printf("TariffManager: DB insert error: %v", err)
+			log.Printf("[ERROR] TariffManager: DB insert error: %v", err)
 		}
 	}
 
-	log.Printf("TariffManager: Successfully fetched and stored %d price points", len(prices))
+	log.Printf("[INFO] TariffManager: Successfully fetched and stored %d price points", len(prices))
 }

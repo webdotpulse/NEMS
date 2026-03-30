@@ -34,13 +34,13 @@ func init() {
 
 func (p *PeblarChargerPoller) Connect() error {
 	addr := p.Device.Host + ":" + strconv.Itoa(p.Device.Port)
-	log.Printf("PeblarChargerPoller: Attempting REST API connection to %s", addr)
+	log.Printf("[INFO] PeblarChargerPoller: Attempting REST API connection to %s", addr)
 
 	url := fmt.Sprintf("http://%s/api/v1/system", addr)
 	client := http.Client{Timeout: 2 * time.Second}
 	_, err := client.Get(url)
 	if err != nil {
-		log.Printf("PeblarChargerPoller: Connection failed, falling back to simulation (%v)", err)
+		log.Printf("[ERROR] PeblarChargerPoller: Connection failed, falling back to simulation (%v)", err)
 		p.status = "error"
 		return nil
 	}
@@ -90,7 +90,7 @@ func (p *PeblarChargerPoller) GetDevice() models.Device {
 }
 
 func (p *PeblarChargerPoller) SetChargeCurrent(amps float64) error {
-	log.Printf("PeblarChargerPoller: Setting charge current to %.2f A (Simulated)", amps)
+	log.Printf("[INFO] PeblarChargerPoller: Setting charge current to %.2f A (Simulated)", amps)
 	return nil
 }
 

@@ -89,7 +89,7 @@ func handleLiveStream(w http.ResponseWriter, r *http.Request) {
 	for {
 		select {
 		case <-notify:
-			log.Println("SSE client disconnected")
+			log.Println("[INFO] SSE client disconnected")
 			return
 		case state := <-clientChan:
 			data, err := json.Marshal(state)
@@ -190,7 +190,7 @@ func handleDailyAggregates(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		// Some other db error occurred
-		log.Printf("Error scanning daily aggregates: %v", err)
+		log.Printf("[ERROR] Error scanning daily aggregates: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -523,7 +523,7 @@ func handleEnergy(w http.ResponseWriter, r *http.Request) {
 
 	rows, err := db.Query(query, startDate.Format("2006-01-02 15:04:05"), endDate.Format("2006-01-02 15:04:05"))
 	if err != nil {
-		log.Printf("Error querying energy data: %v", err)
+		log.Printf("[ERROR] Error querying energy data: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -539,7 +539,7 @@ func handleEnergy(w http.ResponseWriter, r *http.Request) {
 		var gImport, gExport, sYield, bCharge, bDischarge, bChargeSolar, bChargeGrid *float64
 
 		if err := rows.Scan(&bucket, &gImport, &gExport, &sYield, &bCharge, &bDischarge, &bChargeSolar, &bChargeGrid); err != nil {
-			log.Printf("Error scanning row: %v", err)
+			log.Printf("[ERROR] Error scanning row: %v", err)
 			continue
 		}
 

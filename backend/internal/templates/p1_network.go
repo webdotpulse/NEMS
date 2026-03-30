@@ -45,7 +45,7 @@ func (p *P1NetworkPoller) Connect() error {
 	addr := p.Device.Host + ":" + strconv.Itoa(p.Device.Port)
 	conn, err := net.DialTimeout("tcp", addr, 5*time.Second)
 	if err != nil {
-		log.Printf("P1Network [%s]: Failed to connect to %s: %v", p.Device.Name, addr, err)
+		log.Printf("[ERROR] P1Network [%s]: Failed to connect to %s: %v", p.Device.Name, addr, err)
 		p.status = "error"
 		return err
 	}
