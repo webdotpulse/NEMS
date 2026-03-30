@@ -171,22 +171,18 @@
       <div v-if="selectedNode === 'ev_charger' && evDevices && evDevices.length > 0" class="mb-6 bg-gray-50 dark:bg-gray-700/50 p-4 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 flex flex-col items-center z-[105] relative">
         <h3 class="text-sm font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider mb-4 border-b border-gray-300 dark:border-gray-600 pb-2 w-full text-center">EV Charge Mode Control</h3>
         <div class="flex w-full gap-4 max-w-lg">
-          <select @change="setEvMode(($event.target as HTMLSelectElement).value)" class="flex-1 py-3 px-4 rounded-xl font-bold transition-all shadow-sm pointer-events-auto bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-purple-400">
-            <option value="off" :selected="evDevices[0]?.charge_mode === 'off'">Off</option>
-            <option value="eco" :selected="evDevices[0]?.charge_mode === 'eco' || !evDevices[0]?.charge_mode">Eco</option>
-            <option value="now" :selected="evDevices[0]?.charge_mode === 'now'">Now</option>
-          </select>
+          <button @click="setEvMode('off')" :class="['flex-1 py-3 px-4 rounded-xl font-bold transition-all shadow-sm pointer-events-auto', evDevices[0]?.charge_mode === 'off' ? 'bg-purple-600 text-white ring-2 ring-purple-400 ring-offset-2 scale-[1.02]' : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700']">Off</button>
+          <button @click="setEvMode('eco')" :class="['flex-1 py-3 px-4 rounded-xl font-bold transition-all shadow-sm pointer-events-auto', (evDevices[0]?.charge_mode === 'eco' || !evDevices[0]?.charge_mode) ? 'bg-purple-600 text-white ring-2 ring-purple-400 ring-offset-2 scale-[1.02]' : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700']">Eco</button>
+          <button @click="setEvMode('now')" :class="['flex-1 py-3 px-4 rounded-xl font-bold transition-all shadow-sm pointer-events-auto', evDevices[0]?.charge_mode === 'now' ? 'bg-purple-600 text-white ring-2 ring-purple-400 ring-offset-2 scale-[1.02]' : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700']">Now</button>
         </div>
       </div>
 
       <div v-if="selectedNode === 'battery' && batteryDevices && batteryDevices.length > 0" class="mb-6 bg-gray-50 dark:bg-gray-700/50 p-4 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 flex flex-col items-center z-[105] relative pointer-events-auto">
         <h3 class="text-sm font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider mb-4 border-b border-gray-300 dark:border-gray-600 pb-2 w-full text-center">Battery Operations Mode</h3>
         <div class="flex w-full gap-4 max-w-lg">
-          <select @change="setBatteryMode(($event.target as HTMLSelectElement).value)" class="flex-1 py-3 px-4 rounded-xl font-bold transition-all shadow-sm pointer-events-auto bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400">
-            <option value="auto" :selected="batteryDevices[0]?.battery_mode === 'auto' || !batteryDevices[0]?.battery_mode">Auto</option>
-            <option value="hold" :selected="batteryDevices[0]?.battery_mode === 'hold'">Hold</option>
-            <option value="force_charge" :selected="batteryDevices[0]?.battery_mode === 'force_charge'">Force Charge</option>
-          </select>
+          <button @click="setBatteryMode('auto')" :class="['flex-1 py-3 px-4 rounded-xl font-bold transition-all shadow-sm pointer-events-auto', (batteryDevices[0]?.battery_mode === 'auto' || !batteryDevices[0]?.battery_mode) ? 'bg-emerald-500 text-white ring-2 ring-emerald-400 ring-offset-2 scale-[1.02]' : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700']">Auto</button>
+          <button @click="setBatteryMode('hold')" :class="['flex-1 py-3 px-4 rounded-xl font-bold transition-all shadow-sm pointer-events-auto', batteryDevices[0]?.battery_mode === 'hold' ? 'bg-amber-500 text-white ring-2 ring-amber-400 ring-offset-2 scale-[1.02]' : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700']">Hold</button>
+          <button @click="setBatteryMode('force_charge')" :class="['flex-1 py-3 px-4 rounded-xl font-bold transition-all shadow-sm pointer-events-auto', batteryDevices[0]?.battery_mode === 'force_charge' ? 'bg-blue-600 text-white ring-2 ring-blue-400 ring-offset-2 scale-[1.02]' : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700']">Force Charge</button>
         </div>
       </div>
 
