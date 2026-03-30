@@ -351,7 +351,10 @@ const chartOptions = computed(() => ({
       type: 'time' as const,
       time: {
         unit: selectedPeriod.value === 'day' ? 'hour' as const : selectedPeriod.value === 'month' ? 'day' as const : 'month' as const,
-        tooltipFormat: 'PPp'
+        tooltipFormat: 'PP HH:mm',
+        displayFormats: {
+          hour: 'HH:mm'
+        }
       },
       stacked: true,
       ticks: { color: '#9CA3AF' },
