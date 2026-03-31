@@ -287,10 +287,27 @@
 
                   <!-- Engie EMPOWER Flextime -->
                   <template v-if="siteSettings.contract_type === 'engie_flextime'">
-                    <div class="sm:col-span-6">
-                      <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">
-                        <strong>Super-dal:</strong> 01:00 - 07:00 | <strong>Piek:</strong> 07:00 - 11:00 & 17:00 - 22:00 | <strong>Dal:</strong> 11:00 - 17:00 & 22:00 - 01:00 (Weekend)
-                      </p>
+                    <div class="sm:col-span-6 border border-indigo-100 dark:border-indigo-900 rounded-lg p-4 bg-indigo-50/50 dark:bg-indigo-900/10 mb-4">
+                      <div class="flex items-center justify-between">
+                        <div>
+                          <h4 class="text-sm font-medium text-indigo-900 dark:text-indigo-300">Superdal Optimization Mode</h4>
+                          <p class="text-xs text-indigo-700 dark:text-indigo-400 mt-1">
+                            <strong>Super-dal:</strong> 01:00 - 07:00 | <strong>Piek:</strong> 07:00 - 11:00 & 17:00 - 22:00 | <strong>Dal:</strong> 11:00 - 17:00 & 22:00 - 01:00 (Weekend)
+                          </p>
+                          <p class="text-xs text-indigo-700 dark:text-indigo-400 mt-1">Automatically charge battery from grid during Superdal hours to maximize savings.</p>
+                        </div>
+                        <div class="flex items-center h-5">
+                          <input id="superdal_optimization_enabled" type="checkbox" v-model="siteSettings.superdal_optimization_enabled" class="focus:ring-indigo-500 h-5 w-5 text-indigo-600 border-gray-300 rounded transition-colors duration-200 cursor-pointer" />
+                        </div>
+                      </div>
+
+                      <div v-if="siteSettings.superdal_optimization_enabled" class="mt-4 pt-4 border-t border-indigo-100 dark:border-indigo-800">
+                        <label for="superdal_target_soc" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Target SoC %</label>
+                        <div class="mt-1 flex items-center">
+                          <input type="number" step="1" min="0" max="100" id="superdal_target_soc" v-model="siteSettings.superdal_target_soc" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-32 sm:text-sm border-gray-300 rounded-md bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                          <span class="ml-2 text-sm text-gray-500">%</span>
+                        </div>
+                      </div>
                     </div>
                     <div class="sm:col-span-3">
                       <label for="engie_multiplier" class="block text-sm font-medium text-gray-700 dark:text-gray-300">EPEX Multiplier</label>
@@ -358,6 +375,49 @@
                     <label for="smart_ev_cheapest_hours" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Smart EV Charging: Charge during the cheapest hours of the day</label>
                     <div class="mt-1">
                       <input type="number" step="1" min="0" max="24" id="smart_ev_cheapest_hours" v-model="siteSettings.smart_ev_cheapest_hours" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                    </div>
+                  </div>
+
+                  <!-- Custom Charging Timetable -->
+                  <div class="sm:col-span-6 border-t border-gray-200 dark:border-gray-700 pt-6 mt-2">
+                    <div class="flex items-center justify-between mb-4">
+                      <div>
+                        <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100">Custom Charging Timetable</h4>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Define forced charge blocks. Battery will charge from grid (or solar) to target SoC during these hours.</p>
+                      </div>
+                      <button type="button" @click="addCustomChargeSlot" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                        Add Slot
+                      </button>
+                    </div>
+
+                    <div v-if="parsedChargeSchedule.length === 0" class="text-sm text-center text-gray-500 dark:text-gray-400 py-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-dashed border-gray-300 dark:border-gray-700">
+                      No custom charging slots defined.
+                    </div>
+
+                    <div v-else class="space-y-3">
+                      <div v-for="(slot, index) in parsedChargeSchedule" :key="index" class="flex items-center gap-4 bg-gray-50 dark:bg-gray-800/50 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+                        <div class="flex-1 grid grid-cols-3 gap-4">
+                          <div>
+                            <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Start Time</label>
+                            <input type="time" v-model="slot.start" @change="updateChargeSchedule" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-white hover:bg-gray-50 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" required />
+                          </div>
+                          <div>
+                            <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">End Time</label>
+                            <input type="time" v-model="slot.end" @change="updateChargeSchedule" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-white hover:bg-gray-50 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" required />
+                          </div>
+                          <div>
+                            <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Target SoC %</label>
+                            <div class="flex items-center">
+                              <input type="number" min="0" max="100" step="1" v-model="slot.target_soc" @change="updateChargeSchedule" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-white hover:bg-gray-50 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" required />
+                            </div>
+                          </div>
+                        </div>
+                        <button type="button" @click="removeCustomChargeSlot(index)" class="mt-5 inline-flex items-center p-1.5 border border-transparent rounded-full shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors" title="Remove Slot">
+                          <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                          </svg>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -826,8 +886,31 @@ const siteSettings = ref<SiteSettings>({
   engie_markup_off_peak: 0.15,
   engie_markup_super_off_peak: 0.15,
   engie_multiplier: 0.1448,
-  engie_base_fee: 0.0
+  engie_base_fee: 0.0,
+  custom_charge_schedule: '[]',
+  superdal_optimization_enabled: false,
+  superdal_target_soc: 100.0
 })
+
+const parsedChargeSchedule = ref<Array<{start: string, end: string, target_soc: number}>>([])
+
+const updateChargeSchedule = () => {
+  siteSettings.value.custom_charge_schedule = JSON.stringify(parsedChargeSchedule.value)
+}
+
+const addCustomChargeSlot = () => {
+  parsedChargeSchedule.value.push({
+    start: '00:00',
+    end: '06:00',
+    target_soc: 100
+  })
+  updateChargeSchedule()
+}
+
+const removeCustomChargeSlot = (index: number) => {
+  parsedChargeSchedule.value.splice(index, 1)
+  updateChargeSchedule()
+}
 const saveSettingsSuccess = ref(false)
 
 const maxGridPowerKw = computed(() => {
@@ -882,6 +965,13 @@ const fetchSiteSettings = async () => {
     const res = await fetch(`${getApiBase()}/api/settings`)
     if (res.ok) {
       siteSettings.value = await res.json()
+      if (siteSettings.value.custom_charge_schedule) {
+        try {
+          parsedChargeSchedule.value = JSON.parse(siteSettings.value.custom_charge_schedule)
+        } catch (e) {
+          parsedChargeSchedule.value = []
+        }
+      }
     }
   } catch (e) {
     console.error("Failed to fetch site settings:", e)

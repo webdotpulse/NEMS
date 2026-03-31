@@ -49,6 +49,11 @@ export interface SiteSettings {
   engie_markup_super_off_peak: number;
   engie_multiplier: number;
   engie_base_fee: number;
+
+  // Custom Schedules & Optimization
+  custom_charge_schedule: string;
+  superdal_optimization_enabled: boolean;
+  superdal_target_soc: number;
 }
 
 export interface SiteState {
