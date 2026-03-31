@@ -8,6 +8,7 @@ You are building a lightweight, highly responsive, fully UI-driven Energy Manage
 2. **NO Billing/Tokens:** Exclude all funding, payment, RFID token, or billing features.
 3. **Fully UI-Driven:** This EMS must allow device configuration, addition, and removal entirely through the frontend UI.
 4. **Hardware Target:** Optimized for Raspberry Pi (Debian/Linux). Minimize SD card writes (batch DB writes, use Write-Ahead Logging).
+5. **System Info & Build Number:** Do NOT include CPU information in the System Info UI. The build number must use the release tag (`git describe --tags --always`).
 
 ## Required Devices (Templates)
 Implement a modular plugin system for devices. The system MUST include templates for:

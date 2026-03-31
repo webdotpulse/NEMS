@@ -1,18 +1,14 @@
-2026/03/31 02:10:20 [INFO] Connected to SQLite database
-2026/03/31 02:10:20 [INFO] SQLite WAL mode, synchronous=NORMAL, and temp_store=MEMORY enabled for SD card optimization
-2026/03/31 02:10:20 [INFO] Database schema initialized
-2026/03/31 02:10:20 [INFO] PollerManager: Syncing devices...
-2026/03/31 02:10:20 [INFO] Generating self-signed certificate...
-2026/03/31 02:10:20 [INFO] Starting HTTP server on :80 (fallback to :8080)
-2026/03/31 02:10:20 [INFO] Self-signed certificate generated.
-2026/03/31 02:10:20 [INFO] Starting HTTPS server on :443 (fallback to :8443)
-2026/03/31 02:10:20 [ERROR] Failed to bind to :443 (listen tcp :443: bind: permission denied). Trying :8443 instead.
-2026/03/31 02:10:20 [ERROR] Failed to bind to :80 (listen tcp :80: bind: permission denied). Trying :8080 instead.
-2026/03/31 02:10:20 [INFO] TariffManager: No data for today found, bypassing 13:30 check
-2026/03/31 02:10:20 [INFO] TariffManager: Fetching EPEX prices...
-2026/03/31 02:10:21 [INFO] TariffManager: Successfully fetched and stored 24 price points
-2026/03/31 02:11:27 [INFO] SSE client disconnected
-2026/03/31 02:11:59 [INFO] SSE client disconnected
-2026/03/31 02:12:07 [INFO] PollerManager: Syncing devices...
-2026/03/31 02:12:07 [INFO] OcppChargerPoller: Initialized for ChargePointId CP-001
-2026/03/31 02:12:07 [INFO] PollerManager: Added poller for device 1 (Test OCPP Charger)
+2026/03/31 22:00:46 Connected to SQLite database
+2026/03/31 22:00:46 SQLite WAL mode, synchronous=NORMAL, and temp_store=MEMORY enabled for SD card optimization
+2026/03/31 22:00:46 Database schema initialized
+2026/03/31 22:00:46 PollerManager: Syncing devices...
+2026/03/31 22:00:46 Generating self-signed certificate...
+2026/03/31 22:00:46 Starting HTTP server on :80 (fallback to :8080)
+2026/03/31 22:00:46 Self-signed certificate generated.
+2026/03/31 22:00:46 Starting HTTPS server on :443 (fallback to :8443)
+2026/03/31 22:00:46 Failed to bind to :80 (listen tcp :80: bind: permission denied). Trying :8080 instead.
+2026/03/31 22:00:46 Failed to bind to :443 (listen tcp :443: bind: permission denied). Trying :8443 instead.
+2026/03/31 22:00:46 TariffManager: No data for today found, bypassing 13:30 check
+2026/03/31 22:00:46 TariffManager: Fetching EPEX prices...
+2026/03/31 22:00:46 TariffManager: Successfully fetched and stored 24 price points
+2026/03/31 22:01:23 SSE client disconnected

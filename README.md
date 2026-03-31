@@ -4,7 +4,7 @@ Pulse EMS is a lightweight, highly responsive, fully UI-driven Energy Management
 
 ## Features
 
-- **Hardware Target**: Deeply optimized for Raspberry Pi (Debian/Linux ARM64).
+- **Hardware Target**: Deeply optimized for Raspberry Pi (Debian/Linux ARM64). CPU metrics are intentionally excluded from the UI to maintain a lightweight profile. The system displays the release tag as its build number.
 - **Architecture**: A cohesive monolith featuring a Go (Golang) backend acting as a unified API and web server, paired with a modern Vue 3 Single Page Application (SPA).
 - **Minimal SD Card Wear**: Utilizes a highly tuned local SQLite database configured with WAL mode and batched, in-memory transactional writes.
 - **Fully UI-Driven**: Zero YAML configuration required. Add, configure, and remove hardware devices entirely through an intuitive frontend.
