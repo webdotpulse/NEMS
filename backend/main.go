@@ -295,6 +295,7 @@ func main() {
 	mux.HandleFunc("/api/network/scan", handleNetworkScan)
 
 	mux.HandleFunc("/api/tariffs/today", handleTariffsToday)
+	mux.HandleFunc("/api/tariffs/forecast", handleTariffForecast)
 	mux.HandleFunc("/api/settings", handleSettings)
 	mux.HandleFunc("/api/templates", handleTemplates)
 	mux.HandleFunc("/api/devices", handleDevices)
