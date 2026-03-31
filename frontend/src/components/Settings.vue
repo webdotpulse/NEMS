@@ -678,7 +678,8 @@ const form = ref({
   has_grid_meter: false,
   has_battery: false,
   battery_capacity: 0,
-  charge_mode: 'eco'
+  charge_mode: 'eco',
+  ocpp_proxy_url: ''
 })
 
 const editingDevice = ref<Device | null>(null)
@@ -694,7 +695,8 @@ const editForm = ref({
   has_grid_meter: false,
   has_battery: false,
   battery_capacity: 0,
-  charge_mode: 'eco'
+  charge_mode: 'eco',
+  ocpp_proxy_url: ''
 })
 
 const siteSettings = ref<SiteSettings>({
@@ -841,7 +843,8 @@ const addDevice = async () => {
         has_grid_meter: false,
         has_battery: false,
         battery_capacity: 0,
-        charge_mode: 'eco'
+        charge_mode: 'eco',
+        ocpp_proxy_url: ''
       }
       await fetchDevices()
     }
@@ -859,7 +862,8 @@ const editDevice = (device: Device) => {
     has_grid_meter: device.has_grid_meter || false,
     has_battery: device.has_battery || false,
     battery_capacity: device.battery_capacity || 0,
-    charge_mode: device.charge_mode || 'eco'
+    charge_mode: device.charge_mode || 'eco',
+    ocpp_proxy_url: device.ocpp_proxy_url || ''
   }
 }
 

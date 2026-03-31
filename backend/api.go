@@ -300,7 +300,7 @@ func handleTemplates(w http.ResponseWriter, r *http.Request) {
 func handleDevices(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	if r.Method == "GET" {
-		rows, err := db.Query("SELECT id, name, template, host, port, modbus_id, username, password, has_grid_meter, has_battery, battery_capacity, charge_mode, battery_mode FROM devices")
+		rows, err := db.Query("SELECT id, name, template, host, port, modbus_id, username, password, has_grid_meter, has_battery, battery_capacity, charge_mode, battery_mode, ocpp_proxy_url FROM devices")
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -314,7 +314,8 @@ func handleDevices(w http.ResponseWriter, r *http.Request) {
 			var password sql.NullString
 			var chargeMode sql.NullString
 			var batteryMode sql.NullString
-			if err := rows.Scan(&d.ID, &d.Name, &d.Template, &d.Host, &d.Port, &d.ModbusID, &username, &password, &d.HasGridMeter, &d.HasBattery, &d.BatteryCapacity, &chargeMode, &batteryMode); err != nil {
+			var proxyUrl sql.NullString
+			if err := rows.Scan(&d.ID, &d.Name, &d.Template, &d.Host, &d.Port, &d.ModbusID, &username, &password, &d.HasGridMeter, &d.HasBattery, &d.BatteryCapacity, &chargeMode, &batteryMode, &proxyUrl); err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
@@ -329,6 +330,9 @@ func handleDevices(w http.ResponseWriter, r *http.Request) {
 			}
 			if batteryMode.Valid {
 				d.BatteryMode = batteryMode.String
+			}
+			if proxyUrl.Valid {
+				d.OcppProxyUrl = proxyUrl.String
 			}
 
 			// Set dynamic status if poller exists
@@ -364,7 +368,7 @@ func handleDevices(w http.ResponseWriter, r *http.Request) {
 			d.BatteryMode = "auto"
 		}
 
-		result, err := db.Exec("INSERT INTO devices (name, template, host, port, modbus_id, username, password, has_grid_meter, has_battery, battery_capacity, charge_mode, battery_mode) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", d.Name, d.Template, d.Host, d.Port, d.ModbusID, d.Username, d.Password, d.HasGridMeter, d.HasBattery, d.BatteryCapacity, d.ChargeMode, d.BatteryMode)
+		result, err := db.Exec("INSERT INTO devices (name, template, host, port, modbus_id, username, password, has_grid_meter, has_battery, battery_capacity, charge_mode, battery_mode, ocpp_proxy_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", d.Name, d.Template, d.Host, d.Port, d.ModbusID, d.Username, d.Password, d.HasGridMeter, d.HasBattery, d.BatteryCapacity, d.ChargeMode, d.BatteryMode, d.OcppProxyUrl)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -450,8 +454,8 @@ func handleDevice(w http.ResponseWriter, r *http.Request) {
 			d.BatteryMode = "auto"
 		}
 
-		_, err = db.Exec("UPDATE devices SET name = ?, template = ?, host = ?, port = ?, modbus_id = ?, username = ?, password = ?, has_grid_meter = ?, has_battery = ?, battery_capacity = ?, charge_mode = ?, battery_mode = ? WHERE id = ?",
-			d.Name, d.Template, d.Host, d.Port, d.ModbusID, d.Username, d.Password, d.HasGridMeter, d.HasBattery, d.BatteryCapacity, d.ChargeMode, d.BatteryMode, id)
+		_, err = db.Exec("UPDATE devices SET name = ?, template = ?, host = ?, port = ?, modbus_id = ?, username = ?, password = ?, has_grid_meter = ?, has_battery = ?, battery_capacity = ?, charge_mode = ?, battery_mode = ?, ocpp_proxy_url = ? WHERE id = ?",
+			d.Name, d.Template, d.Host, d.Port, d.ModbusID, d.Username, d.Password, d.HasGridMeter, d.HasBattery, d.BatteryCapacity, d.ChargeMode, d.BatteryMode, d.OcppProxyUrl, id)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

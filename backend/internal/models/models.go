@@ -35,6 +35,7 @@ type Device struct {
 	HasGridMeter    bool    `json:"has_grid_meter"`
 	HasBattery      bool    `json:"has_battery"`
 	BatteryCapacity float64 `json:"battery_capacity"`
+	OcppProxyUrl    string  `json:"ocpp_proxy_url,omitempty"`
 }
 
 type DevicePoller interface {

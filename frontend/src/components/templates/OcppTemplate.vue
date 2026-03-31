@@ -29,6 +29,17 @@
     </div>
     <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Must exactly match the charger's configured ID.</p>
   </div>
+
+  <div class="sm:col-span-6 mt-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+    <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-4">Third-Party CSMS Proxy (Optional)</h4>
+    <label :for="prefix + 'ocpp_proxy_url'" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Upstream WebSocket URL</label>
+    <div class="mt-1">
+      <input type="text" :id="prefix + 'ocpp_proxy_url'" :value="modelValue.ocpp_proxy_url" @input="$emit('update:modelValue', { ...modelValue, ocpp_proxy_url: ($event.target as HTMLInputElement).value })"
+             placeholder="ws://example-csms.com/ocpp"
+             class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white transition-all duration-200">
+    </div>
+    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">If provided, NEMS will act as a man-in-the-middle proxy to this URL. Requires exact URI schema (ws:// or wss://).</p>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -36,7 +47,7 @@ import { computed } from 'vue'
 import { getApiBase } from '../../api'
 
 const props = defineProps<{
-  modelValue: { host: string; port?: number };
+  modelValue: { host: string; port?: number; ocpp_proxy_url?: string };
   prefix?: string;
 }>()
 
