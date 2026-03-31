@@ -199,6 +199,18 @@ func handleTariffForecast(w http.ResponseWriter, r *http.Request) {
 	start := now.UTC()
 	end := now.Add(24 * time.Hour).UTC()
 
+	var settings models.SiteSettings
+	row := db.QueryRow("SELECT contract_type, fixed_price_peak_kwh, fixed_price_off_peak_kwh, fixed_inject_price_kwh, dynamic_markup_kwh, engie_markup_peak, engie_markup_off_peak, engie_markup_super_off_peak, engie_multiplier, engie_base_fee FROM site_settings WHERE id = 1")
+	err = row.Scan(&settings.ContractType, &settings.FixedPricePeakKwh, &settings.FixedPriceOffPeakKwh, &settings.FixedInjectPriceKwh, &settings.DynamicMarkupKwh, &settings.EngieMarkupPeak, &settings.EngieMarkupOffPeak, &settings.EngieMarkupSuperOffPeak, &settings.EngieMultiplier, &settings.EngieBaseFee)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			settings.ContractType = "dynamic"
+			settings.DynamicMarkupKwh = 0.0
+		} else {
+			log.Printf("[ERROR] handleTariffForecast: Error fetching site settings: %v", err)
+		}
+	}
+
 	rows, err := db.Query("SELECT timestamp, price_per_kwh FROM epex_prices WHERE timestamp >= ? AND timestamp <= ? ORDER BY timestamp ASC", start, end)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -215,6 +227,7 @@ func handleTariffForecast(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		p.Timestamp = ts.In(loc)
+		p.PricePerKwh = CalculateEffectivePrice(p.Timestamp, p.PricePerKwh, settings)
 		prices = append(prices, p)
 	}
 
@@ -237,6 +250,18 @@ func handleTariffsToday(w http.ResponseWriter, r *http.Request) {
 	startOfToday := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc).UTC()
 	endOfTomorrow := time.Date(now.Year(), now.Month(), now.Day()+2, 0, 0, 0, 0, loc).UTC()
 
+	var settings models.SiteSettings
+	row := db.QueryRow("SELECT contract_type, fixed_price_peak_kwh, fixed_price_off_peak_kwh, fixed_inject_price_kwh, dynamic_markup_kwh, engie_markup_peak, engie_markup_off_peak, engie_markup_super_off_peak, engie_multiplier, engie_base_fee FROM site_settings WHERE id = 1")
+	err = row.Scan(&settings.ContractType, &settings.FixedPricePeakKwh, &settings.FixedPriceOffPeakKwh, &settings.FixedInjectPriceKwh, &settings.DynamicMarkupKwh, &settings.EngieMarkupPeak, &settings.EngieMarkupOffPeak, &settings.EngieMarkupSuperOffPeak, &settings.EngieMultiplier, &settings.EngieBaseFee)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			settings.ContractType = "dynamic"
+			settings.DynamicMarkupKwh = 0.0
+		} else {
+			log.Printf("[ERROR] handleTariffsToday: Error fetching site settings: %v", err)
+		}
+	}
+
 	rows, err := db.Query("SELECT timestamp, price_per_kwh FROM epex_prices WHERE timestamp >= ? AND timestamp < ? ORDER BY timestamp ASC", startOfToday, endOfTomorrow)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -253,6 +278,7 @@ func handleTariffsToday(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		p.Timestamp = ts.In(loc)
+		p.PricePerKwh = CalculateEffectivePrice(p.Timestamp, p.PricePerKwh, settings)
 		prices = append(prices, p)
 	}
 
@@ -268,9 +294,9 @@ func handleTariffsToday(w http.ResponseWriter, r *http.Request) {
 func handleSettings(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	if r.Method == "GET" {
-		row := db.QueryRow("SELECT strategy_mode, capacity_peak_limit_kw, active_inverter_curtailment, battery_grid_charge_strategy, force_charge_below_euro, force_discharge_above_euro, smart_ev_cheapest_hours, grid_nominal_current_a, grid_system, allowed_grid_import_kw, allowed_grid_export_kw, appliance_turn_on_excess_w, peak_shaving_buffer_w, peak_shaving_rampup_w, timezone, latitude, longitude FROM site_settings WHERE id = 1")
+		row := db.QueryRow("SELECT strategy_mode, capacity_peak_limit_kw, active_inverter_curtailment, battery_grid_charge_strategy, force_charge_below_euro, force_discharge_above_euro, smart_ev_cheapest_hours, grid_nominal_current_a, grid_system, allowed_grid_import_kw, allowed_grid_export_kw, appliance_turn_on_excess_w, peak_shaving_buffer_w, peak_shaving_rampup_w, timezone, latitude, longitude, contract_type, fixed_price_peak_kwh, fixed_price_off_peak_kwh, fixed_inject_price_kwh, dynamic_markup_kwh, engie_markup_peak, engie_markup_off_peak, engie_markup_super_off_peak, engie_multiplier, engie_base_fee FROM site_settings WHERE id = 1")
 		var settings models.SiteSettings
-		err := row.Scan(&settings.StrategyMode, &settings.CapacityPeakLimitKw, &settings.ActiveInverterCurtailment, &settings.BatteryGridChargeStrategy, &settings.ForceChargeBelowEuro, &settings.ForceDischargeAboveEuro, &settings.SmartEvCheapestHours, &settings.GridNominalCurrentA, &settings.GridSystem, &settings.AllowedGridImportKw, &settings.AllowedGridExportKw, &settings.ApplianceTurnOnExcessW, &settings.PeakShavingBufferW, &settings.PeakShavingRampupW, &settings.Timezone, &settings.Latitude, &settings.Longitude)
+		err := row.Scan(&settings.StrategyMode, &settings.CapacityPeakLimitKw, &settings.ActiveInverterCurtailment, &settings.BatteryGridChargeStrategy, &settings.ForceChargeBelowEuro, &settings.ForceDischargeAboveEuro, &settings.SmartEvCheapestHours, &settings.GridNominalCurrentA, &settings.GridSystem, &settings.AllowedGridImportKw, &settings.AllowedGridExportKw, &settings.ApplianceTurnOnExcessW, &settings.PeakShavingBufferW, &settings.PeakShavingRampupW, &settings.Timezone, &settings.Latitude, &settings.Longitude, &settings.ContractType, &settings.FixedPricePeakKwh, &settings.FixedPriceOffPeakKwh, &settings.FixedInjectPriceKwh, &settings.DynamicMarkupKwh, &settings.EngieMarkupPeak, &settings.EngieMarkupOffPeak, &settings.EngieMarkupSuperOffPeak, &settings.EngieMultiplier, &settings.EngieBaseFee)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				// Fallback
@@ -292,6 +318,16 @@ func handleSettings(w http.ResponseWriter, r *http.Request) {
 					Timezone:                  "Europe/Brussels",
 					Latitude:                  50.8503,
 					Longitude:                 4.3517,
+					ContractType:              "dynamic",
+					FixedPricePeakKwh:         0.0,
+					FixedPriceOffPeakKwh:      0.0,
+					FixedInjectPriceKwh:       0.0,
+					DynamicMarkupKwh:          0.0,
+					EngieMarkupPeak:           0.0,
+					EngieMarkupOffPeak:        0.0,
+					EngieMarkupSuperOffPeak:   0.0,
+					EngieMultiplier:           1.0,
+					EngieBaseFee:              0.0,
 				}
 				json.NewEncoder(w).Encode(settings)
 				return
@@ -315,8 +351,8 @@ func handleSettings(w http.ResponseWriter, r *http.Request) {
 			settings.BatteryGridChargeStrategy = "price_only"
 		}
 
-		_, err := db.Exec("UPDATE site_settings SET strategy_mode = ?, capacity_peak_limit_kw = ?, active_inverter_curtailment = ?, battery_grid_charge_strategy = ?, force_charge_below_euro = ?, force_discharge_above_euro = ?, smart_ev_cheapest_hours = ?, grid_nominal_current_a = ?, grid_system = ?, allowed_grid_import_kw = ?, allowed_grid_export_kw = ?, appliance_turn_on_excess_w = ?, peak_shaving_buffer_w = ?, peak_shaving_rampup_w = ?, timezone = ?, latitude = ?, longitude = ? WHERE id = 1",
-			settings.StrategyMode, settings.CapacityPeakLimitKw, settings.ActiveInverterCurtailment, settings.BatteryGridChargeStrategy, settings.ForceChargeBelowEuro, settings.ForceDischargeAboveEuro, settings.SmartEvCheapestHours, settings.GridNominalCurrentA, settings.GridSystem, settings.AllowedGridImportKw, settings.AllowedGridExportKw, settings.ApplianceTurnOnExcessW, settings.PeakShavingBufferW, settings.PeakShavingRampupW, settings.Timezone, settings.Latitude, settings.Longitude)
+		_, err := db.Exec("UPDATE site_settings SET strategy_mode = ?, capacity_peak_limit_kw = ?, active_inverter_curtailment = ?, battery_grid_charge_strategy = ?, force_charge_below_euro = ?, force_discharge_above_euro = ?, smart_ev_cheapest_hours = ?, grid_nominal_current_a = ?, grid_system = ?, allowed_grid_import_kw = ?, allowed_grid_export_kw = ?, appliance_turn_on_excess_w = ?, peak_shaving_buffer_w = ?, peak_shaving_rampup_w = ?, timezone = ?, latitude = ?, longitude = ?, contract_type = ?, fixed_price_peak_kwh = ?, fixed_price_off_peak_kwh = ?, fixed_inject_price_kwh = ?, dynamic_markup_kwh = ?, engie_markup_peak = ?, engie_markup_off_peak = ?, engie_markup_super_off_peak = ?, engie_multiplier = ?, engie_base_fee = ? WHERE id = 1",
+			settings.StrategyMode, settings.CapacityPeakLimitKw, settings.ActiveInverterCurtailment, settings.BatteryGridChargeStrategy, settings.ForceChargeBelowEuro, settings.ForceDischargeAboveEuro, settings.SmartEvCheapestHours, settings.GridNominalCurrentA, settings.GridSystem, settings.AllowedGridImportKw, settings.AllowedGridExportKw, settings.ApplianceTurnOnExcessW, settings.PeakShavingBufferW, settings.PeakShavingRampupW, settings.Timezone, settings.Latitude, settings.Longitude, settings.ContractType, settings.FixedPricePeakKwh, settings.FixedPriceOffPeakKwh, settings.FixedInjectPriceKwh, settings.DynamicMarkupKwh, settings.EngieMarkupPeak, settings.EngieMarkupOffPeak, settings.EngieMarkupSuperOffPeak, settings.EngieMultiplier, settings.EngieBaseFee)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
