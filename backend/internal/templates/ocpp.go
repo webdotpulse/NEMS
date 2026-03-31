@@ -19,7 +19,7 @@ func init() {
 			ID:       "ocpp_charger",
 			Name:     "OCPP Charger",
 			Vendor:   "Generic",
-			Type:     "rest", // Allow host/port/url configuration
+			Type:     "ocpp", // Allow custom ocpp fields configuration
 			Category: "charger",
 		},
 		NewPoller: func(device models.Device) models.DevicePoller {
@@ -39,7 +39,7 @@ func (p *OcppChargerPoller) Connect() error {
 func (p *OcppChargerPoller) Status() string {
 	// Check if the WebSocket server has an active connection for this charge point
 	state := ocpp.GetChargerState(p.Device.Host)
-	if state != nil {
+	if state != nil && state.IsConnected() {
 		_, _, lastSeen := state.GetTelemetry()
 		if time.Since(lastSeen) < 5*time.Minute {
 			return "online"

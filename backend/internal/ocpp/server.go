@@ -42,6 +42,13 @@ func GetChargerState(chargePointId string) *OcppState {
 	return chargers[chargePointId]
 }
 
+// IsConnected safely returns whether the charger currently has an active WebSocket connection
+func (s *OcppState) IsConnected() bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.Conn != nil
+}
+
 // GetTelemetry safely returns the current power, energy, and last seen time
 func (s *OcppState) GetTelemetry() (powerW float64, energyWh float64, lastSeen time.Time) {
 	s.mu.RLock()

@@ -442,6 +442,9 @@
                   <template v-else-if="templates.find(t => t.id === form.template)?.type === 'network'">
                     <P1NetworkTemplate :device="form" />
                   </template>
+                  <template v-else-if="templates.find(t => t.id === form.template)?.type === 'ocpp'">
+                    <OcppTemplate v-model="form" />
+                  </template>
 
                   <!-- EV Charger Mode Selection -->
                   <div v-if="isCharger(form.template)" class="sm:col-span-3">
@@ -555,6 +558,9 @@
               <template v-else-if="templates.find(t => t.id === editForm.template)?.type === 'network'">
                 <P1NetworkTemplate :device="editForm" />
               </template>
+              <template v-else-if="templates.find(t => t.id === editForm.template)?.type === 'ocpp'">
+                <OcppTemplate v-model="editForm" prefix="edit_" />
+              </template>
 
               <!-- EV Charger Mode Selection -->
               <div v-if="isCharger(editForm.template)" class="sm:col-span-3">
@@ -630,6 +636,7 @@ import ModbusTemplate from './templates/ModbusTemplate.vue'
 import CloudTemplate from './templates/CloudTemplate.vue'
 import RestTemplate from './templates/RestTemplate.vue'
 import CloudRestTemplate from './templates/CloudRestTemplate.vue'
+import OcppTemplate from './templates/OcppTemplate.vue'
 import P1SerialTemplate from './templates/P1SerialTemplate.vue'
 import P1NetworkTemplate from './templates/P1NetworkTemplate.vue'
 
