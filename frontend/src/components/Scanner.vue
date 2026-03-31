@@ -64,12 +64,12 @@
           </thead>
           <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
             <tr v-if="devices.length === 0 && !isScanning && !error">
-              <td colspan="4" class="px-6 py-10 text-center text-sm text-gray-500 dark:text-gray-400">
+              <td colspan="5" class="px-6 py-10 text-center text-sm text-gray-500 dark:text-gray-400">
                 Click "Start Scan" to discover devices on your local network.
               </td>
             </tr>
             <tr v-else-if="devices.length === 0 && isScanning">
-              <td colspan="4" class="px-6 py-10 text-center text-sm text-gray-500 dark:text-gray-400">
+              <td colspan="5" class="px-6 py-10 text-center text-sm text-gray-500 dark:text-gray-400">
                 Scanning network... This may take up to 10 seconds.
               </td>
             </tr>
