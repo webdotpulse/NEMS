@@ -280,6 +280,17 @@ func main() {
 	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN latitude REAL DEFAULT 50.8503")
 	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN longitude REAL DEFAULT 4.3517")
 
+	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN contract_type TEXT DEFAULT 'dynamic'")
+	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN fixed_price_peak_kwh REAL DEFAULT 0.0")
+	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN fixed_price_off_peak_kwh REAL DEFAULT 0.0")
+	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN fixed_inject_price_kwh REAL DEFAULT 0.0")
+	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN dynamic_markup_kwh REAL DEFAULT 0.0")
+	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN engie_markup_peak REAL DEFAULT 0.0")
+	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN engie_markup_off_peak REAL DEFAULT 0.0")
+	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN engie_markup_super_off_peak REAL DEFAULT 0.0")
+	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN engie_multiplier REAL DEFAULT 1.0")
+	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN engie_base_fee REAL DEFAULT 0.0")
+
 	log.Println("[INFO] Database schema initialized")
 
 	mux := http.NewServeMux()
