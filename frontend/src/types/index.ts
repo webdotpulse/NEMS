@@ -37,6 +37,18 @@ export interface SiteSettings {
   peak_shaving_rampup_w: number;
   timezone: string;
   log_level: string;
+
+  // Energy Contract
+  contract_type: string;
+  fixed_price_peak_kwh: number;
+  fixed_price_off_peak_kwh: number;
+  fixed_inject_price_kwh: number;
+  dynamic_markup_kwh: number;
+  engie_markup_peak: number;
+  engie_markup_off_peak: number;
+  engie_markup_super_off_peak: number;
+  engie_multiplier: number;
+  engie_base_fee: number;
 }
 
 export interface SiteState {

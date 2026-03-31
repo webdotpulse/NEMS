@@ -65,14 +65,16 @@ func (sc *StrategyController) updatePricingCache(settings models.SiteSettings) {
 	now := time.Now().In(loc)
 	startOfHour := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), 0, 0, 0, loc).UTC()
 
-	var newPrice float64
-	err := db.QueryRow("SELECT price_per_kwh FROM epex_prices WHERE timestamp = ?", startOfHour).Scan(&newPrice)
+	var rawPrice float64
+	err := db.QueryRow("SELECT price_per_kwh FROM epex_prices WHERE timestamp = ?", startOfHour).Scan(&rawPrice)
 	if err != nil && err != sql.ErrNoRows {
 		log.Printf("[ERROR] StrategyController: Error fetching current EPEX price: %v", err)
-		newPrice = 999.0
+		rawPrice = 999.0
 	} else if err == sql.ErrNoRows {
-		newPrice = 999.0
+		rawPrice = 999.0
 	}
+
+	newPrice := CalculateEffectivePrice(now, rawPrice, settings)
 
 	newIsCheapest := false
 	if settings.SmartEvCheapestHours > 0 {
@@ -111,8 +113,8 @@ func (sc *StrategyController) Start() {
 			select {
 			case <-ticker.C:
 				var settings models.SiteSettings
-				row := db.QueryRow("SELECT strategy_mode, capacity_peak_limit_kw, active_inverter_curtailment, force_charge_below_euro, smart_ev_cheapest_hours, appliance_turn_on_excess_w, peak_shaving_buffer_w, peak_shaving_rampup_w FROM site_settings WHERE id = 1")
-				err := row.Scan(&settings.StrategyMode, &settings.CapacityPeakLimitKw, &settings.ActiveInverterCurtailment, &settings.ForceChargeBelowEuro, &settings.SmartEvCheapestHours, &settings.ApplianceTurnOnExcessW, &settings.PeakShavingBufferW, &settings.PeakShavingRampupW)
+				row := db.QueryRow("SELECT strategy_mode, capacity_peak_limit_kw, active_inverter_curtailment, force_charge_below_euro, force_discharge_above_euro, smart_ev_cheapest_hours, appliance_turn_on_excess_w, peak_shaving_buffer_w, peak_shaving_rampup_w, contract_type, fixed_price_peak_kwh, fixed_price_off_peak_kwh, fixed_inject_price_kwh, dynamic_markup_kwh, engie_markup_peak, engie_markup_off_peak, engie_markup_super_off_peak, engie_multiplier, engie_base_fee FROM site_settings WHERE id = 1")
+				err := row.Scan(&settings.StrategyMode, &settings.CapacityPeakLimitKw, &settings.ActiveInverterCurtailment, &settings.ForceChargeBelowEuro, &settings.ForceDischargeAboveEuro, &settings.SmartEvCheapestHours, &settings.ApplianceTurnOnExcessW, &settings.PeakShavingBufferW, &settings.PeakShavingRampupW, &settings.ContractType, &settings.FixedPricePeakKwh, &settings.FixedPriceOffPeakKwh, &settings.FixedInjectPriceKwh, &settings.DynamicMarkupKwh, &settings.EngieMarkupPeak, &settings.EngieMarkupOffPeak, &settings.EngieMarkupSuperOffPeak, &settings.EngieMultiplier, &settings.EngieBaseFee)
 				if err != nil {
 					if err == sql.ErrNoRows {
 						settings = models.SiteSettings{
@@ -120,10 +122,21 @@ func (sc *StrategyController) Start() {
 							CapacityPeakLimitKw: 2.5,
 							ActiveInverterCurtailment: false,
 							ForceChargeBelowEuro: 0.0,
+							ForceDischargeAboveEuro: 999.0,
 							SmartEvCheapestHours: 0,
 							ApplianceTurnOnExcessW: 0.0,
 							PeakShavingBufferW: 200.0,
 							PeakShavingRampupW: 500.0,
+							ContractType: "dynamic",
+							FixedPricePeakKwh: 0.35,
+							FixedPriceOffPeakKwh: 0.30,
+							FixedInjectPriceKwh: 0.05,
+							DynamicMarkupKwh: 0.15,
+							EngieMarkupPeak: 0.15,
+							EngieMarkupOffPeak: 0.15,
+							EngieMarkupSuperOffPeak: 0.15,
+							EngieMultiplier: 0.1448,
+							EngieBaseFee: 0.0,
 						}
 					} else {
 						log.Printf("[ERROR] StrategyController: Error fetching site settings: %v", err)
