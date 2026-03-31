@@ -2,6 +2,8 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
+	"fmt"
 	"log"
 	"math"
 	"sync"
@@ -117,8 +119,8 @@ func (sc *StrategyController) Start() {
 			select {
 			case <-ticker.C:
 				var settings models.SiteSettings
-				row := db.QueryRow("SELECT strategy_mode, capacity_peak_limit_kw, active_inverter_curtailment, battery_grid_charge_strategy, force_charge_below_euro, force_discharge_above_euro, smart_ev_cheapest_hours, appliance_turn_on_excess_w, peak_shaving_buffer_w, peak_shaving_rampup_w, timezone, contract_type, fixed_price_peak_kwh, fixed_price_off_peak_kwh, fixed_inject_price_kwh, dynamic_markup_kwh, engie_markup_peak, engie_markup_off_peak, engie_markup_super_off_peak, engie_multiplier, engie_base_fee FROM site_settings WHERE id = 1")
-				err := row.Scan(&settings.StrategyMode, &settings.CapacityPeakLimitKw, &settings.ActiveInverterCurtailment, &settings.BatteryGridChargeStrategy, &settings.ForceChargeBelowEuro, &settings.ForceDischargeAboveEuro, &settings.SmartEvCheapestHours, &settings.ApplianceTurnOnExcessW, &settings.PeakShavingBufferW, &settings.PeakShavingRampupW, &settings.Timezone, &settings.ContractType, &settings.FixedPricePeakKwh, &settings.FixedPriceOffPeakKwh, &settings.FixedInjectPriceKwh, &settings.DynamicMarkupKwh, &settings.EngieMarkupPeak, &settings.EngieMarkupOffPeak, &settings.EngieMarkupSuperOffPeak, &settings.EngieMultiplier, &settings.EngieBaseFee)
+				row := db.QueryRow("SELECT strategy_mode, capacity_peak_limit_kw, active_inverter_curtailment, battery_grid_charge_strategy, force_charge_below_euro, force_discharge_above_euro, smart_ev_cheapest_hours, appliance_turn_on_excess_w, peak_shaving_buffer_w, peak_shaving_rampup_w, timezone, contract_type, fixed_price_peak_kwh, fixed_price_off_peak_kwh, fixed_inject_price_kwh, dynamic_markup_kwh, engie_markup_peak, engie_markup_off_peak, engie_markup_super_off_peak, engie_multiplier, engie_base_fee, custom_charge_schedule, superdal_optimization_enabled, superdal_target_soc FROM site_settings WHERE id = 1")
+				err := row.Scan(&settings.StrategyMode, &settings.CapacityPeakLimitKw, &settings.ActiveInverterCurtailment, &settings.BatteryGridChargeStrategy, &settings.ForceChargeBelowEuro, &settings.ForceDischargeAboveEuro, &settings.SmartEvCheapestHours, &settings.ApplianceTurnOnExcessW, &settings.PeakShavingBufferW, &settings.PeakShavingRampupW, &settings.Timezone, &settings.ContractType, &settings.FixedPricePeakKwh, &settings.FixedPriceOffPeakKwh, &settings.FixedInjectPriceKwh, &settings.DynamicMarkupKwh, &settings.EngieMarkupPeak, &settings.EngieMarkupOffPeak, &settings.EngieMarkupSuperOffPeak, &settings.EngieMultiplier, &settings.EngieBaseFee, &settings.CustomChargeSchedule, &settings.SuperdalOptimizationEnabled, &settings.SuperdalTargetSoc)
 				if err != nil {
 					if err == sql.ErrNoRows {
 						settings = models.SiteSettings{
@@ -143,6 +145,9 @@ func (sc *StrategyController) Start() {
 							EngieMarkupSuperOffPeak: 0.15,
 							EngieMultiplier: 0.1448,
 							EngieBaseFee: 0.0,
+							CustomChargeSchedule: "[]",
+							SuperdalOptimizationEnabled: false,
+							SuperdalTargetSoc: 100.0,
 						}
 					} else {
 						log.Printf("[ERROR] StrategyController: Error fetching site settings: %v", err)
@@ -277,11 +282,67 @@ func (sc *StrategyController) executeControlLoop(settings models.SiteSettings) {
 		allowGridCharge = currentCachedPrice < settings.ForceChargeBelowEuro
 	}
 
+	// Superdal Optimization Override
+	superdalActive := false
+	if settings.ContractType == "engie_flextime" && settings.SuperdalOptimizationEnabled && isSuperDal {
+		allowGridCharge = true
+		superdalActive = true
+	}
+
+	// Custom Charge Schedule Override
+	type ScheduleSlot struct {
+		Start     string  `json:"start"`
+		End       string  `json:"end"`
+		TargetSoc float64 `json:"target_soc"`
+	}
+	var schedule []ScheduleSlot
+	customScheduleActive := false
+	customScheduleTargetSoc := 100.0
+	if settings.CustomChargeSchedule != "" && settings.CustomChargeSchedule != "[]" {
+		err := json.Unmarshal([]byte(settings.CustomChargeSchedule), &schedule)
+		if err == nil {
+			currentMinutes := currentTime.Hour()*60 + currentTime.Minute()
+			for _, slot := range schedule {
+				var startH, startM, endH, endM int
+				fmt.Sscanf(slot.Start, "%d:%d", &startH, &startM)
+				fmt.Sscanf(slot.End, "%d:%d", &endH, &endM)
+				startMin := startH*60 + startM
+				endMin := endH*60 + endM
+
+				if startMin < endMin {
+					if currentMinutes >= startMin && currentMinutes < endMin {
+						customScheduleActive = true
+						customScheduleTargetSoc = slot.TargetSoc
+						allowGridCharge = true
+						break
+					}
+				} else { // crosses midnight
+					if currentMinutes >= startMin || currentMinutes < endMin {
+						customScheduleActive = true
+						customScheduleTargetSoc = slot.TargetSoc
+						allowGridCharge = true
+						break
+					}
+				}
+			}
+		} else {
+			log.Printf("[ERROR] Failed to parse custom charge schedule: %v", err)
+		}
+	}
+
 	if allowGridCharge {
 		for id, poller := range pollers {
 			if _, ok := poller.(models.BatteryController); ok {
 				dev := poller.GetDevice()
 				if dev.HasBattery && dev.BatteryMode != "hold" {
+					// Check SOC target blocks
+					if customScheduleActive && cache[id].Soc >= customScheduleTargetSoc {
+						continue // Target SOC reached for custom schedule
+					}
+					if !customScheduleActive && superdalActive && cache[id].Soc >= settings.SuperdalTargetSoc {
+						continue // Target SOC reached for superdal
+					}
+
 					// Initially set intent to max grid capacity or physical limit
 					// If we are in Flanders mode, available capacity is threshold - current import
 					// If not Flanders, we can just command max available (100000)

@@ -30,6 +30,11 @@ type SiteSettings struct {
 	EngieMarkupSuperOffPeak float64 `json:"engie_markup_super_off_peak"`
 	EngieMultiplier         float64 `json:"engie_multiplier"`
 	EngieBaseFee            float64 `json:"engie_base_fee"`
+
+	// Custom Schedules & Optimization
+	CustomChargeSchedule        string  `json:"custom_charge_schedule"`
+	SuperdalOptimizationEnabled bool    `json:"superdal_optimization_enabled"`
+	SuperdalTargetSoc           float64 `json:"superdal_target_soc"`
 }
 
 type Device struct {
