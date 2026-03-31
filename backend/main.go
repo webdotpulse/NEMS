@@ -192,6 +192,8 @@ func main() {
 		timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
 		device_id TEXT NOT NULL,
 		power_w REAL NOT NULL,
+		battery_power_w REAL NOT NULL DEFAULT 0,
+		grid_power_w REAL NOT NULL DEFAULT 0,
 		energy_kwh REAL NOT NULL
 	);
 	`
@@ -219,6 +221,10 @@ func main() {
 	if err != nil {
 		log.Fatal("[FATAL] Failed to create devices table:", err)
 	}
+
+	// Add new columns to measurements (for existing databases)
+	_, _ = db.Exec("ALTER TABLE measurements ADD COLUMN battery_power_w REAL NOT NULL DEFAULT 0")
+	_, _ = db.Exec("ALTER TABLE measurements ADD COLUMN grid_power_w REAL NOT NULL DEFAULT 0")
 
 	// Add new columns if they don't exist (for existing databases)
 	_, _ = db.Exec("ALTER TABLE devices ADD COLUMN username TEXT DEFAULT ''")

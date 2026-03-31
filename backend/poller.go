@@ -30,9 +30,11 @@ type DeviceData struct {
 }
 
 type BufferedMeasurement struct {
-	DeviceID  int
-	PowerW    float64
-	EnergyKwh float64
+	DeviceID      int
+	PowerW        float64
+	BatteryPowerW float64
+	GridPowerW    float64
+	EnergyKwh     float64
 }
 
 type PollerManager struct {
@@ -224,9 +226,11 @@ func (pm *PollerManager) Start() {
 					// Buffer measurement
 					pm.bufferMu.Lock()
 					pm.buffer = append(pm.buffer, BufferedMeasurement{
-						DeviceID:  id,
-						PowerW:    powerW,
-						EnergyKwh: energyKwh,
+						DeviceID:      id,
+						PowerW:        powerW,
+						BatteryPowerW: batteryPowerW,
+						GridPowerW:    gridPowerW,
+						EnergyKwh:     energyKwh,
 					})
 					pm.bufferMu.Unlock()
 				}
@@ -300,9 +304,11 @@ func (pm *PollerManager) Start() {
 					// Buffer measurement
 					pm.bufferMu.Lock()
 					pm.buffer = append(pm.buffer, BufferedMeasurement{
-						DeviceID:  id,
-						PowerW:    powerW,
-						EnergyKwh: energyKwh,
+						DeviceID:      id,
+						PowerW:        powerW,
+						BatteryPowerW: batteryPowerW,
+						GridPowerW:    gridPowerW,
+						EnergyKwh:     energyKwh,
 					})
 					pm.bufferMu.Unlock()
 				}
@@ -450,9 +456,11 @@ func (pm *PollerManager) flushBuffer() {
 
 	// Aggregate averages by device ID
 	type sumCount struct {
-		SumPowerW float64
-		SumEnergy float64
-		Count     int
+		SumPowerW        float64
+		SumBatteryPowerW float64
+		SumGridPowerW    float64
+		SumEnergy        float64
+		Count            int
 	}
 	agg := make(map[int]*sumCount)
 
@@ -461,6 +469,8 @@ func (pm *PollerManager) flushBuffer() {
 			agg[m.DeviceID] = &sumCount{}
 		}
 		agg[m.DeviceID].SumPowerW += m.PowerW
+		agg[m.DeviceID].SumBatteryPowerW += m.BatteryPowerW
+		agg[m.DeviceID].SumGridPowerW += m.GridPowerW
 		agg[m.DeviceID].SumEnergy += m.EnergyKwh
 		agg[m.DeviceID].Count++
 	}
@@ -472,7 +482,7 @@ func (pm *PollerManager) flushBuffer() {
 		return
 	}
 
-	stmt, err := tx.Prepare("INSERT INTO measurements (device_id, power_w, energy_kwh) VALUES (?, ?, ?)")
+	stmt, err := tx.Prepare("INSERT INTO measurements (device_id, power_w, battery_power_w, grid_power_w, energy_kwh) VALUES (?, ?, ?, ?, ?)")
 	if err != nil {
 		tx.Rollback()
 		log.Printf("[ERROR] PollerManager DB Flush: Error preparing statement: %v", err)
@@ -482,9 +492,11 @@ func (pm *PollerManager) flushBuffer() {
 
 	for id, data := range agg {
 		avgPower := data.SumPowerW / float64(data.Count)
+		avgBatteryPower := data.SumBatteryPowerW / float64(data.Count)
+		avgGridPower := data.SumGridPowerW / float64(data.Count)
 		totalEnergy := data.SumEnergy // energy is incremental, we just sum it for the minute interval
 
-		_, err := stmt.Exec(id, avgPower, totalEnergy)
+		_, err := stmt.Exec(id, avgPower, avgBatteryPower, avgGridPower, totalEnergy)
 		if err != nil {
 			log.Printf("[ERROR] PollerManager DB Flush: Error executing statement for device %d: %v", id, err)
 		}
