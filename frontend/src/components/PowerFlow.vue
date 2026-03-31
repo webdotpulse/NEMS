@@ -1,6 +1,12 @@
 <template>
   <div class="w-full flex justify-center items-center">
     <div class="relative w-full h-[460px] bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+      <!-- Tariff Forecast Button -->
+      <button @click="openTariffModal" class="absolute top-4 right-4 z-20 cursor-pointer text-gray-500 hover:text-blue-500 transition-colors" title="Tariff Forecast">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+        </svg>
+      </button>
 
       <!-- SVG paths for animated power flow lines -->
       <svg class="absolute inset-0 w-full h-full z-0 pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="none">
@@ -157,6 +163,25 @@
     </div>
   </div>
 
+  <!-- Tariff Forecast Modal -->
+  <div v-if="showTariffModal" class="fixed inset-0 z-[100] flex justify-center items-center bg-black bg-opacity-50 transition-opacity" @click.self="closeTariffModal">
+    <div class="w-full h-full bg-white dark:bg-gray-800 shadow-xl p-8 relative flex flex-col transform transition-transform duration-300 translate-x-0 overflow-y-auto" @click.stop>
+      <button @click="closeTariffModal" class="absolute top-6 right-6 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 z-[110]">
+        <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+
+      <h2 class="text-3xl font-semibold mb-6 text-gray-800 dark:text-gray-100">Tariff Forecast (Next 24h)</h2>
+
+      <div class="flex-grow w-full h-full min-h-[500px]">
+        <Bar v-if="tariffData" :data="tariffData" :options="tariffChartOptions" />
+        <div v-else-if="isLoadingTariff" class="flex items-center justify-center h-full text-xl text-gray-500 dark:text-gray-400">Loading forecast...</div>
+        <div v-else class="flex items-center justify-center h-full text-xl text-gray-500 dark:text-gray-400">No forecast data available</div>
+      </div>
+    </div>
+  </div>
+
   <!-- Context-Sensitive Full-screen Panel -->
   <div v-if="isModalOpen" class="fixed inset-0 z-[100] flex justify-center items-center bg-black bg-opacity-50 transition-opacity" @click.self="closeChart">
     <div class="w-full h-full bg-white dark:bg-gray-800 shadow-xl p-8 relative flex flex-col transform transition-transform duration-300 translate-x-0 overflow-y-auto" @click.stop>
@@ -218,12 +243,13 @@ import {
   LinearScale,
   PointElement,
   LineElement,
+  BarElement,
   Title,
   Tooltip,
   Legend,
   TimeScale,
 } from 'chart.js'
-import { Line } from 'vue-chartjs'
+import { Line, Bar } from 'vue-chartjs'
 import 'chartjs-adapter-date-fns'
 
 ChartJS.register(
@@ -231,6 +257,7 @@ ChartJS.register(
   LinearScale,
   PointElement,
   LineElement,
+  BarElement,
   Title,
   Tooltip,
   Legend,
@@ -294,6 +321,60 @@ const selectedNode = ref<string | null>(null)
 const selectedRange = ref<string>('today')
 const isLoading = ref(false)
 const chartData = ref<any>(null)
+
+// Tariff Modal state
+const showTariffModal = ref(false)
+const tariffData = ref<any>(null)
+const isLoadingTariff = ref(false)
+
+const openTariffModal = () => {
+  showTariffModal.value = true
+  fetchTariffForecast()
+}
+
+const closeTariffModal = () => {
+  showTariffModal.value = false
+  tariffData.value = null
+}
+
+const fetchTariffForecast = async () => {
+  isLoadingTariff.value = true
+  tariffData.value = null
+  try {
+    const res = await fetch(`${getApiBase()}/api/tariffs/forecast`)
+    if (res.ok) {
+      const data: {timestamp: string, price_per_kwh: number}[] = await res.json()
+
+      if (data && data.length > 0) {
+        tariffData.value = {
+          datasets: [
+            {
+              label: 'Price',
+              data: data.map(d => ({ x: new Date(d.timestamp), y: d.price_per_kwh })),
+              backgroundColor: data.map(d => {
+                if (d.price_per_kwh <= 0) return '#10B981' // Green (Cheap/Negative)
+                if (d.price_per_kwh >= 0.15) return '#EF4444' // Red (Expensive)
+                return '#3B82F6' // Blue (Normal)
+              }),
+              borderWidth: 1,
+              borderColor: data.map(d => {
+                if (d.price_per_kwh <= 0) return '#059669'
+                if (d.price_per_kwh >= 0.15) return '#DC2626'
+                return '#2563EB'
+              }),
+            }
+          ]
+        }
+      } else {
+        tariffData.value = null
+      }
+    }
+  } catch (e) {
+    console.error("Failed to fetch tariff forecast:", e)
+  } finally {
+    isLoadingTariff.value = false
+  }
+}
 
 const ranges = [
   { label: 'Today', value: 'today' },
@@ -620,6 +701,52 @@ const formatPowerSimple = (powerW: number) => {
   const valKw = (absPower / 1000).toFixed(1)
   return `${valKw} kW`
 }
+
+const tariffChartOptions = computed(() => ({
+  responsive: true,
+  maintainAspectRatio: false,
+  scales: {
+    x: {
+      type: 'time' as const,
+      time: {
+        unit: 'hour' as const,
+        displayFormats: {
+          hour: 'HH:mm',
+        },
+        tooltipFormat: 'PP HH:mm'
+      },
+      ticks: {
+        color: '#9CA3AF',
+      },
+      grid: {
+        color: '#374151',
+      }
+    },
+    y: {
+      title: {
+        display: true,
+        text: 'Price (€/kWh)',
+        color: '#9CA3AF'
+      },
+      ticks: {
+        color: '#9CA3AF',
+      },
+      grid: {
+        color: '#374151',
+      }
+    }
+  },
+  plugins: {
+    legend: {
+      display: false
+    },
+    tooltip: {
+      callbacks: {
+        label: (context: any) => `${context.parsed.y.toFixed(3)} €/kWh`
+      }
+    }
+  }
+}))
 
 const chartOptions = computed(() => ({
   responsive: true,

@@ -186,6 +186,44 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(`{"status": "ok"}`))
 }
 
+// handleTariffForecast is the HTTP handler for the /api/tariffs/forecast endpoint.
+// It retrieves EPEX spot prices for the next 24 hours.
+func handleTariffForecast(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	loc, err := time.LoadLocation("Europe/Amsterdam")
+	if err != nil {
+		loc = time.UTC
+	}
+	now := time.Now().In(loc)
+	start := now.UTC()
+	end := now.Add(24 * time.Hour).UTC()
+
+	rows, err := db.Query("SELECT timestamp, price_per_kwh FROM epex_prices WHERE timestamp >= ? AND timestamp <= ? ORDER BY timestamp ASC", start, end)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var prices []PricePoint
+	for rows.Next() {
+		var p PricePoint
+		var ts time.Time
+		if err := rows.Scan(&ts, &p.PricePerKwh); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		p.Timestamp = ts.In(loc)
+		prices = append(prices, p)
+	}
+
+	if prices == nil {
+		prices = []PricePoint{}
+	}
+	json.NewEncoder(w).Encode(prices)
+}
+
 // handleTariffsToday is the HTTP handler for the /api/tariffs/today endpoint.
 // It retrieves EPEX spot prices from the local database for today and tomorrow.
 func handleTariffsToday(w http.ResponseWriter, r *http.Request) {
