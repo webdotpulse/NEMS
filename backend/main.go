@@ -265,6 +265,7 @@ func main() {
 	// Insert default if not exists
 	_, _ = db.Exec("INSERT OR IGNORE INTO site_settings (id, strategy_mode, capacity_peak_limit_kw, active_inverter_curtailment) VALUES (1, 'eco', 2.5, 0)")
 
+	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN battery_grid_charge_strategy TEXT DEFAULT 'price_only'")
 	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN force_charge_below_euro REAL DEFAULT 0")
 	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN force_discharge_above_euro REAL DEFAULT 999.0")
 	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN smart_ev_cheapest_hours INTEGER DEFAULT 0")

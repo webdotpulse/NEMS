@@ -113,20 +113,22 @@ func (sc *StrategyController) Start() {
 			select {
 			case <-ticker.C:
 				var settings models.SiteSettings
-				row := db.QueryRow("SELECT strategy_mode, capacity_peak_limit_kw, active_inverter_curtailment, force_charge_below_euro, force_discharge_above_euro, smart_ev_cheapest_hours, appliance_turn_on_excess_w, peak_shaving_buffer_w, peak_shaving_rampup_w, contract_type, fixed_price_peak_kwh, fixed_price_off_peak_kwh, fixed_inject_price_kwh, dynamic_markup_kwh, engie_markup_peak, engie_markup_off_peak, engie_markup_super_off_peak, engie_multiplier, engie_base_fee FROM site_settings WHERE id = 1")
-				err := row.Scan(&settings.StrategyMode, &settings.CapacityPeakLimitKw, &settings.ActiveInverterCurtailment, &settings.ForceChargeBelowEuro, &settings.ForceDischargeAboveEuro, &settings.SmartEvCheapestHours, &settings.ApplianceTurnOnExcessW, &settings.PeakShavingBufferW, &settings.PeakShavingRampupW, &settings.ContractType, &settings.FixedPricePeakKwh, &settings.FixedPriceOffPeakKwh, &settings.FixedInjectPriceKwh, &settings.DynamicMarkupKwh, &settings.EngieMarkupPeak, &settings.EngieMarkupOffPeak, &settings.EngieMarkupSuperOffPeak, &settings.EngieMultiplier, &settings.EngieBaseFee)
+				row := db.QueryRow("SELECT strategy_mode, capacity_peak_limit_kw, active_inverter_curtailment, battery_grid_charge_strategy, force_charge_below_euro, force_discharge_above_euro, smart_ev_cheapest_hours, appliance_turn_on_excess_w, peak_shaving_buffer_w, peak_shaving_rampup_w, timezone, contract_type, fixed_price_peak_kwh, fixed_price_off_peak_kwh, fixed_inject_price_kwh, dynamic_markup_kwh, engie_markup_peak, engie_markup_off_peak, engie_markup_super_off_peak, engie_multiplier, engie_base_fee FROM site_settings WHERE id = 1")
+				err := row.Scan(&settings.StrategyMode, &settings.CapacityPeakLimitKw, &settings.ActiveInverterCurtailment, &settings.BatteryGridChargeStrategy, &settings.ForceChargeBelowEuro, &settings.ForceDischargeAboveEuro, &settings.SmartEvCheapestHours, &settings.ApplianceTurnOnExcessW, &settings.PeakShavingBufferW, &settings.PeakShavingRampupW, &settings.Timezone, &settings.ContractType, &settings.FixedPricePeakKwh, &settings.FixedPriceOffPeakKwh, &settings.FixedInjectPriceKwh, &settings.DynamicMarkupKwh, &settings.EngieMarkupPeak, &settings.EngieMarkupOffPeak, &settings.EngieMarkupSuperOffPeak, &settings.EngieMultiplier, &settings.EngieBaseFee)
 				if err != nil {
 					if err == sql.ErrNoRows {
 						settings = models.SiteSettings{
 							StrategyMode: "eco",
 							CapacityPeakLimitKw: 2.5,
 							ActiveInverterCurtailment: false,
+							BatteryGridChargeStrategy: "price_only",
 							ForceChargeBelowEuro: 0.0,
 							ForceDischargeAboveEuro: 999.0,
 							SmartEvCheapestHours: 0,
 							ApplianceTurnOnExcessW: 0.0,
 							PeakShavingBufferW: 200.0,
 							PeakShavingRampupW: 500.0,
+							Timezone: "Europe/Brussels",
 							ContractType: "dynamic",
 							FixedPricePeakKwh: 0.35,
 							FixedPriceOffPeakKwh: 0.30,
@@ -241,7 +243,28 @@ func (sc *StrategyController) executeControlLoop(settings models.SiteSettings) {
 	}
 
 	// Battery Arbitrage Intent
-	if currentCachedPrice < settings.ForceChargeBelowEuro {
+	tz := settings.Timezone
+	if tz == "" {
+		tz = "Europe/Brussels"
+	}
+	loc, err := time.LoadLocation(tz)
+	if err != nil || loc == nil {
+		loc = time.Local
+	}
+	currentTime := time.Now().In(loc)
+	isSuperDal := currentTime.Hour() >= 1 && currentTime.Hour() < 7
+
+	allowGridCharge := false
+	if settings.BatteryGridChargeStrategy == "super_dal_only" {
+		allowGridCharge = isSuperDal
+	} else if settings.BatteryGridChargeStrategy == "hybrid" {
+		allowGridCharge = isSuperDal || currentCachedPrice < settings.ForceChargeBelowEuro
+	} else {
+		// "price_only" or default
+		allowGridCharge = currentCachedPrice < settings.ForceChargeBelowEuro
+	}
+
+	if allowGridCharge {
 		for id, poller := range pollers {
 			if _, ok := poller.(models.BatteryController); ok {
 				dev := poller.GetDevice()
