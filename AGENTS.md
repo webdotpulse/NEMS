@@ -11,6 +11,7 @@ You are building a lightweight, highly responsive, fully UI-driven Energy Manage
 
 ## Required Devices (Templates)
 Implement a modular plugin system for devices. The system MUST include templates for:
+- OCPP 1.6 / 2.0.1 EV Chargers
 - Modbus TCP/REST Chargers
 - Huawei/SMA/Solis/Enerlution Inverters
 - P1/Modbus Smart Meters
@@ -21,6 +22,6 @@ Implement a modular plugin system for devices. The system MUST include templates
 2. **Click-to-Reveal History:** Clicking any node on the flow chart opens a dedicated view/modal showing historical charts and detailed metrics for *that specific element*.
 
 ## Tech Stack
-- **Backend:** Go (Golang) or Node.js (TypeScript). Choose the one that ensures the lowest memory footprint on a Raspberry Pi. 
-- **Database:** SQLite (with Timeseries capabilities) or minimal InfluxDB for historical data.
-- **Frontend:** Vue 3 or React (TypeScript), styled with Tailwind CSS. Use Apache ECharts or Chart.js for historical graphing.
+- **Backend:** Go (Golang), chosen to ensure the lowest memory footprint on a Raspberry Pi.
+- **Database:** SQLite (with Timeseries capabilities) for historical data.
+- **Frontend:** Vue 3 (TypeScript), styled with Tailwind CSS. Uses Chart.js for historical graphing.

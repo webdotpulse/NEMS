@@ -16,6 +16,9 @@ graph TD
     PM -->|Batched Writes| DB[(SQLite DB)]
     API <--> SC[Strategy Controller]
     SC -->|Hardware Limits| Devices
+    API <-->|WebSocket| OCPP[Native OCPP Server]
+    OCPP <-->|OCPP 1.6/2.0.1| EVCharger[EV Chargers]
+    OCPP -.->|Optional Forwarding| CSMS[Upstream CSMS]
 ```
 
 ## Data Flow
@@ -27,16 +30,21 @@ graph TD
   - **Standard Ticker (5s):** Polls heavier devices (like inverters and EV chargers).
 - Polled data is immediately cached in memory (`deviceCache`) to decouple hardware IO from UI responsiveness.
 
-### 2. Live Site State (SSE)
+### 2. Native OCPP Server & Proxy
+- A built-in WebSocket server at `/api/ocpp/` handles incoming connections from EV Chargers.
+- The `OcppState` struct receives live telemetry (e.g., `MeterValues`, `Heartbeat`, `BootNotification`) directly from the charger.
+- If configured, an optional bi-directional proxy acts as a man-in-the-middle, transparently forwarding standard messages to an Upstream CSMS (like a corporate backend) while intercepting necessary data to update local metrics for strategy execution without issuing conflicting `CallResult` responses.
+
+### 3. Live Site State (SSE)
 - When new data is polled, the `PollerManager` aggregates the data (total grid, total solar, etc.) into a `SiteState` struct.
 - This struct is broadcasted to the frontend via Server-Sent Events (SSE) at the `/api/live` endpoint. This allows the Vue dashboard to update in real-time without continuous AJAX polling.
 
-### 3. Historical Data & Database
+### 4. Historical Data & Database
 - To minimize SD card wear, the `PollerManager` buffers polled measurements in memory.
 - Every 1 minute, the `flushBuffer` function runs, averages the buffered data, and performs a single transactional `INSERT` into the SQLite `measurements` table.
 - SQLite is configured with WAL mode (`journal_mode=WAL`), `synchronous=NORMAL`, and `temp_store=MEMORY` to further reduce disk I/O.
 
-### 4. Strategy Execution
+### 5. Strategy Execution
 - The `StrategyController` runs a background loop (every 2 seconds).
 - It reads the latest `deviceCache` from the `PollerManager` and categorizes the measurements using the `registry.GetCategory()` properties to aggregate composite values (`totalGridImport`, `totalSolar`).
 - Based on the user's selected strategy (Eco, Flanders, Netherlands), it calculates optimal setpoints:
@@ -46,6 +54,7 @@ graph TD
 
 ## Design Decisions
 
+- **Network Scanner Heuristics:** To achieve zero-dependency network discovery across multiple manufacturer hardware types, NEMS implements localized mapping of MAC Organizationally Unique Identifiers (OUIs). This avoids runtime third-party API dependencies and ensures rapid scanning performance.
 - **No YAML:** NEMS strictly uses a UI-driven database approach. Device configurations are stored in SQLite. This lowers the barrier to entry for non-technical users.
 - **Null Safety in JSON:** The `SiteState` struct uses pointers for float values (`*float64`). If a device type (e.g., a Battery) is not configured, the pointer remains `nil`, resulting in `null` in the JSON payload. The Vue frontend uses this `null` state to completely hide the relevant UI cards, rather than displaying `0 W`.
 - **Registry Pattern for Devices:** Device templates are added by creating a new file in `backend/internal/templates/` and calling `registry.RegisterTemplate()` inside the `init()` function. This makes adding new hardware integrations highly modular.
