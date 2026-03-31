@@ -17,6 +17,18 @@ type SiteSettings struct {
 	Timezone                  string  `json:"timezone"`
 	Latitude                  float64 `json:"latitude"`
 	Longitude                 float64 `json:"longitude"`
+
+	// Energy Contract Configuration
+	ContractType            string  `json:"contract_type"`
+	FixedPricePeakKwh       float64 `json:"fixed_price_peak_kwh"`
+	FixedPriceOffPeakKwh    float64 `json:"fixed_price_off_peak_kwh"`
+	FixedInjectPriceKwh     float64 `json:"fixed_inject_price_kwh"`
+	DynamicMarkupKwh        float64 `json:"dynamic_markup_kwh"`
+	EngieMarkupPeak         float64 `json:"engie_markup_peak"`
+	EngieMarkupOffPeak      float64 `json:"engie_markup_off_peak"`
+	EngieMarkupSuperOffPeak float64 `json:"engie_markup_super_off_peak"`
+	EngieMultiplier         float64 `json:"engie_multiplier"`
+	EngieBaseFee            float64 `json:"engie_base_fee"`
 }
 
 type Device struct {

@@ -232,15 +232,114 @@
               </div>
             </div>
 
+            <!-- Energy Contract Configuration Card -->
+            <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg mb-6">
+              <div class="px-4 py-5 sm:p-6">
+                <div class="mb-4 border-b border-gray-200 dark:border-gray-700 pb-4">
+                  <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-gray-100">
+                    Energy Contract Configuration
+                  </h3>
+                  <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    Configure your energy provider contract to accurately calculate costs and optimization thresholds.
+                  </p>
+                </div>
+
+                <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                  <div class="sm:col-span-6">
+                    <label for="contract_type" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Contract Type</label>
+                    <div class="mt-1">
+                      <select id="contract_type" v-model="siteSettings.contract_type"
+                              class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
+                        <option value="fixed">Fixed Price</option>
+                        <option value="dynamic">Standard Dynamic</option>
+                        <option value="engie_flextime">Engie EMPOWER Flextime</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <!-- Fixed Price -->
+                  <template v-if="siteSettings.contract_type === 'fixed'">
+                    <div class="sm:col-span-2">
+                      <label for="fixed_price_peak_kwh" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Peak Price (€/kWh)</label>
+                      <div class="mt-1">
+                        <input type="number" step="0.0001" id="fixed_price_peak_kwh" v-model="siteSettings.fixed_price_peak_kwh" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                      </div>
+                    </div>
+                    <div class="sm:col-span-2">
+                      <label for="fixed_price_off_peak_kwh" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Off-Peak Price (€/kWh)</label>
+                      <div class="mt-1">
+                        <input type="number" step="0.0001" id="fixed_price_off_peak_kwh" v-model="siteSettings.fixed_price_off_peak_kwh" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                      </div>
+                    </div>
+                    <div class="sm:col-span-2">
+                      <label for="fixed_inject_price_kwh" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Injection Return (€/kWh)</label>
+                      <div class="mt-1">
+                        <input type="number" step="0.0001" id="fixed_inject_price_kwh" v-model="siteSettings.fixed_inject_price_kwh" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                      </div>
+                    </div>
+                  </template>
+
+                  <!-- Standard Dynamic -->
+                  <template v-if="siteSettings.contract_type === 'dynamic'">
+                    <div class="sm:col-span-6">
+                      <label for="dynamic_markup_kwh" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Markup / Taxes on top of EPEX (€/kWh)</label>
+                      <div class="mt-1">
+                        <input type="number" step="0.0001" id="dynamic_markup_kwh" v-model="siteSettings.dynamic_markup_kwh" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                      </div>
+                    </div>
+                  </template>
+
+                  <!-- Engie EMPOWER Flextime -->
+                  <template v-if="siteSettings.contract_type === 'engie_flextime'">
+                    <div class="sm:col-span-6">
+                      <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">
+                        <strong>Super-dal:</strong> 01:00 - 07:00 | <strong>Piek:</strong> 07:00 - 11:00 & 17:00 - 22:00 | <strong>Dal:</strong> 11:00 - 17:00 & 22:00 - 01:00 (Weekend)
+                      </p>
+                    </div>
+                    <div class="sm:col-span-3">
+                      <label for="engie_multiplier" class="block text-sm font-medium text-gray-700 dark:text-gray-300">EPEX Multiplier</label>
+                      <div class="mt-1">
+                        <input type="number" step="0.0001" id="engie_multiplier" v-model="siteSettings.engie_multiplier" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                      </div>
+                    </div>
+                    <div class="sm:col-span-3">
+                      <label for="engie_base_fee" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Base Fee (€/kWh)</label>
+                      <div class="mt-1">
+                        <input type="number" step="0.0001" id="engie_base_fee" v-model="siteSettings.engie_base_fee" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                      </div>
+                    </div>
+                    <div class="sm:col-span-2">
+                      <label for="engie_markup_peak" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Markup Piekuren (€/kWh)</label>
+                      <div class="mt-1">
+                        <input type="number" step="0.0001" id="engie_markup_peak" v-model="siteSettings.engie_markup_peak" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                      </div>
+                    </div>
+                    <div class="sm:col-span-2">
+                      <label for="engie_markup_off_peak" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Markup Daluren (€/kWh)</label>
+                      <div class="mt-1">
+                        <input type="number" step="0.0001" id="engie_markup_off_peak" v-model="siteSettings.engie_markup_off_peak" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                      </div>
+                    </div>
+                    <div class="sm:col-span-2">
+                      <label for="engie_markup_super_off_peak" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Markup Super-daluren (€/kWh)</label>
+                      <div class="mt-1">
+                        <input type="number" step="0.0001" id="engie_markup_super_off_peak" v-model="siteSettings.engie_markup_super_off_peak" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                      </div>
+                    </div>
+                  </template>
+                </div>
+              </div>
+            </div>
+
             <!-- Dynamic Tariffs Card -->
             <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg mb-6">
               <div class="px-4 py-5 sm:p-6">
                 <div class="mb-4 border-b border-gray-200 dark:border-gray-700 pb-4">
                   <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-gray-100">
-                    Dynamic Tariffs
+                    Energy Arbitrage & Optimization
                   </h3>
                   <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                    Configure rules for dynamic energy pricing.
+                    Configure rules based on the calculated effective energy price.
                   </p>
                 </div>
 
@@ -721,7 +820,17 @@ const siteSettings = ref<SiteSettings>({
   peak_shaving_buffer_w: 200.0,
   peak_shaving_rampup_w: 500.0,
   timezone: 'Europe/Brussels',
-  log_level: 'INFO'
+  log_level: 'INFO',
+  contract_type: 'dynamic',
+  fixed_price_peak_kwh: 0.35,
+  fixed_price_off_peak_kwh: 0.30,
+  fixed_inject_price_kwh: 0.05,
+  dynamic_markup_kwh: 0.15,
+  engie_markup_peak: 0.15,
+  engie_markup_off_peak: 0.15,
+  engie_markup_super_off_peak: 0.15,
+  engie_multiplier: 0.1448,
+  engie_base_fee: 0.0
 })
 const saveSettingsSuccess = ref(false)
 
