@@ -1,6 +1,13 @@
 <template>
   <div class="w-full flex justify-center items-center">
     <div class="relative w-full h-[460px] bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+      <!-- Solar Forecast Button -->
+      <button @click="openSolarModal" class="absolute top-4 left-4 z-20 cursor-pointer text-gray-500 hover:text-yellow-500 transition-colors" title="Solar Forecast">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M6.993 12c0 2.761 2.246 5.007 5.007 5.007s5.007-2.246 5.007-5.007S14.761 6.993 12 6.993 6.993 9.239 6.993 12zM12 8.993c1.658 0 3.007 1.349 3.007 3.007S13.658 15.007 12 15.007 8.993 13.658 8.993 12 10.342 8.993 12 8.993zM10.998 19h2v3h-2zm0-17h2v3h-2zm-9 9h3v2h-3zm17 0h3v2h-3zM4.219 18.363l2.12-2.122 1.415 1.414-2.12 2.122zM16.24 6.344l2.122-2.122 1.414 1.414-2.122 2.122zM6.342 7.759 4.22 5.637l1.415-1.414 2.12 2.122zm13.434 10.605-1.414 1.414-2.122-2.122 1.414-1.414z"/>
+        </svg>
+      </button>
+
       <!-- Tariff Forecast Button -->
       <button @click="openTariffModal" class="absolute top-4 right-4 z-20 cursor-pointer text-gray-500 hover:text-blue-500 transition-colors" title="Tariff Forecast">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -163,6 +170,25 @@
     </div>
   </div>
 
+  <!-- Solar Forecast Modal -->
+  <div v-if="showSolarModal" class="fixed inset-0 z-[100] flex justify-center items-center bg-black bg-opacity-50 transition-opacity" @click.self="closeSolarModal">
+    <div class="w-full h-full bg-white dark:bg-gray-800 shadow-xl p-8 relative flex flex-col transform transition-transform duration-300 translate-x-0 overflow-y-auto" @click.stop>
+      <button @click="closeSolarModal" class="absolute top-6 right-6 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 z-[110]">
+        <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+
+      <h2 class="text-3xl font-semibold mb-6 text-gray-800 dark:text-gray-100">Solar Forecast (Next 24h)</h2>
+
+      <div class="flex-grow w-full h-full min-h-[500px]">
+        <Line v-if="solarForecastData" :data="solarForecastData" :options="solarChartOptions" />
+        <div v-else-if="isLoadingSolar" class="flex items-center justify-center h-full text-xl text-gray-500 dark:text-gray-400">Loading forecast...</div>
+        <div v-else class="flex items-center justify-center h-full text-xl text-gray-500 dark:text-gray-400">No forecast data available (check location in Settings)</div>
+      </div>
+    </div>
+  </div>
+
   <!-- Tariff Forecast Modal -->
   <div v-if="showTariffModal" class="fixed inset-0 z-[100] flex justify-center items-center bg-black bg-opacity-50 transition-opacity" @click.self="closeTariffModal">
     <div class="w-full h-full bg-white dark:bg-gray-800 shadow-xl p-8 relative flex flex-col transform transition-transform duration-300 translate-x-0 overflow-y-auto" @click.stop>
@@ -321,6 +347,53 @@ const selectedNode = ref<string | null>(null)
 const selectedRange = ref<string>('today')
 const isLoading = ref(false)
 const chartData = ref<any>(null)
+
+// Solar Forecast Modal state
+const showSolarModal = ref(false)
+const solarForecastData = ref<any>(null)
+const isLoadingSolar = ref(false)
+
+const openSolarModal = () => {
+  showSolarModal.value = true
+  fetchSolarForecast()
+}
+
+const closeSolarModal = () => {
+  showSolarModal.value = false
+  solarForecastData.value = null
+}
+
+const fetchSolarForecast = async () => {
+  isLoadingSolar.value = true
+  solarForecastData.value = null
+  try {
+    const res = await fetch(`${getApiBase()}/api/solar/forecast`)
+    if (res.ok) {
+      const data: {timestamp: string, estimated_power_w: number}[] = await res.json()
+      if (data && data.length > 0) {
+        solarForecastData.value = {
+          datasets: [
+            {
+              label: 'Estimated Power (W)',
+              data: data.map(d => ({ x: new Date(d.timestamp), y: d.estimated_power_w })),
+              borderColor: '#F59E0B',
+              backgroundColor: '#FDE68A',
+              borderWidth: 2,
+              fill: true,
+              tension: 0.4
+            }
+          ]
+        }
+      }
+    } else {
+        console.error("Failed to fetch solar forecast, status: ", res.status)
+    }
+  } catch (e) {
+    console.error("Failed to fetch solar forecast:", e)
+  } finally {
+    isLoadingSolar.value = false
+  }
+}
 
 // Tariff Modal state
 const showTariffModal = ref(false)
@@ -701,6 +774,52 @@ const formatPowerSimple = (powerW: number) => {
   const valKw = (absPower / 1000).toFixed(1)
   return `${valKw} kW`
 }
+
+const solarChartOptions = computed(() => ({
+  responsive: true,
+  maintainAspectRatio: false,
+  scales: {
+    x: {
+      type: 'time' as const,
+      time: {
+        unit: 'hour' as const,
+        displayFormats: {
+          hour: 'HH:mm',
+        },
+        tooltipFormat: 'PP HH:mm'
+      },
+      ticks: {
+        color: '#9CA3AF',
+      },
+      grid: {
+        color: '#374151',
+      }
+    },
+    y: {
+      title: {
+        display: true,
+        text: 'Estimated Power (W)',
+        color: '#9CA3AF'
+      },
+      ticks: {
+        color: '#9CA3AF',
+      },
+      grid: {
+        color: '#374151',
+      }
+    }
+  },
+  plugins: {
+    legend: {
+      display: false
+    },
+    tooltip: {
+      callbacks: {
+        label: (context: any) => `${context.parsed.y.toFixed(0)} W`
+      }
+    }
+  }
+}))
 
 const tariffChartOptions = computed(() => ({
   responsive: true,
