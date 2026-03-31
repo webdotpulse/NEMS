@@ -17,6 +17,8 @@ import (
 	"math/big"
 
 	_ "github.com/mattn/go-sqlite3"
+
+	"nems/internal/ocpp"
 )
 
 
@@ -296,6 +298,9 @@ func main() {
 	mux.HandleFunc("/api/devices", handleDevices)
 	mux.HandleFunc("/api/history", handleHistory)
 	mux.HandleFunc("/api/devices/", handleDevice)
+
+	// OCPP WebSocket endpoint
+	mux.HandleFunc("/api/ocpp/", ocpp.HandleWebSocket)
 
 	// Serve frontend SPA
 	fs := http.FileServer(http.Dir("./dist"))
