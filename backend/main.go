@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -27,6 +28,8 @@ type LogRingBuffer struct {
 	mu     sync.RWMutex
 	logs   []string
 	maxLen int
+	head   int
+	count  int
 }
 
 func (r *LogRingBuffer) Write(p []byte) (n int, err error) {
@@ -34,10 +37,11 @@ func (r *LogRingBuffer) Write(p []byte) (n int, err error) {
 	defer r.mu.Unlock()
 
 	msg := string(p)
-	if len(r.logs) >= r.maxLen {
-		r.logs = r.logs[1:]
+	r.logs[r.head] = msg
+	r.head = (r.head + 1) % r.maxLen
+	if r.count < r.maxLen {
+		r.count++
 	}
-	r.logs = append(r.logs, msg)
 	return len(p), nil
 }
 
@@ -45,15 +49,30 @@ func (r *LogRingBuffer) GetLogs() []string {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	res := make([]string, len(r.logs))
-	copy(res, r.logs)
+	res := make([]string, 0, r.count)
+	if r.count == 0 {
+		return res
+	}
+
+	start := 0
+	if r.count == r.maxLen {
+		start = r.head
+	}
+
+	for i := 0; i < r.count; i++ {
+		res = append(res, r.logs[(start+i)%r.maxLen])
+	}
 	return res
 }
 
 func (r *LogRingBuffer) ClearLogs() {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	r.logs = make([]string, 0, r.maxLen)
+	r.head = 0
+	r.count = 0
+	for i := range r.logs {
+		r.logs[i] = ""
+	}
 }
 
 var logBuffer *LogRingBuffer
@@ -61,7 +80,7 @@ var BuildNumber = "development"
 
 func InitLogger() {
 	logBuffer = &LogRingBuffer{
-		logs:   make([]string, 0, 1000),
+		logs:   make([]string, 1000),
 		maxLen: 1000,
 	}
 	multiWriter := io.MultiWriter(os.Stdout, logBuffer)
@@ -132,6 +151,37 @@ func ensureCertificates(certFile, keyFile string) error {
 }
 
 var db *sql.DB
+
+func ensureColumnExists(db *sql.DB, tableName, colName, colDef string) {
+	query := fmt.Sprintf("PRAGMA table_info(%s);", tableName)
+	rows, err := db.Query(query)
+	if err != nil {
+		log.Printf("[ERROR] Failed to check columns for table %s: %v", tableName, err)
+		return
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var cid int
+		var name, ctype string
+		var notnull int
+		var dflt_value interface{}
+		var pk int
+		if err := rows.Scan(&cid, &name, &ctype, &notnull, &dflt_value, &pk); err == nil {
+			if name == colName {
+				return // Column exists
+			}
+		}
+	}
+
+	alterQuery := fmt.Sprintf("ALTER TABLE %s ADD COLUMN %s %s", tableName, colName, colDef)
+	_, err = db.Exec(alterQuery)
+	if err != nil {
+		log.Printf("[ERROR] Failed to add column %s to %s: %v", colName, tableName, err)
+	} else {
+		log.Printf("[INFO] Added missing column %s to table %s", colName, tableName)
+	}
+}
 
 func enableCORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -226,18 +276,18 @@ func main() {
 	}
 
 	// Add new columns to measurements (for existing databases)
-	_, _ = db.Exec("ALTER TABLE measurements ADD COLUMN battery_power_w REAL NOT NULL DEFAULT 0")
-	_, _ = db.Exec("ALTER TABLE measurements ADD COLUMN grid_power_w REAL NOT NULL DEFAULT 0")
+	ensureColumnExists(db, "measurements", "battery_power_w", "REAL NOT NULL DEFAULT 0")
+	ensureColumnExists(db, "measurements", "grid_power_w", "REAL NOT NULL DEFAULT 0")
 
 	// Add new columns if they don't exist (for existing databases)
-	_, _ = db.Exec("ALTER TABLE devices ADD COLUMN username TEXT DEFAULT ''")
-	_, _ = db.Exec("ALTER TABLE devices ADD COLUMN password TEXT DEFAULT ''")
-	_, _ = db.Exec("ALTER TABLE devices ADD COLUMN has_grid_meter BOOLEAN DEFAULT 0")
-	_, _ = db.Exec("ALTER TABLE devices ADD COLUMN has_battery BOOLEAN DEFAULT 0")
-	_, _ = db.Exec("ALTER TABLE devices ADD COLUMN battery_capacity REAL DEFAULT 0")
-	_, _ = db.Exec("ALTER TABLE devices ADD COLUMN charge_mode TEXT DEFAULT 'eco'")
-	_, _ = db.Exec("ALTER TABLE devices ADD COLUMN battery_mode TEXT DEFAULT 'auto'")
-	_, _ = db.Exec("ALTER TABLE devices ADD COLUMN ocpp_proxy_url TEXT DEFAULT ''")
+	ensureColumnExists(db, "devices", "username", "TEXT DEFAULT ''")
+	ensureColumnExists(db, "devices", "password", "TEXT DEFAULT ''")
+	ensureColumnExists(db, "devices", "has_grid_meter", "BOOLEAN DEFAULT 0")
+	ensureColumnExists(db, "devices", "has_battery", "BOOLEAN DEFAULT 0")
+	ensureColumnExists(db, "devices", "battery_capacity", "REAL DEFAULT 0")
+	ensureColumnExists(db, "devices", "charge_mode", "TEXT DEFAULT 'eco'")
+	ensureColumnExists(db, "devices", "battery_mode", "TEXT DEFAULT 'auto'")
+	ensureColumnExists(db, "devices", "ocpp_proxy_url", "TEXT DEFAULT ''")
 
 	createEpexPricesSQL := `
 	CREATE TABLE IF NOT EXISTS epex_prices (
@@ -265,31 +315,31 @@ func main() {
 	// Insert default if not exists
 	_, _ = db.Exec("INSERT OR IGNORE INTO site_settings (id, strategy_mode, capacity_peak_limit_kw, active_inverter_curtailment) VALUES (1, 'eco', 2.5, 0)")
 
-	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN battery_grid_charge_strategy TEXT DEFAULT 'price_only'")
-	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN force_charge_below_euro REAL DEFAULT 0")
-	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN force_discharge_above_euro REAL DEFAULT 999.0")
-	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN smart_ev_cheapest_hours INTEGER DEFAULT 0")
-	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN grid_nominal_current_a REAL DEFAULT 25.0")
-	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN grid_system TEXT DEFAULT 'single_phase_230v'")
-	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN allowed_grid_import_kw REAL DEFAULT 0.0")
-	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN allowed_grid_export_kw REAL DEFAULT 0.0")
-	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN appliance_turn_on_excess_w REAL DEFAULT 0.0")
-	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN peak_shaving_buffer_w REAL DEFAULT 200.0")
-	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN peak_shaving_rampup_w REAL DEFAULT 500.0")
-	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN timezone TEXT DEFAULT 'Europe/Brussels'")
-	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN latitude REAL DEFAULT 50.8503")
-	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN longitude REAL DEFAULT 4.3517")
+	ensureColumnExists(db, "site_settings", "battery_grid_charge_strategy", "TEXT DEFAULT 'price_only'")
+	ensureColumnExists(db, "site_settings", "force_charge_below_euro", "REAL DEFAULT 0")
+	ensureColumnExists(db, "site_settings", "force_discharge_above_euro", "REAL DEFAULT 999.0")
+	ensureColumnExists(db, "site_settings", "smart_ev_cheapest_hours", "INTEGER DEFAULT 0")
+	ensureColumnExists(db, "site_settings", "grid_nominal_current_a", "REAL DEFAULT 25.0")
+	ensureColumnExists(db, "site_settings", "grid_system", "TEXT DEFAULT 'single_phase_230v'")
+	ensureColumnExists(db, "site_settings", "allowed_grid_import_kw", "REAL DEFAULT 0.0")
+	ensureColumnExists(db, "site_settings", "allowed_grid_export_kw", "REAL DEFAULT 0.0")
+	ensureColumnExists(db, "site_settings", "appliance_turn_on_excess_w", "REAL DEFAULT 0.0")
+	ensureColumnExists(db, "site_settings", "peak_shaving_buffer_w", "REAL DEFAULT 200.0")
+	ensureColumnExists(db, "site_settings", "peak_shaving_rampup_w", "REAL DEFAULT 500.0")
+	ensureColumnExists(db, "site_settings", "timezone", "TEXT DEFAULT 'Europe/Brussels'")
+	ensureColumnExists(db, "site_settings", "latitude", "REAL DEFAULT 50.8503")
+	ensureColumnExists(db, "site_settings", "longitude", "REAL DEFAULT 4.3517")
 
-	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN contract_type TEXT DEFAULT 'dynamic'")
-	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN fixed_price_peak_kwh REAL DEFAULT 0.0")
-	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN fixed_price_off_peak_kwh REAL DEFAULT 0.0")
-	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN fixed_inject_price_kwh REAL DEFAULT 0.0")
-	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN dynamic_markup_kwh REAL DEFAULT 0.0")
-	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN engie_markup_peak REAL DEFAULT 0.0")
-	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN engie_markup_off_peak REAL DEFAULT 0.0")
-	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN engie_markup_super_off_peak REAL DEFAULT 0.0")
-	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN engie_multiplier REAL DEFAULT 1.0")
-	_, _ = db.Exec("ALTER TABLE site_settings ADD COLUMN engie_base_fee REAL DEFAULT 0.0")
+	ensureColumnExists(db, "site_settings", "contract_type", "TEXT DEFAULT 'dynamic'")
+	ensureColumnExists(db, "site_settings", "fixed_price_peak_kwh", "REAL DEFAULT 0.0")
+	ensureColumnExists(db, "site_settings", "fixed_price_off_peak_kwh", "REAL DEFAULT 0.0")
+	ensureColumnExists(db, "site_settings", "fixed_inject_price_kwh", "REAL DEFAULT 0.0")
+	ensureColumnExists(db, "site_settings", "dynamic_markup_kwh", "REAL DEFAULT 0.0")
+	ensureColumnExists(db, "site_settings", "engie_markup_peak", "REAL DEFAULT 0.0")
+	ensureColumnExists(db, "site_settings", "engie_markup_off_peak", "REAL DEFAULT 0.0")
+	ensureColumnExists(db, "site_settings", "engie_markup_super_off_peak", "REAL DEFAULT 0.0")
+	ensureColumnExists(db, "site_settings", "engie_multiplier", "REAL DEFAULT 1.0")
+	ensureColumnExists(db, "site_settings", "engie_base_fee", "REAL DEFAULT 0.0")
 
 	log.Println("[INFO] Database schema initialized")
 
