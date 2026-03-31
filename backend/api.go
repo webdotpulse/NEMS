@@ -553,3 +553,117 @@ func handleDevice(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
 }
+
+type SolarForecastPoint struct {
+	Timestamp       time.Time `json:"timestamp"`
+	EstimatedPowerW float64   `json:"estimated_power_w"`
+}
+
+// handleSolarForecast is the HTTP handler for the /api/solar/forecast endpoint.
+// It retrieves the solar forecast based on the user's configured latitude and longitude
+// using the free Open-Meteo API.
+func handleSolarForecast(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	// Get latitude and longitude from settings
+	var settings models.SiteSettings
+	row := db.QueryRow("SELECT latitude, longitude FROM site_settings WHERE id = 1")
+	err := row.Scan(&settings.Latitude, &settings.Longitude)
+	if err != nil {
+		log.Printf("[ERROR] handleSolarForecast: Error fetching site settings: %v", err)
+		http.Error(w, "Could not retrieve site settings", http.StatusInternalServerError)
+		return
+	}
+
+	if settings.Latitude == 0 && settings.Longitude == 0 {
+		http.Error(w, "Location (latitude/longitude) is not configured in settings.", http.StatusBadRequest)
+		return
+	}
+
+	// Fetch from Open-Meteo API
+	// Example URL: https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&hourly=direct_radiation,diffuse_radiation
+	url := fmt.Sprintf("https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&hourly=direct_radiation,diffuse_radiation&forecast_days=2", settings.Latitude, settings.Longitude)
+
+	resp, err := http.Get(url)
+	if err != nil {
+		log.Printf("[ERROR] handleSolarForecast: Error calling Open-Meteo API: %v", err)
+		http.Error(w, "Failed to fetch solar forecast from external API", http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		log.Printf("[ERROR] handleSolarForecast: Open-Meteo API returned status: %d", resp.StatusCode)
+		http.Error(w, "External API error", http.StatusInternalServerError)
+		return
+	}
+
+	var meteoData struct {
+		Hourly struct {
+			Time             []string  `json:"time"`
+			DirectRadiation  []float64 `json:"direct_radiation"`
+			DiffuseRadiation []float64 `json:"diffuse_radiation"`
+		} `json:"hourly"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&meteoData); err != nil {
+		log.Printf("[ERROR] handleSolarForecast: Error decoding Open-Meteo API response: %v", err)
+		http.Error(w, "Failed to decode forecast data", http.StatusInternalServerError)
+		return
+	}
+
+	loc, err := time.LoadLocation("Europe/Amsterdam") // Default fallback if needed, but time string from meteo is iso8601
+	if err != nil {
+		loc = time.UTC
+	}
+
+	var forecast []SolarForecastPoint
+	now := time.Now().In(loc)
+	start := now.Truncate(time.Hour) // start from the current hour
+	end := start.Add(24 * time.Hour) // next 24 hours
+
+	for i, tStr := range meteoData.Hourly.Time {
+		// Open-meteo returns time in ISO8601 like "2023-10-25T00:00"
+		t, err := time.Parse("2006-01-02T15:04", tStr)
+		if err != nil {
+			continue
+		}
+
+		// Adjust timezone to local if necessary, open-meteo usually returns local time or UTC based on params
+		// But let's assume it's UTC or we can just use the parsed time.
+		// Open-Meteo defaults to UTC if no timezone is specified.
+		tUTC := t.UTC()
+
+		if tUTC.Before(start.UTC()) {
+			continue
+		}
+		if tUTC.After(end.UTC()) {
+			break
+		}
+
+		// Calculate estimated power.
+		// Direct + Diffuse radiation (W/m²). We just use this raw value as a proxy for estimated generation.
+		// A more complex model would multiply by area and efficiency.
+		direct := 0.0
+		diffuse := 0.0
+		if i < len(meteoData.Hourly.DirectRadiation) {
+			direct = meteoData.Hourly.DirectRadiation[i]
+		}
+		if i < len(meteoData.Hourly.DiffuseRadiation) {
+			diffuse = meteoData.Hourly.DiffuseRadiation[i]
+		}
+
+		estimatedPower := direct + diffuse
+
+		forecast = append(forecast, SolarForecastPoint{
+			Timestamp:       tUTC.In(loc),
+			EstimatedPowerW: estimatedPower,
+		})
+	}
+
+	if forecast == nil {
+		forecast = []SolarForecastPoint{}
+	}
+
+	json.NewEncoder(w).Encode(forecast)
+}
