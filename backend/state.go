@@ -146,11 +146,11 @@ func handleDailyAggregates(w http.ResponseWriter, r *http.Request) {
 		WITH minute_aggs AS (
 			SELECT
 				strftime('%Y-%m-%dT%H:%M:00Z', m.timestamp) as ts,
-				SUM(CASE WHEN (d.template IN ('huawei_dongle', 'demo_dongle', 'homewizard_meter', 'p1_serial', 'p1_network') OR (d.template IN ('huawei_inverter', 'enerlution_inverter') AND d.has_grid_meter = 1)) AND m.grid_power_w > 0 THEN (m.grid_power_w / 60000.0) ELSE 0 END) as grid_import,
-				SUM(CASE WHEN (d.template IN ('huawei_dongle', 'demo_dongle', 'homewizard_meter', 'p1_serial', 'p1_network') OR (d.template IN ('huawei_inverter', 'enerlution_inverter') AND d.has_grid_meter = 1)) AND m.grid_power_w < 0 THEN ABS(m.grid_power_w / 60000.0) ELSE 0 END) as grid_export,
-				SUM(CASE WHEN d.template IN ('huawei_inverter', 'solis_inverter', 'sma_inverter', 'enerlution_inverter', 'demo_inverter') AND m.power_w > 0 THEN (m.power_w / 60000.0) ELSE 0 END) as solar_yield,
-				SUM(CASE WHEN ((d.template IN ('huawei_inverter', 'enerlution_inverter', 'demo_inverter') AND d.has_battery = 1) OR d.template = 'demo_battery') AND m.battery_power_w < 0 THEN ABS(m.battery_power_w / 60000.0) ELSE 0 END) as battery_charge,
-				SUM(CASE WHEN ((d.template IN ('huawei_inverter', 'enerlution_inverter', 'demo_inverter') AND d.has_battery = 1) OR d.template = 'demo_battery') AND m.battery_power_w > 0 THEN (m.battery_power_w / 60000.0) ELSE 0 END) as battery_discharge
+				SUM(CASE WHEN (d.template IN ('huawei_dongle', 'homewizard_meter', 'p1_serial', 'p1_network') OR (d.template IN ('huawei_inverter', 'enerlution_inverter') AND d.has_grid_meter = 1)) AND m.grid_power_w > 0 THEN (m.grid_power_w / 60000.0) ELSE 0 END) as grid_import,
+				SUM(CASE WHEN (d.template IN ('huawei_dongle', 'homewizard_meter', 'p1_serial', 'p1_network') OR (d.template IN ('huawei_inverter', 'enerlution_inverter') AND d.has_grid_meter = 1)) AND m.grid_power_w < 0 THEN ABS(m.grid_power_w / 60000.0) ELSE 0 END) as grid_export,
+				SUM(CASE WHEN d.template IN ('huawei_inverter', 'solis_inverter', 'sma_inverter', 'enerlution_inverter') AND m.power_w > 0 THEN (m.power_w / 60000.0) ELSE 0 END) as solar_yield,
+				SUM(CASE WHEN ((d.template IN ('huawei_inverter', 'enerlution_inverter') AND d.has_battery = 1)) AND m.battery_power_w < 0 THEN ABS(m.battery_power_w / 60000.0) ELSE 0 END) as battery_charge,
+				SUM(CASE WHEN ((d.template IN ('huawei_inverter', 'enerlution_inverter') AND d.has_battery = 1)) AND m.battery_power_w > 0 THEN (m.battery_power_w / 60000.0) ELSE 0 END) as battery_discharge
 			FROM measurements m
 			JOIN devices d ON CAST(m.device_id AS INTEGER) = d.id
 			WHERE m.timestamp >= ? AND m.timestamp < ?
@@ -292,19 +292,19 @@ func handleHistory(w http.ResponseWriter, r *http.Request) {
 					d.id as device_id,
 					AVG(
 						CASE
-							WHEN d.template IN ('huawei_dongle', 'demo_dongle', 'homewizard_meter', 'p1_serial', 'p1_network') OR (d.template IN ('huawei_inverter', 'enerlution_inverter') AND d.has_grid_meter = 1) THEN m.grid_power_w
+							WHEN d.template IN ('huawei_dongle', 'homewizard_meter', 'p1_serial', 'p1_network') OR (d.template IN ('huawei_inverter', 'enerlution_inverter') AND d.has_grid_meter = 1) THEN m.grid_power_w
 							ELSE 0
 						END +
 						CASE
-							WHEN d.template IN ('huawei_inverter', 'solis_inverter', 'sma_inverter', 'enerlution_inverter', 'demo_inverter') THEN m.power_w
+							WHEN d.template IN ('huawei_inverter', 'solis_inverter', 'sma_inverter', 'enerlution_inverter') THEN m.power_w
 							ELSE 0
 						END +
 						CASE
-							WHEN (d.template IN ('huawei_inverter', 'enerlution_inverter', 'demo_inverter') AND d.has_battery = 1) OR d.template = 'demo_battery' THEN m.battery_power_w
+							WHEN (d.template IN ('huawei_inverter', 'enerlution_inverter') AND d.has_battery = 1) THEN m.battery_power_w
 							ELSE 0
 						END +
 						CASE
-							WHEN d.template IN ('raedian_charger', 'alfen_charger', 'bender_charger', 'phoenix_charger', 'easee_charger', 'peblar_charger', 'demo_charger') THEN -m.power_w
+							WHEN d.template IN ('raedian_charger', 'alfen_charger', 'bender_charger', 'phoenix_charger', 'easee_charger', 'peblar_charger') THEN -m.power_w
 							ELSE 0
 						END
 					) as total_contribution
@@ -325,15 +325,15 @@ func handleHistory(w http.ResponseWriter, r *http.Request) {
 		powerColumn := "power_w"
 		switch node {
 		case "grid":
-			whereClause = "(template IN ('huawei_dongle', 'demo_dongle', 'homewizard_meter', 'p1_serial', 'p1_network') OR (template IN ('huawei_inverter', 'enerlution_inverter') AND has_grid_meter = 1))"
+			whereClause = "(template IN ('huawei_dongle', 'homewizard_meter', 'p1_serial', 'p1_network') OR (template IN ('huawei_inverter', 'enerlution_inverter') AND has_grid_meter = 1))"
 			powerColumn = "grid_power_w"
 		case "solar":
-			whereClause = "(template IN ('huawei_inverter', 'solis_inverter', 'sma_inverter', 'enerlution_inverter', 'demo_inverter'))"
+			whereClause = "(template IN ('huawei_inverter', 'solis_inverter', 'sma_inverter', 'enerlution_inverter'))"
 		case "battery":
-			whereClause = "((template IN ('huawei_inverter', 'enerlution_inverter', 'demo_inverter') AND has_battery = 1) OR template = 'demo_battery')"
+			whereClause = "((template IN ('huawei_inverter', 'enerlution_inverter') AND has_battery = 1))"
 			powerColumn = "battery_power_w"
 		case "ev_charger":
-			whereClause = "(template IN ('raedian_charger', 'alfen_charger', 'bender_charger', 'phoenix_charger', 'easee_charger', 'peblar_charger', 'demo_charger'))"
+			whereClause = "(template IN ('raedian_charger', 'alfen_charger', 'bender_charger', 'phoenix_charger', 'easee_charger', 'peblar_charger'))"
 		default:
 			http.Error(w, "Invalid node", http.StatusBadRequest)
 			return
@@ -501,11 +501,11 @@ func handleEnergy(w http.ResponseWriter, r *http.Request) {
 		WITH minute_aggs AS (
 			SELECT
 				%s as bucket,
-				SUM(CASE WHEN (d.template IN ('huawei_dongle', 'demo_dongle', 'homewizard_meter', 'p1_serial', 'p1_network') OR (d.template IN ('huawei_inverter', 'enerlution_inverter') AND d.has_grid_meter = 1)) AND m.grid_power_w > 0 THEN (m.grid_power_w / 60000.0) ELSE 0 END) as grid_import,
-				SUM(CASE WHEN (d.template IN ('huawei_dongle', 'demo_dongle', 'homewizard_meter', 'p1_serial', 'p1_network') OR (d.template IN ('huawei_inverter', 'enerlution_inverter') AND d.has_grid_meter = 1)) AND m.grid_power_w < 0 THEN ABS(m.grid_power_w / 60000.0) ELSE 0 END) as grid_export,
-				SUM(CASE WHEN d.template IN ('huawei_inverter', 'solis_inverter', 'sma_inverter', 'enerlution_inverter', 'demo_inverter') AND m.power_w > 0 THEN (m.power_w / 60000.0) ELSE 0 END) as solar_yield,
-				SUM(CASE WHEN ((d.template IN ('huawei_inverter', 'enerlution_inverter', 'demo_inverter') AND d.has_battery = 1) OR d.template = 'demo_battery') AND m.battery_power_w < 0 THEN ABS(m.battery_power_w / 60000.0) ELSE 0 END) as battery_charge,
-				SUM(CASE WHEN ((d.template IN ('huawei_inverter', 'enerlution_inverter', 'demo_inverter') AND d.has_battery = 1) OR d.template = 'demo_battery') AND m.battery_power_w > 0 THEN (m.battery_power_w / 60000.0) ELSE 0 END) as battery_discharge
+				SUM(CASE WHEN (d.template IN ('huawei_dongle', 'homewizard_meter', 'p1_serial', 'p1_network') OR (d.template IN ('huawei_inverter', 'enerlution_inverter') AND d.has_grid_meter = 1)) AND m.grid_power_w > 0 THEN (m.grid_power_w / 60000.0) ELSE 0 END) as grid_import,
+				SUM(CASE WHEN (d.template IN ('huawei_dongle', 'homewizard_meter', 'p1_serial', 'p1_network') OR (d.template IN ('huawei_inverter', 'enerlution_inverter') AND d.has_grid_meter = 1)) AND m.grid_power_w < 0 THEN ABS(m.grid_power_w / 60000.0) ELSE 0 END) as grid_export,
+				SUM(CASE WHEN d.template IN ('huawei_inverter', 'solis_inverter', 'sma_inverter', 'enerlution_inverter') AND m.power_w > 0 THEN (m.power_w / 60000.0) ELSE 0 END) as solar_yield,
+				SUM(CASE WHEN ((d.template IN ('huawei_inverter', 'enerlution_inverter') AND d.has_battery = 1)) AND m.battery_power_w < 0 THEN ABS(m.battery_power_w / 60000.0) ELSE 0 END) as battery_charge,
+				SUM(CASE WHEN ((d.template IN ('huawei_inverter', 'enerlution_inverter') AND d.has_battery = 1)) AND m.battery_power_w > 0 THEN (m.battery_power_w / 60000.0) ELSE 0 END) as battery_discharge
 			FROM measurements m
 			JOIN devices d ON CAST(m.device_id AS INTEGER) = d.id
 			WHERE m.timestamp >= ? AND m.timestamp < ?
