@@ -139,15 +139,17 @@
                   <div class="sm:col-span-3">
                     <label for="allowed_grid_import_kw" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Allowed Grid Import (kW)</label>
                     <div class="mt-1">
-                      <input type="number" step="0.1" id="allowed_grid_import_kw" v-model="siteSettings.allowed_grid_import_kw" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                      <input type="number" step="0.1" id="allowed_grid_import_kw" v-model="siteSettings.allowed_grid_import_kw" :placeholder="maxGridPowerKw" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
                     </div>
+                    <p class="mt-1 text-xs text-gray-500">Proposed max: {{ maxGridPowerKw }} kW</p>
                   </div>
 
                   <div class="sm:col-span-3">
                     <label for="allowed_grid_export_kw" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Allowed Grid Export (kW)</label>
                     <div class="mt-1">
-                      <input type="number" step="0.1" id="allowed_grid_export_kw" v-model="siteSettings.allowed_grid_export_kw" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                      <input type="number" step="0.1" id="allowed_grid_export_kw" v-model="siteSettings.allowed_grid_export_kw" :placeholder="maxGridPowerKw" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
                     </div>
+                    <p class="mt-1 text-xs text-gray-500">Proposed max: {{ maxGridPowerKw }} kW</p>
                   </div>
                 </div>
               </div>
@@ -722,6 +724,20 @@ const siteSettings = ref<SiteSettings>({
   log_level: 'INFO'
 })
 const saveSettingsSuccess = ref(false)
+
+const maxGridPowerKw = computed(() => {
+  const current = siteSettings.value.grid_nominal_current_a
+  const system = siteSettings.value.grid_system
+  let maxKw = 0
+  if (system === 'single_phase_230v') {
+    maxKw = (current * 230) / 1000
+  } else if (system === 'three_phase_400v') {
+    maxKw = (current * 230 * 3) / 1000
+  } else if (system === 'three_phase_230v_delta') {
+    maxKw = (current * 230 * Math.sqrt(3)) / 1000
+  }
+  return maxKw.toFixed(1)
+})
 
 const getDeviceCategory = (templateId: string) => {
   if (!templateId) return 'Other'

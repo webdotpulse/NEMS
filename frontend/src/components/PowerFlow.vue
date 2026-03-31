@@ -93,7 +93,7 @@
         <div class="absolute flex flex-col items-center justify-center transform -translate-x-1/2 -translate-y-1/2" style="left: 85%; top: 50%;">
           <!-- Remove direct border, add conic gradient background based on percentages -->
           <div @click="openChart('home')" class="z-10 flex flex-col items-center justify-center w-[120px] h-[120px] rounded-full shadow-sm cursor-pointer hover:scale-105 transition-transform mb-2 relative" :style="homeBorderStyle">
-            <span class="text-xs font-medium text-gray-500 mb-1 absolute -bottom-6">Home</span>
+            <span class="text-xs font-medium text-gray-500 mb-1 absolute -top-6">Home</span>
             <!-- Inner white circle to create the border effect -->
             <div class="absolute flex flex-col items-center justify-center w-[104px] h-[104px] bg-white dark:bg-gray-800 rounded-full top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-700 dark:text-gray-300 mb-1" fill="currentColor" viewBox="0 0 24 24"><path d="M3 13h1v7c0 1.103.897 2 2 2h12c1.103 0 2-.897 2-2v-7h1a1 1 0 0 0 .707-1.707l-9-9a.999.999 0 0 0-1.414 0l-9 9A1 1 0 0 0 3 13zm7 7v-5h4v5h-4zm2-15.586 6 6V15l.001 5H16v-5c0-1.103-.897-2-2-2h-4c-1.103 0-2 .897-2 2v5H6v-9.586l6-6z"/></svg>
