@@ -16,8 +16,6 @@ graph TD
     PM -->|Batched Writes| DB[(SQLite DB)]
     API <--> SC[Strategy Controller]
     SC -->|Hardware Limits| Devices
-    API <--> FM[Forecast Manager]
-    FM -->|Open-Meteo REST API| OpenMeteo[Open-Meteo Servers]
 ```
 
 ## Data Flow
@@ -43,11 +41,11 @@ graph TD
 - It reads the latest `deviceCache` from the `PollerManager` and categorizes the measurements using the `registry.GetCategory()` properties to aggregate composite values (`totalGridImport`, `totalSolar`).
 - Based on the user's selected strategy (Eco, Flanders, Netherlands), it calculates optimal setpoints:
   - **Predictive Peak Shaving:** In Flanders mode, an instantaneous power allowance is dynamically calculated based on the elapsed time in the synchronized 15-minute window and the currently accumulated `avg15MinImport` energy. The EV chargers and batteries are sequentially throttled based on priority against this dynamic limit.
-  - **Dynamic Battery Arbitrage & Forecasting:** The EMS optimizes battery operation via Day-Ahead EPEX spot prices using dynamic price spreads. The `ForecastManager` evaluates shortwave radiation from the Open-Meteo API; if a high yield is forecast for the upcoming day, battery arbitrage grid-charging is actively suppressed.
+  - **Dynamic Battery Arbitrage:** The EMS optimizes battery operation via Day-Ahead EPEX spot prices using dynamic price spreads.
 - It then safely dispatches hardware commands, immediately checking for execution errors (`err == nil`) before reflecting state updates within the internal EMS `strategyMaps`.
 
 ## Design Decisions
 
-- **No YAML:** Unlike EVCC or Home Assistant, NEMS strictly uses a UI-driven database approach. Device configurations are stored in SQLite. This lowers the barrier to entry for non-technical users.
+- **No YAML:** NEMS strictly uses a UI-driven database approach. Device configurations are stored in SQLite. This lowers the barrier to entry for non-technical users.
 - **Null Safety in JSON:** The `SiteState` struct uses pointers for float values (`*float64`). If a device type (e.g., a Battery) is not configured, the pointer remains `nil`, resulting in `null` in the JSON payload. The Vue frontend uses this `null` state to completely hide the relevant UI cards, rather than displaying `0 W`.
 - **Registry Pattern for Devices:** Device templates are added by creating a new file in `backend/internal/templates/` and calling `registry.RegisterTemplate()` inside the `init()` function. This makes adding new hardware integrations highly modular.
