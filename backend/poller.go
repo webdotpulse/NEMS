@@ -166,10 +166,10 @@ func (pm *PollerManager) Start() {
 		for {
 			select {
 			case <-fastTicker.C:
-				pm.mu.Lock()
+				pollersCopy := pm.GetPollers()
 				polledAny := false
 
-				for id, poller := range pm.pollers {
+				for id, poller := range pollersCopy {
 					device := poller.GetDevice()
 					category := templates.GetCategory(device.Template)
 					if category != "meter" {
@@ -241,16 +241,15 @@ func (pm *PollerManager) Start() {
 					})
 					pm.bufferMu.Unlock()
 				}
-				pm.mu.Unlock()
 
 				if polledAny {
 					pm.broadcastState()
 				}
 
 			case <-ticker.C:
-				pm.mu.Lock()
+				pollersCopy := pm.GetPollers()
 
-				for id, poller := range pm.pollers {
+				for id, poller := range pollersCopy {
 					device := poller.GetDevice()
 					category := templates.GetCategory(device.Template)
 					if category == "meter" {
@@ -321,7 +320,6 @@ func (pm *PollerManager) Start() {
 					})
 					pm.bufferMu.Unlock()
 				}
-				pm.mu.Unlock()
 
 				pm.broadcastState()
 
@@ -423,9 +421,8 @@ func (pm *PollerManager) broadcastState() {
 	}
 
 	var totalLoad *float64
-	if totalGrid != nil || totalSolar != nil || totalBattery != nil {
-		v := 0.0
-		if totalGrid != nil { v += *totalGrid }
+	if totalGrid != nil {
+		v := *totalGrid
 		if totalSolar != nil { v += *totalSolar }
 		if totalBattery != nil { v += *totalBattery }
 		totalLoad = &v
@@ -468,7 +465,7 @@ func (pm *PollerManager) flushBuffer() {
 		SumPowerW        float64
 		SumBatteryPowerW float64
 		SumGridPowerW    float64
-		SumEnergy        float64
+		LastEnergy       float64
 		Count            int
 	}
 	agg := make(map[int]*sumCount)
@@ -480,7 +477,7 @@ func (pm *PollerManager) flushBuffer() {
 		agg[m.DeviceID].SumPowerW += m.PowerW
 		agg[m.DeviceID].SumBatteryPowerW += m.BatteryPowerW
 		agg[m.DeviceID].SumGridPowerW += m.GridPowerW
-		agg[m.DeviceID].SumEnergy += m.EnergyKwh
+		agg[m.DeviceID].LastEnergy = m.EnergyKwh
 		agg[m.DeviceID].Count++
 	}
 
@@ -503,7 +500,7 @@ func (pm *PollerManager) flushBuffer() {
 		avgPower := data.SumPowerW / float64(data.Count)
 		avgBatteryPower := data.SumBatteryPowerW / float64(data.Count)
 		avgGridPower := data.SumGridPowerW / float64(data.Count)
-		totalEnergy := data.SumEnergy // energy is incremental, we just sum it for the minute interval
+		totalEnergy := data.LastEnergy // store the latest cumulative energy read in this minute interval
 
 		_, err := stmt.Exec(id, avgPower, avgBatteryPower, avgGridPower, totalEnergy)
 		if err != nil {

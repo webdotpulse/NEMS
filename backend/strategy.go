@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"log"
+	"math"
 	"sync"
 	"time"
 
@@ -22,6 +23,9 @@ var strategyMapsMu sync.Mutex
 var chargerCurrentSetpoints = make(map[int]float64)
 var batteryForceChargeW = make(map[int]float64)
 var evSmartChargeActive = make(map[int]bool)
+var relayCurrentState = make(map[int]bool)
+var batteryDischargeW = make(map[int]float64)
+var inverterPowerLimitW = make(map[int]float64)
 
 // Kwartierpiek (15-min sliding window) Tracking
 type TimeValue struct {
@@ -226,7 +230,16 @@ func (sc *StrategyController) executeControlLoop(settings models.SiteSettings) {
 	if len(gridImportSamples) > 0 {
 		avg15MinImport = sumImport / float64(len(gridImportSamples))
 	}
-	SetProjectedQuarterPeakW(avg15MinImport)
+
+	elapsedSec := now.Sub(startOfQuarter).Seconds()
+	remSec := 900.0 - elapsedSec
+	if remSec < 1.0 {
+		remSec = 1.0 // prevent division by zero near the boundary
+	}
+
+	// Project the final 15-minute average assuming the current instantaneous power is maintained
+	projectedPeak := (avg15MinImport*elapsedSec + totalGridImport*remSec) / 900.0
+	SetProjectedQuarterPeakW(projectedPeak)
 
 	// Step 2: Apply Dynamic Tariffs Base Intent
 
@@ -278,13 +291,15 @@ func (sc *StrategyController) executeControlLoop(settings models.SiteSettings) {
 							buffer = 200 // Default fallback
 						}
 						threshold := (settings.CapacityPeakLimitKw * 1000) - buffer
-						// Add current battery charge power back to available capacity calculation
-						// because if it is currently charging, that power is already included in avg15MinImport
+						// Available instantaneous capacity is based on projecting the rest of the 15-minute window
+						// targetRemPower = (threshold * 900 - avg15MinImport * elapsedSec) / remSec
+						// we then subtract the current house load excluding the battery charge
 						currentChargePower := cache[id].BatteryPowerW
 						if currentChargePower < 0 {
 							currentChargePower = 0 // Ignore discharging
 						}
-						availableGridCapacity := threshold - avg15MinImport + currentChargePower
+						targetRemPower := (threshold*900.0 - avg15MinImport*elapsedSec) / remSec
+						availableGridCapacity := targetRemPower - (totalGridImport - currentChargePower)
 						if availableGridCapacity < 0 {
 							availableGridCapacity = 0
 						}
@@ -400,10 +415,10 @@ func (sc *StrategyController) executeControlLoop(settings models.SiteSettings) {
 			rampup = 500
 		}
 
-		// Check if our current (or intended) load exceeds threshold
-		// We use current grid import to determine excess
-		if totalGridImport > threshold {
-			excess := totalGridImport - threshold
+		// Check if our projected load exceeds threshold
+		// We use the projected 15-minute average to determine excess
+		if projectedPeak > threshold {
+			excess := (projectedPeak - threshold) * (900.0 / remSec)
 
 			// First priority: reduce EV chargers
 			for id := range desiredEvSetpoints {
@@ -454,7 +469,7 @@ func (sc *StrategyController) executeControlLoop(settings models.SiteSettings) {
 					}
 				}
 			}
-		} else if totalGridImport < threshold - rampup {
+		} else if projectedPeak < threshold - rampup {
 			// When house load drops, slowly ramp EV chargers UP if they were throttled
 			// (If they are 0 because of SmartEV blocking, do not ramp up)
 			for id, currentSp := range desiredEvSetpoints {
@@ -490,17 +505,41 @@ func (sc *StrategyController) executeControlLoop(settings models.SiteSettings) {
 				}
 				if batteriesFull && totalEvCharger < 100 {
 					totalHouseLoad := totalSolar + totalBattery + (totalGridImport - totalGridExport)
-					for _, poller := range pollers {
+					for id, poller := range pollers {
 						if inverter, ok := poller.(models.InverterController); ok {
-							inverter.SetActivePowerLimit(totalHouseLoad)
+							strategyMapsMu.Lock()
+							currentLimit, exists := inverterPowerLimitW[id]
+							strategyMapsMu.Unlock()
+
+							if !exists || math.Abs(currentLimit-totalHouseLoad) > 100.0 {
+								log.Printf("[INFO] Netherlands Mode: Actively curtailing inverter. Setting limit to %.1f W", totalHouseLoad)
+								err := inverter.SetActivePowerLimit(totalHouseLoad)
+								if err == nil {
+									strategyMapsMu.Lock()
+									inverterPowerLimitW[id] = totalHouseLoad
+									strategyMapsMu.Unlock()
+								}
+							}
 						}
 					}
 				}
 			} else if totalGridImport > 50 {
 				// Release curtailment
-				for _, poller := range pollers {
+				for id, poller := range pollers {
 					if inverter, ok := poller.(models.InverterController); ok {
-						inverter.SetActivePowerLimit(100000)
+						strategyMapsMu.Lock()
+						currentLimit, exists := inverterPowerLimitW[id]
+						strategyMapsMu.Unlock()
+
+						if !exists || currentLimit != 100000.0 {
+							log.Printf("[INFO] Netherlands Mode: Releasing curtailment. Setting limit to 100000 W")
+							err := inverter.SetActivePowerLimit(100000.0)
+							if err == nil {
+								strategyMapsMu.Lock()
+								inverterPowerLimitW[id] = 100000.0
+								strategyMapsMu.Unlock()
+							}
+						}
 					}
 				}
 			}
@@ -515,7 +554,7 @@ func (sc *StrategyController) executeControlLoop(settings models.SiteSettings) {
 			strategyMapsMu.Lock()
 			currentSp := chargerCurrentSetpoints[id]
 			strategyMapsMu.Unlock()
-			if currentSp != desiredSp {
+			if math.Abs(currentSp-desiredSp) > 0.5 || desiredSp == 0 && currentSp != 0 || desiredSp == 16 && currentSp != 16 {
 				log.Printf("[INFO] Control Loop: Changing EV Charger %d from %.1f A to %.1f A", id, currentSp, desiredSp)
 				err := charger.SetChargeCurrent(desiredSp)
 				if err == nil {
@@ -535,18 +574,31 @@ func (sc *StrategyController) executeControlLoop(settings models.SiteSettings) {
 	}
 
 	// Issue Relay Commands
-	for _, poller := range pollers {
+	for id, poller := range pollers {
 		if relay, ok := poller.(models.RelayController); ok {
+			desiredState := false
 			if isCachedCheapestHour && settings.SmartEvCheapestHours > 0 {
-				relay.SetState(true)
+				desiredState = true
 			} else if settings.ApplianceTurnOnExcessW > 0 {
 				if totalGridExport > settings.ApplianceTurnOnExcessW {
-					relay.SetState(true)
-				} else {
-					relay.SetState(false)
+					desiredState = true
 				}
-			} else {
-				relay.SetState(false)
+			}
+
+			strategyMapsMu.Lock()
+			currentState, exists := relayCurrentState[id]
+			strategyMapsMu.Unlock()
+
+			if !exists || currentState != desiredState {
+				log.Printf("[INFO] Control Loop: Changing Relay %d to %v", id, desiredState)
+				err := relay.SetState(desiredState)
+				if err == nil {
+					strategyMapsMu.Lock()
+					relayCurrentState[id] = desiredState
+					strategyMapsMu.Unlock()
+				} else {
+					log.Printf("[ERROR] Control Loop: Failed to execute relay command for %d: %v", id, err)
+				}
 			}
 		}
 	}
@@ -561,7 +613,7 @@ func (sc *StrategyController) executeControlLoop(settings models.SiteSettings) {
 				lastChargeW, exists := batteryForceChargeW[id]
 				strategyMapsMu.Unlock()
 
-				if !exists || desiredChargeW != lastChargeW {
+				if !exists || (desiredChargeW == 0 && lastChargeW > 0) || (desiredChargeW > 0 && math.Abs(desiredChargeW-lastChargeW) > 50.0) {
 					var err error
 					if desiredChargeW > 0 {
 						log.Printf("[INFO] Control Loop: Setting Battery Force Charge for %d to %.1f W", id, desiredChargeW)
@@ -582,13 +634,31 @@ func (sc *StrategyController) executeControlLoop(settings models.SiteSettings) {
 
 				// Handle discharge if needed (Flanders peak shave)
 				dischargeW := desiredBatteryDischargeW[id]
+				strategyMapsMu.Lock()
+				lastDischargeW, dischExists := batteryDischargeW[id]
+				strategyMapsMu.Unlock()
+
 				if dischargeW > 0 {
-					// For simplicity we just issue discharge command if requested,
-					// assuming the poller handles throttling or repeated commands fine,
-					// or we could track last discharge command.
-					err := battery.DischargeBattery(dischargeW)
-					if err != nil {
-						log.Printf("[ERROR] Control Loop: Failed to execute battery discharge command for %d: %v", id, err)
+					if !dischExists || math.Abs(dischargeW-lastDischargeW) > 50.0 {
+						log.Printf("[INFO] Control Loop: Setting Battery Discharge for %d to %.1f W", id, dischargeW)
+						err := battery.DischargeBattery(dischargeW)
+						if err == nil {
+							strategyMapsMu.Lock()
+							batteryDischargeW[id] = dischargeW
+							strategyMapsMu.Unlock()
+						} else {
+							log.Printf("[ERROR] Control Loop: Failed to execute battery discharge command for %d: %v", id, err)
+						}
+					}
+				} else if dischExists && lastDischargeW > 0 {
+					log.Printf("[INFO] Control Loop: Stopping Battery Discharge for %d", id)
+					err := battery.DischargeBattery(0)
+					if err == nil {
+						strategyMapsMu.Lock()
+						batteryDischargeW[id] = 0
+						strategyMapsMu.Unlock()
+					} else {
+						log.Printf("[ERROR] Control Loop: Failed to execute battery stop discharge command for %d: %v", id, err)
 					}
 				}
 			}
@@ -707,10 +777,21 @@ func (sc *StrategyController) applyNetherlandsMode(activeCurtailment bool) {
 
 			if batteriesFull && totalEvCharger < 100 {
 				totalHouseLoad := totalSolar + totalBattery + totalGrid
-				for _, poller := range pollers {
+				for id, poller := range pollers {
 					if inverter, ok := poller.(models.InverterController); ok {
-						log.Printf("[INFO] Netherlands Mode: Actively curtailing inverter. Setting limit to %.1f W", totalHouseLoad)
-						inverter.SetActivePowerLimit(totalHouseLoad)
+						strategyMapsMu.Lock()
+						currentLimit, exists := inverterPowerLimitW[id]
+						strategyMapsMu.Unlock()
+
+						if !exists || math.Abs(currentLimit-totalHouseLoad) > 100.0 {
+							log.Printf("[INFO] Netherlands Mode: Actively curtailing inverter. Setting limit to %.1f W", totalHouseLoad)
+							err := inverter.SetActivePowerLimit(totalHouseLoad)
+							if err == nil {
+								strategyMapsMu.Lock()
+								inverterPowerLimitW[id] = totalHouseLoad
+								strategyMapsMu.Unlock()
+							}
+						}
 					}
 				}
 			}
@@ -718,9 +799,21 @@ func (sc *StrategyController) applyNetherlandsMode(activeCurtailment bool) {
 			// Release curtailment. If totalGrid > 50, it means we are importing power from the grid,
 			// which implies the house load has increased beyond our currently curtailed inverter limit.
 			// Release the limit to cover the new load.
-			for _, poller := range pollers {
+			for id, poller := range pollers {
 				if inverter, ok := poller.(models.InverterController); ok {
-					inverter.SetActivePowerLimit(100000)
+					strategyMapsMu.Lock()
+					currentLimit, exists := inverterPowerLimitW[id]
+					strategyMapsMu.Unlock()
+
+					if !exists || currentLimit != 100000.0 {
+						log.Printf("[INFO] Netherlands Mode: Releasing curtailment. Setting limit to 100000 W")
+						err := inverter.SetActivePowerLimit(100000.0)
+						if err == nil {
+							strategyMapsMu.Lock()
+							inverterPowerLimitW[id] = 100000.0
+							strategyMapsMu.Unlock()
+						}
+					}
 				}
 			}
 		}
