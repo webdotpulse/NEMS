@@ -5,7 +5,7 @@ NEMS (Pulse EMS) is designed as a lightweight, embedded Energy Management System
 ## High-Level Architecture
 
 The system follows a monolith architecture composed of two main parts:
-1. **Go Backend:** A statically compiled binary that serves both the JSON API, handles hardware device polling (Modbus/REST), executes energy control strategies, and serves the static frontend assets.
+1. **Go Backend:** A statically compiled binary that serves both the JSON API, handles hardware device polling (Modbus/REST), executes energy control strategies, and serves the static frontend assets. The build number is injected as a release tag at compile time via `-ldflags` using `git describe --tags --always`, and CPU data is explicitly omitted from system info endpoints.
 2. **Vue 3 Frontend:** A Single Page Application (SPA) that provides a fully UI-driven interface for monitoring and configuring the EMS.
 
 ```mermaid

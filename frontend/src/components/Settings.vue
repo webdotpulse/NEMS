@@ -53,10 +53,6 @@
                 <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ sysInfo.gateway }}</dd>
               </div>
               <div>
-                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">CPU</dt>
-                <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ sysInfo.cpu }}</dd>
-              </div>
-              <div>
                 <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Memory</dt>
                 <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ sysInfo.memory }}</dd>
               </div>
