@@ -3,8 +3,7 @@
 > vite
 
 
-  VITE v8.0.3  ready in 552 ms
+  VITE v8.0.3  ready in 766 ms
 
   ➜  Local:   http://localhost:5173/
   ➜  Network: use --host to expose
-8:42:14 PM [vite] (client) hmr update /src/components/Dashboard.vue, /src/style.css

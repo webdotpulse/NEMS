@@ -27,6 +27,7 @@ type DeviceData struct {
 	Category      string
 	HasGridMeter  bool
 	HasBattery    bool
+	OcppProxyUrl  string
 }
 
 type BufferedMeasurement struct {
@@ -91,7 +92,7 @@ func (pm *PollerManager) SyncDevices() {
 	log.Println("[INFO] PollerManager: Syncing devices...")
 
 	// Fetch current devices from DB
-	rows, err := db.Query("SELECT id, name, template, host, port, modbus_id, username, password, has_grid_meter, has_battery, battery_capacity FROM devices")
+	rows, err := db.Query("SELECT id, name, template, host, port, modbus_id, username, password, has_grid_meter, has_battery, battery_capacity, ocpp_proxy_url FROM devices")
 	if err != nil {
 		log.Printf("[ERROR] PollerManager: Error fetching devices: %v", err)
 		return
@@ -104,7 +105,8 @@ func (pm *PollerManager) SyncDevices() {
 		var d models.Device
 		var username sql.NullString
 		var password sql.NullString
-		if err := rows.Scan(&d.ID, &d.Name, &d.Template, &d.Host, &d.Port, &d.ModbusID, &username, &password, &d.HasGridMeter, &d.HasBattery, &d.BatteryCapacity); err != nil {
+		var proxyUrl sql.NullString
+		if err := rows.Scan(&d.ID, &d.Name, &d.Template, &d.Host, &d.Port, &d.ModbusID, &username, &password, &d.HasGridMeter, &d.HasBattery, &d.BatteryCapacity, &proxyUrl); err != nil {
 			log.Printf("[ERROR] PollerManager: Error scanning device: %v", err)
 			continue
 		}
@@ -113,6 +115,9 @@ func (pm *PollerManager) SyncDevices() {
 		}
 		if password.Valid {
 			d.Password = password.String
+		}
+		if proxyUrl.Valid {
+			d.OcppProxyUrl = proxyUrl.String
 		}
 		activeDeviceIDs[d.ID] = true
 
@@ -202,6 +207,7 @@ func (pm *PollerManager) Start() {
 								Category:      category,
 								HasGridMeter:  device.HasGridMeter,
 								HasBattery:    device.HasBattery,
+								OcppProxyUrl:  device.OcppProxyUrl,
 							}
 						}
 						pm.cacheMu.Unlock()
@@ -220,6 +226,7 @@ func (pm *PollerManager) Start() {
 						Category:      category,
 						HasGridMeter:  device.HasGridMeter,
 						HasBattery:    device.HasBattery,
+						OcppProxyUrl:  device.OcppProxyUrl,
 					}
 					pm.cacheMu.Unlock()
 
@@ -280,6 +287,7 @@ func (pm *PollerManager) Start() {
 								Category:      category,
 								HasGridMeter:  device.HasGridMeter,
 								HasBattery:    device.HasBattery,
+								OcppProxyUrl:  device.OcppProxyUrl,
 							}
 						}
 						pm.cacheMu.Unlock()
@@ -298,6 +306,7 @@ func (pm *PollerManager) Start() {
 						Category:      category,
 						HasGridMeter:  device.HasGridMeter,
 						HasBattery:    device.HasBattery,
+						OcppProxyUrl:  device.OcppProxyUrl,
 					}
 					pm.cacheMu.Unlock()
 
