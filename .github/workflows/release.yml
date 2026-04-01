@@ -111,7 +111,7 @@ jobs:
           run: |
             # Install required packages
             apt-get update
-            apt-get install -y raspberrypi-connect nginx openssl
+            apt-get install -y nginx openssl
 
             # Install the DEB package we just built
             dpkg -i /mounted-github-repo/build/nems_*_arm64.deb || apt-get install -f -y
