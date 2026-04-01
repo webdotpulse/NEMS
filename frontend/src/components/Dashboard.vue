@@ -2,7 +2,7 @@
   <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
     <div class="px-4 py-6 sm:px-0">
 
-      <div v-if="state" class="mb-8">
+      <div class="mb-8">
         <PowerFlow :state="state" />
       </div>
 
@@ -234,11 +234,11 @@
       <div v-else class="border-4 border-dashed border-gray-200 dark:border-gray-700 rounded-lg h-96 flex flex-col items-center justify-center mt-6">
         <div class="text-center">
           <svg class="mx-auto h-12 w-12 text-gray-400 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-            <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
           </svg>
-          <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">Connecting to Energy Engine...</h3>
+          <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">Loading Energy Data...</h3>
           <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Waiting for live device data...
+            Fetching historical aggregates...
           </p>
         </div>
       </div>
