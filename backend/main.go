@@ -267,6 +267,7 @@ func main() {
 		has_grid_meter BOOLEAN DEFAULT 0,
 		has_battery BOOLEAN DEFAULT 0,
 		battery_capacity REAL DEFAULT 0,
+		inverter_rated_power_kw REAL DEFAULT 0,
 		ocpp_proxy_url TEXT DEFAULT ''
 	);
 	`
@@ -287,6 +288,7 @@ func main() {
 	ensureColumnExists(db, "devices", "battery_capacity", "REAL DEFAULT 0")
 	ensureColumnExists(db, "devices", "charge_mode", "TEXT DEFAULT 'eco'")
 	ensureColumnExists(db, "devices", "battery_mode", "TEXT DEFAULT 'auto'")
+	ensureColumnExists(db, "devices", "inverter_rated_power_kw", "REAL DEFAULT 0")
 	ensureColumnExists(db, "devices", "ocpp_proxy_url", "TEXT DEFAULT ''")
 
 	createEpexPricesSQL := `

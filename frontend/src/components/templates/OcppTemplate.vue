@@ -25,7 +25,7 @@
     <div class="mt-1">
       <input type="text" :id="prefix + 'host'" :value="modelValue.host" @input="$emit('update:modelValue', { ...modelValue, host: ($event.target as HTMLInputElement).value })"
              placeholder="e.g. CS-001" required
-             class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white transition-all duration-200">
+             class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white transition-all duration-200">
     </div>
     <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Must exactly match the charger's configured ID.</p>
   </div>
