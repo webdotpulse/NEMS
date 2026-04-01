@@ -86,14 +86,14 @@
                   </h3>
                 </div>
                 <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-                  <div class="sm:col-span-3">
+                  <div class="sm:col-span-2">
                     <label for="grid_nominal_current_a" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nominal Current (A)</label>
                     <div class="mt-1">
                       <input type="number" step="0.1" id="grid_nominal_current_a" v-model="siteSettings.grid_nominal_current_a" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
                     </div>
                   </div>
 
-                  <div class="sm:col-span-3">
+                  <div class="sm:col-span-2">
                     <label for="grid_system" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Grid System</label>
                     <div class="mt-1">
                       <select id="grid_system" v-model="siteSettings.grid_system"
@@ -105,7 +105,35 @@
                     </div>
                   </div>
 
-                  <div class="sm:col-span-3">
+                  <div class="sm:col-span-2">
+                    <label for="allowed_grid_import_kw" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Allowed Grid Import (kW)</label>
+                    <div class="mt-1">
+                      <input type="number" step="0.1" id="allowed_grid_import_kw" v-model="siteSettings.allowed_grid_import_kw" :placeholder="maxGridPowerKw" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500">Proposed max: {{ maxGridPowerKw }} kW</p>
+                  </div>
+
+                  <div class="sm:col-span-2">
+                    <label for="allowed_grid_export_kw" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Allowed Grid Export (kW)</label>
+                    <div class="mt-1">
+                      <input type="number" step="0.1" id="allowed_grid_export_kw" v-model="siteSettings.allowed_grid_export_kw" :placeholder="maxGridPowerKw" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500">Proposed max: {{ maxGridPowerKw }} kW</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Location Card -->
+            <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg mb-6">
+              <div class="px-4 py-5 sm:p-6">
+                <div class="mb-4 border-b border-gray-200 dark:border-gray-700 pb-4">
+                  <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-gray-100">
+                    Location
+                  </h3>
+                </div>
+                <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                  <div class="sm:col-span-2">
                     <label for="timezone" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Time Zone</label>
                     <div class="mt-1">
                       <select id="timezone" v-model="siteSettings.timezone"
@@ -118,34 +146,18 @@
                     </div>
                   </div>
 
-                  <div class="sm:col-span-3">
+                  <div class="sm:col-span-2">
                     <label for="latitude" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Latitude</label>
                     <div class="mt-1">
                       <input type="number" step="0.0001" id="latitude" v-model="siteSettings.latitude" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
                     </div>
                   </div>
 
-                  <div class="sm:col-span-3">
+                  <div class="sm:col-span-2">
                     <label for="longitude" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Longitude</label>
                     <div class="mt-1">
                       <input type="number" step="0.0001" id="longitude" v-model="siteSettings.longitude" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
                     </div>
-                  </div>
-
-                  <div class="sm:col-span-3">
-                    <label for="allowed_grid_import_kw" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Allowed Grid Import (kW)</label>
-                    <div class="mt-1">
-                      <input type="number" step="0.1" id="allowed_grid_import_kw" v-model="siteSettings.allowed_grid_import_kw" :placeholder="maxGridPowerKw" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
-                    </div>
-                    <p class="mt-1 text-xs text-gray-500">Proposed max: {{ maxGridPowerKw }} kW</p>
-                  </div>
-
-                  <div class="sm:col-span-3">
-                    <label for="allowed_grid_export_kw" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Allowed Grid Export (kW)</label>
-                    <div class="mt-1">
-                      <input type="number" step="0.1" id="allowed_grid_export_kw" v-model="siteSettings.allowed_grid_export_kw" :placeholder="maxGridPowerKw" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
-                    </div>
-                    <p class="mt-1 text-xs text-gray-500">Proposed max: {{ maxGridPowerKw }} kW</p>
                   </div>
                 </div>
               </div>
@@ -399,11 +411,11 @@
                         <div class="flex-1 grid grid-cols-3 gap-4">
                           <div>
                             <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Start Time</label>
-                            <input type="time" v-model="slot.start" @change="updateChargeSchedule" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-white hover:bg-gray-50 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" required />
+                            <input type="text" pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$" placeholder="HH:MM" v-model="slot.start" @change="updateChargeSchedule" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-white hover:bg-gray-50 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" required />
                           </div>
                           <div>
                             <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">End Time</label>
-                            <input type="time" v-model="slot.end" @change="updateChargeSchedule" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-white hover:bg-gray-50 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" required />
+                            <input type="text" pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$" placeholder="HH:MM" v-model="slot.end" @change="updateChargeSchedule" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-white hover:bg-gray-50 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" required />
                           </div>
                           <div>
                             <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Target SoC %</label>
