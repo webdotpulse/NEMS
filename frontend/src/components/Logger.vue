@@ -12,7 +12,7 @@
         </div>
 
         <div class="flex space-x-4 items-center">
-          <select v-model="selectedLogLevel" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-32 sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+          <select v-model="selectedLogLevel" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-32  border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
             <option value="ALL">All Levels</option>
             <option value="FATAL">Fatal</option>
             <option value="ERROR">Error</option>
@@ -56,7 +56,7 @@
       </div>
 
       <div class="bg-gray-900 dark:bg-black rounded-lg shadow overflow-hidden h-[600px] flex flex-col">
-        <div class="p-4 flex-1 overflow-y-auto font-mono text-xs sm:text-sm text-gray-300" ref="logContainer" @scroll="handleScroll">
+        <div class="p-4 flex-1 overflow-y-auto font-mono text-xs  text-gray-300" ref="logContainer" @scroll="handleScroll">
           <div v-if="filteredLogs.length === 0" class="text-gray-500 italic">No logs available for selected filter...</div>
           <table v-else class="min-w-full divide-y divide-gray-800">
             <tbody class="divide-y divide-gray-800/50">

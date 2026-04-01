@@ -89,7 +89,7 @@
                   <div class="sm:col-span-3">
                     <label for="grid_nominal_current_a" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nominal Current (A)</label>
                     <div class="mt-1">
-                      <input type="number" step="0.1" id="grid_nominal_current_a" v-model="siteSettings.grid_nominal_current_a" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                      <input type="number" step="0.1" id="grid_nominal_current_a" v-model="siteSettings.grid_nominal_current_a" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
                     </div>
                   </div>
 
@@ -97,7 +97,7 @@
                     <label for="grid_system" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Grid System</label>
                     <div class="mt-1">
                       <select id="grid_system" v-model="siteSettings.grid_system"
-                              class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
+                              class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
                         <option value="single_phase_230v">Single Phase 230V</option>
                         <option value="three_phase_400v">Three Phase 400V</option>
                         <option value="three_phase_230v_delta">Three Phase 230V Delta</option>
@@ -109,7 +109,7 @@
                     <label for="timezone" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Time Zone</label>
                     <div class="mt-1">
                       <select id="timezone" v-model="siteSettings.timezone"
-                              class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
+                              class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
                         <option value="UTC">UTC</option>
                         <option value="Europe/Brussels">Europe/Brussels</option>
                         <option value="Europe/London">Europe/London</option>
@@ -121,21 +121,21 @@
                   <div class="sm:col-span-3">
                     <label for="latitude" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Latitude</label>
                     <div class="mt-1">
-                      <input type="number" step="0.0001" id="latitude" v-model="siteSettings.latitude" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                      <input type="number" step="0.0001" id="latitude" v-model="siteSettings.latitude" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
                     </div>
                   </div>
 
                   <div class="sm:col-span-3">
                     <label for="longitude" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Longitude</label>
                     <div class="mt-1">
-                      <input type="number" step="0.0001" id="longitude" v-model="siteSettings.longitude" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                      <input type="number" step="0.0001" id="longitude" v-model="siteSettings.longitude" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
                     </div>
                   </div>
 
                   <div class="sm:col-span-3">
                     <label for="allowed_grid_import_kw" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Allowed Grid Import (kW)</label>
                     <div class="mt-1">
-                      <input type="number" step="0.1" id="allowed_grid_import_kw" v-model="siteSettings.allowed_grid_import_kw" :placeholder="maxGridPowerKw" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                      <input type="number" step="0.1" id="allowed_grid_import_kw" v-model="siteSettings.allowed_grid_import_kw" :placeholder="maxGridPowerKw" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
                     </div>
                     <p class="mt-1 text-xs text-gray-500">Proposed max: {{ maxGridPowerKw }} kW</p>
                   </div>
@@ -143,7 +143,7 @@
                   <div class="sm:col-span-3">
                     <label for="allowed_grid_export_kw" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Allowed Grid Export (kW)</label>
                     <div class="mt-1">
-                      <input type="number" step="0.1" id="allowed_grid_export_kw" v-model="siteSettings.allowed_grid_export_kw" :placeholder="maxGridPowerKw" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                      <input type="number" step="0.1" id="allowed_grid_export_kw" v-model="siteSettings.allowed_grid_export_kw" :placeholder="maxGridPowerKw" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
                     </div>
                     <p class="mt-1 text-xs text-gray-500">Proposed max: {{ maxGridPowerKw }} kW</p>
                   </div>
@@ -161,7 +161,7 @@
                       <label for="strategy_mode" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Optimization Strategy</label>
                       <div class="mt-1">
                         <select id="strategy_mode" v-model="siteSettings.strategy_mode"
-                                class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
+                                class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
                           <option value="eco">Eco (Max Self-Consumption)</option>
                           <option value="flanders">Flanders Mode (Peak Shaving)</option>
                           <option value="netherlands">Netherlands Mode (Zero-Export)</option>
@@ -173,7 +173,7 @@
                       <label for="capacity_peak_limit" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Capacity Peak Limit (kW)</label>
                       <div class="mt-1">
                         <input type="number" step="0.1" id="capacity_peak_limit" v-model="siteSettings.capacity_peak_limit_kw"
-                               class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
+                               class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
                       </div>
                     </div>
 
@@ -181,7 +181,7 @@
                       <label for="peak_shaving_buffer_w" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Peak Shaving Buffer (W)</label>
                       <div class="mt-1">
                         <input type="number" step="1" min="0" id="peak_shaving_buffer_w" v-model="siteSettings.peak_shaving_buffer_w"
-                               class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
+                               class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
                       </div>
                     </div>
 
@@ -189,7 +189,7 @@
                       <label for="peak_shaving_rampup_w" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Ramp-up Hysteresis (W)</label>
                       <div class="mt-1">
                         <input type="number" step="1" min="0" id="peak_shaving_rampup_w" v-model="siteSettings.peak_shaving_rampup_w"
-                               class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
+                               class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
                       </div>
                     </div>
 
@@ -221,7 +221,7 @@
                   <div class="sm:col-span-6">
                     <label for="appliance_turn_on_excess_w" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Turn on Relays above Solar Excess (W)</label>
                     <div class="mt-1">
-                      <input type="number" step="1" min="0" id="appliance_turn_on_excess_w" v-model="siteSettings.appliance_turn_on_excess_w" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                      <input type="number" step="1" min="0" id="appliance_turn_on_excess_w" v-model="siteSettings.appliance_turn_on_excess_w" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
                     </div>
                   </div>
                 </div>
@@ -245,7 +245,7 @@
                     <label for="contract_type" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Contract Type</label>
                     <div class="mt-1">
                       <select id="contract_type" v-model="siteSettings.contract_type"
-                              class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
+                              class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
                         <option value="fixed">Fixed Price</option>
                         <option value="dynamic">Standard Dynamic</option>
                         <option value="engie_flextime">Engie EMPOWER Flextime</option>
@@ -258,19 +258,19 @@
                     <div class="sm:col-span-2">
                       <label for="fixed_price_peak_kwh" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Peak Price (€/kWh)</label>
                       <div class="mt-1">
-                        <input type="number" step="0.0001" id="fixed_price_peak_kwh" v-model="siteSettings.fixed_price_peak_kwh" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                        <input type="number" step="0.0001" id="fixed_price_peak_kwh" v-model="siteSettings.fixed_price_peak_kwh" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
                       </div>
                     </div>
                     <div class="sm:col-span-2">
                       <label for="fixed_price_off_peak_kwh" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Off-Peak Price (€/kWh)</label>
                       <div class="mt-1">
-                        <input type="number" step="0.0001" id="fixed_price_off_peak_kwh" v-model="siteSettings.fixed_price_off_peak_kwh" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                        <input type="number" step="0.0001" id="fixed_price_off_peak_kwh" v-model="siteSettings.fixed_price_off_peak_kwh" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
                       </div>
                     </div>
                     <div class="sm:col-span-2">
                       <label for="fixed_inject_price_kwh" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Injection Return (€/kWh)</label>
                       <div class="mt-1">
-                        <input type="number" step="0.0001" id="fixed_inject_price_kwh" v-model="siteSettings.fixed_inject_price_kwh" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                        <input type="number" step="0.0001" id="fixed_inject_price_kwh" v-model="siteSettings.fixed_inject_price_kwh" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
                       </div>
                     </div>
                   </template>
@@ -280,7 +280,7 @@
                     <div class="sm:col-span-6">
                       <label for="dynamic_markup_kwh" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Markup / Taxes on top of EPEX (€/kWh)</label>
                       <div class="mt-1">
-                        <input type="number" step="0.0001" id="dynamic_markup_kwh" v-model="siteSettings.dynamic_markup_kwh" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                        <input type="number" step="0.0001" id="dynamic_markup_kwh" v-model="siteSettings.dynamic_markup_kwh" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
                       </div>
                     </div>
                   </template>
@@ -304,7 +304,7 @@
                       <div v-if="siteSettings.superdal_optimization_enabled" class="mt-4 pt-4 border-t border-indigo-100 dark:border-indigo-800">
                         <label for="superdal_target_soc" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Target SoC %</label>
                         <div class="mt-1 flex items-center">
-                          <input type="number" step="1" min="0" max="100" id="superdal_target_soc" v-model="siteSettings.superdal_target_soc" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-32 sm:text-sm border-gray-300 rounded-md bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                          <input type="number" step="1" min="0" max="100" id="superdal_target_soc" v-model="siteSettings.superdal_target_soc" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-32  border-gray-300 rounded-md bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 dark:border-gray-600 dark:text-white transition-all duration-200" />
                           <span class="ml-2 text-sm text-gray-500">%</span>
                         </div>
                       </div>
@@ -312,31 +312,31 @@
                     <div class="sm:col-span-3">
                       <label for="engie_multiplier" class="block text-sm font-medium text-gray-700 dark:text-gray-300">EPEX Multiplier</label>
                       <div class="mt-1">
-                        <input type="number" step="0.0001" id="engie_multiplier" v-model="siteSettings.engie_multiplier" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                        <input type="number" step="0.0001" id="engie_multiplier" v-model="siteSettings.engie_multiplier" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
                       </div>
                     </div>
                     <div class="sm:col-span-3">
                       <label for="engie_base_fee" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Base Fee (€/kWh)</label>
                       <div class="mt-1">
-                        <input type="number" step="0.0001" id="engie_base_fee" v-model="siteSettings.engie_base_fee" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                        <input type="number" step="0.0001" id="engie_base_fee" v-model="siteSettings.engie_base_fee" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
                       </div>
                     </div>
                     <div class="sm:col-span-2">
                       <label for="engie_markup_peak" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Markup Piekuren (€/kWh)</label>
                       <div class="mt-1">
-                        <input type="number" step="0.0001" id="engie_markup_peak" v-model="siteSettings.engie_markup_peak" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                        <input type="number" step="0.0001" id="engie_markup_peak" v-model="siteSettings.engie_markup_peak" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
                       </div>
                     </div>
                     <div class="sm:col-span-2">
                       <label for="engie_markup_off_peak" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Markup Daluren (€/kWh)</label>
                       <div class="mt-1">
-                        <input type="number" step="0.0001" id="engie_markup_off_peak" v-model="siteSettings.engie_markup_off_peak" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                        <input type="number" step="0.0001" id="engie_markup_off_peak" v-model="siteSettings.engie_markup_off_peak" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
                       </div>
                     </div>
                     <div class="sm:col-span-2">
                       <label for="engie_markup_super_off_peak" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Markup Super-daluren (€/kWh)</label>
                       <div class="mt-1">
-                        <input type="number" step="0.0001" id="engie_markup_super_off_peak" v-model="siteSettings.engie_markup_super_off_peak" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                        <input type="number" step="0.0001" id="engie_markup_super_off_peak" v-model="siteSettings.engie_markup_super_off_peak" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
                       </div>
                     </div>
                   </template>
@@ -360,21 +360,21 @@
                   <div class="sm:col-span-6">
                     <label for="force_charge_below_euro" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Force Charge Battery if price drops below (€/kWh)</label>
                     <div class="mt-1">
-                      <input type="number" step="0.01" id="force_charge_below_euro" v-model="siteSettings.force_charge_below_euro" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                      <input type="number" step="0.01" id="force_charge_below_euro" v-model="siteSettings.force_charge_below_euro" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
                     </div>
                   </div>
 
                   <div class="sm:col-span-6">
                     <label for="force_discharge_above_euro" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Force Discharge Battery to Grid if price rises above (€/kWh)</label>
                     <div class="mt-1">
-                      <input type="number" step="0.01" id="force_discharge_above_euro" v-model="siteSettings.force_discharge_above_euro" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                      <input type="number" step="0.01" id="force_discharge_above_euro" v-model="siteSettings.force_discharge_above_euro" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
                     </div>
                   </div>
 
                   <div class="sm:col-span-6">
                     <label for="smart_ev_cheapest_hours" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Smart EV Charging: Charge during the cheapest hours of the day</label>
                     <div class="mt-1">
-                      <input type="number" step="1" min="0" max="24" id="smart_ev_cheapest_hours" v-model="siteSettings.smart_ev_cheapest_hours" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                      <input type="number" step="1" min="0" max="24" id="smart_ev_cheapest_hours" v-model="siteSettings.smart_ev_cheapest_hours" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
                     </div>
                   </div>
 
@@ -399,16 +399,16 @@
                         <div class="flex-1 grid grid-cols-3 gap-4">
                           <div>
                             <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Start Time</label>
-                            <input type="time" v-model="slot.start" @change="updateChargeSchedule" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-white hover:bg-gray-50 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" required />
+                            <input type="time" v-model="slot.start" @change="updateChargeSchedule" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-white hover:bg-gray-50 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" required />
                           </div>
                           <div>
                             <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">End Time</label>
-                            <input type="time" v-model="slot.end" @change="updateChargeSchedule" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-white hover:bg-gray-50 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" required />
+                            <input type="time" v-model="slot.end" @change="updateChargeSchedule" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-white hover:bg-gray-50 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" required />
                           </div>
                           <div>
                             <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Target SoC %</label>
                             <div class="flex items-center">
-                              <input type="number" min="0" max="100" step="1" v-model="slot.target_soc" @change="updateChargeSchedule" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-white hover:bg-gray-50 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" required />
+                              <input type="number" min="0" max="100" step="1" v-model="slot.target_soc" @change="updateChargeSchedule" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-white hover:bg-gray-50 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" required />
                             </div>
                           </div>
                         </div>
@@ -441,7 +441,7 @@
                     <label for="log_level" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Log Level</label>
                     <div class="mt-1">
                       <select id="log_level" v-model="siteSettings.log_level"
-                              class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
+                              class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
                         <option value="TRACE">Trace</option>
                         <option value="DEBUG">Debug</option>
                         <option value="INFO">Info</option>
@@ -564,7 +564,7 @@
                       <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Device Name</label>
                       <div class="mt-1">
                         <input type="text" id="name" v-model="form.name" required
-                               class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
+                               class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
                       </div>
                     </div>
 
@@ -572,7 +572,7 @@
                       <label for="template" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Device Template</label>
                       <div class="mt-1">
                         <select id="template" v-model="form.template" required
-                                class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
+                                class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
                           <option disabled value="">Please select one</option>
                           <option v-for="t in filteredTemplates" :key="t.id" :value="t.id">
                             {{ t.name }}
@@ -603,12 +603,21 @@
                     <OcppTemplate v-model="form" />
                   </template>
 
+                  <!-- Inverter Rated Power Selection -->
+                  <div v-if="getDeviceCategory(form.template) === 'Inverters & Solar'" class="sm:col-span-3">
+                    <label for="inverter_rated_power_kw" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Rated Power (kW)</label>
+                    <div class="mt-1">
+                      <input type="number" step="0.1" id="inverter_rated_power_kw" v-model="form.inverter_rated_power_kw"
+                             class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
+                    </div>
+                  </div>
+
                   <!-- EV Charger Mode Selection -->
                   <div v-if="isCharger(form.template)" class="sm:col-span-3">
                     <label for="charge_mode" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Charge Mode</label>
                     <div class="mt-1">
                       <select id="charge_mode" v-model="form.charge_mode"
-                              class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
+                              class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
                         <option value="eco">Eco / Smart</option>
                         <option value="pv_only">PV Only (Solar)</option>
                         <option value="now">Fast (Max Power)</option>
@@ -642,7 +651,7 @@
                         <label for="battery_capacity" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Battery Capacity (kWh)</label>
                         <div class="mt-1">
                           <input type="number" step="0.1" id="battery_capacity" v-model="form.battery_capacity"
-                                 class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
+                                 class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
                         </div>
                       </div>
                     </div>
@@ -680,7 +689,7 @@
                 <label for="edit_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Device Name</label>
                 <div class="mt-1">
                   <input type="text" id="edit_name" v-model="editForm.name" required
-                         class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
+                         class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
                 </div>
               </div>
 
@@ -688,7 +697,7 @@
                 <label for="edit_template" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Device Template</label>
                 <div class="mt-1">
                   <select id="edit_template" v-model="editForm.template" required
-                          class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
+                          class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
                     <option disabled value="">Please select one</option>
                     <option v-for="t in templates" :key="t.id" :value="t.id">
                       {{ t.name }}
@@ -719,12 +728,21 @@
                 <OcppTemplate v-model="editForm" prefix="edit_" />
               </template>
 
+              <!-- Inverter Rated Power Selection -->
+              <div v-if="getDeviceCategory(editForm.template) === 'Inverters & Solar'" class="sm:col-span-3">
+                <label for="edit_inverter_rated_power_kw" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Rated Power (kW)</label>
+                <div class="mt-1">
+                  <input type="number" step="0.1" id="edit_inverter_rated_power_kw" v-model="editForm.inverter_rated_power_kw"
+                         class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
+                </div>
+              </div>
+
               <!-- EV Charger Mode Selection -->
               <div v-if="isCharger(editForm.template)" class="sm:col-span-3">
                 <label for="edit_charge_mode" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Charge Mode</label>
                 <div class="mt-1">
                   <select id="edit_charge_mode" v-model="editForm.charge_mode"
-                          class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
+                          class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
                     <option value="eco">Eco / Smart</option>
                     <option value="pv_only">PV Only (Solar)</option>
                     <option value="now">Fast (Max Power)</option>
@@ -758,7 +776,7 @@
                     <label for="edit_battery_capacity" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Battery Capacity (kWh)</label>
                     <div class="mt-1">
                       <input type="number" step="0.1" id="edit_battery_capacity" v-model="editForm.battery_capacity"
-                             class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
+                             class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
                     </div>
                   </div>
                 </div>
@@ -835,6 +853,7 @@ const form = ref({
   has_grid_meter: false,
   has_battery: false,
   battery_capacity: 0,
+  inverter_rated_power_kw: 0,
   charge_mode: 'eco',
   ocpp_proxy_url: ''
 })
@@ -852,6 +871,7 @@ const editForm = ref({
   has_grid_meter: false,
   has_battery: false,
   battery_capacity: 0,
+  inverter_rated_power_kw: 0,
   charge_mode: 'eco',
   ocpp_proxy_url: ''
 })
@@ -1054,6 +1074,7 @@ const addDevice = async () => {
         has_grid_meter: false,
         has_battery: false,
         battery_capacity: 0,
+        inverter_rated_power_kw: 0,
         charge_mode: 'eco',
         ocpp_proxy_url: ''
       }
@@ -1073,6 +1094,7 @@ const editDevice = (device: Device) => {
     has_grid_meter: device.has_grid_meter || false,
     has_battery: device.has_battery || false,
     battery_capacity: device.battery_capacity || 0,
+    inverter_rated_power_kw: device.inverter_rated_power_kw || 0,
     charge_mode: device.charge_mode || 'eco',
     ocpp_proxy_url: device.ocpp_proxy_url || ''
   }

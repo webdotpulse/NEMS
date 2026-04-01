@@ -13,6 +13,7 @@ export interface Device {
   has_grid_meter?: boolean;
   has_battery?: boolean;
   battery_capacity?: number;
+  inverter_rated_power_kw?: number;
   ocpp_proxy_url?: string;
 }
 

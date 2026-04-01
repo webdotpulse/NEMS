@@ -50,10 +50,11 @@ type Device struct {
 	ChargeMode      string  `json:"charge_mode,omitempty"`
 	BatteryMode     string  `json:"battery_mode,omitempty"`
 	Status          string  `json:"status"`
-	HasGridMeter    bool    `json:"has_grid_meter"`
-	HasBattery      bool    `json:"has_battery"`
-	BatteryCapacity float64 `json:"battery_capacity"`
-	OcppProxyUrl    string  `json:"ocpp_proxy_url,omitempty"`
+	HasGridMeter         bool    `json:"has_grid_meter"`
+	HasBattery           bool    `json:"has_battery"`
+	BatteryCapacity      float64 `json:"battery_capacity"`
+	InverterRatedPowerKw float64 `json:"inverter_rated_power_kw,omitempty"`
+	OcppProxyUrl         string  `json:"ocpp_proxy_url,omitempty"`
 }
 
 type DevicePoller interface {

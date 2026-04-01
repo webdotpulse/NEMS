@@ -171,7 +171,7 @@ func handleSystemReboot(w http.ResponseWriter, r *http.Request) {
 	// Give the HTTP response time to be sent before rebooting
 	go func() {
 		time.Sleep(2 * time.Second)
-		out, err := exec.Command("sudo", "reboot").CombinedOutput()
+		out, err := exec.Command("systemctl", "reboot").CombinedOutput()
 		if err != nil {
 			log.Printf("[ERROR] Reboot failed: %v, output: %s", err, string(out))
 		}
@@ -386,7 +386,7 @@ func handleTemplates(w http.ResponseWriter, r *http.Request) {
 func handleDevices(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	if r.Method == "GET" {
-		rows, err := db.Query("SELECT id, name, template, host, port, modbus_id, username, password, has_grid_meter, has_battery, battery_capacity, charge_mode, battery_mode, ocpp_proxy_url FROM devices")
+		rows, err := db.Query("SELECT id, name, template, host, port, modbus_id, username, password, has_grid_meter, has_battery, battery_capacity, inverter_rated_power_kw, charge_mode, battery_mode, ocpp_proxy_url FROM devices")
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -401,7 +401,7 @@ func handleDevices(w http.ResponseWriter, r *http.Request) {
 			var chargeMode sql.NullString
 			var batteryMode sql.NullString
 			var proxyUrl sql.NullString
-			if err := rows.Scan(&d.ID, &d.Name, &d.Template, &d.Host, &d.Port, &d.ModbusID, &username, &password, &d.HasGridMeter, &d.HasBattery, &d.BatteryCapacity, &chargeMode, &batteryMode, &proxyUrl); err != nil {
+			if err := rows.Scan(&d.ID, &d.Name, &d.Template, &d.Host, &d.Port, &d.ModbusID, &username, &password, &d.HasGridMeter, &d.HasBattery, &d.BatteryCapacity, &d.InverterRatedPowerKw, &chargeMode, &batteryMode, &proxyUrl); err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
@@ -454,7 +454,7 @@ func handleDevices(w http.ResponseWriter, r *http.Request) {
 			d.BatteryMode = "auto"
 		}
 
-		result, err := db.Exec("INSERT INTO devices (name, template, host, port, modbus_id, username, password, has_grid_meter, has_battery, battery_capacity, charge_mode, battery_mode, ocpp_proxy_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", d.Name, d.Template, d.Host, d.Port, d.ModbusID, d.Username, d.Password, d.HasGridMeter, d.HasBattery, d.BatteryCapacity, d.ChargeMode, d.BatteryMode, d.OcppProxyUrl)
+		result, err := db.Exec("INSERT INTO devices (name, template, host, port, modbus_id, username, password, has_grid_meter, has_battery, battery_capacity, inverter_rated_power_kw, charge_mode, battery_mode, ocpp_proxy_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", d.Name, d.Template, d.Host, d.Port, d.ModbusID, d.Username, d.Password, d.HasGridMeter, d.HasBattery, d.BatteryCapacity, d.InverterRatedPowerKw, d.ChargeMode, d.BatteryMode, d.OcppProxyUrl)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -540,8 +540,8 @@ func handleDevice(w http.ResponseWriter, r *http.Request) {
 			d.BatteryMode = "auto"
 		}
 
-		_, err = db.Exec("UPDATE devices SET name = ?, template = ?, host = ?, port = ?, modbus_id = ?, username = ?, password = ?, has_grid_meter = ?, has_battery = ?, battery_capacity = ?, charge_mode = ?, battery_mode = ?, ocpp_proxy_url = ? WHERE id = ?",
-			d.Name, d.Template, d.Host, d.Port, d.ModbusID, d.Username, d.Password, d.HasGridMeter, d.HasBattery, d.BatteryCapacity, d.ChargeMode, d.BatteryMode, d.OcppProxyUrl, id)
+		_, err = db.Exec("UPDATE devices SET name = ?, template = ?, host = ?, port = ?, modbus_id = ?, username = ?, password = ?, has_grid_meter = ?, has_battery = ?, battery_capacity = ?, inverter_rated_power_kw = ?, charge_mode = ?, battery_mode = ?, ocpp_proxy_url = ? WHERE id = ?",
+			d.Name, d.Template, d.Host, d.Port, d.ModbusID, d.Username, d.Password, d.HasGridMeter, d.HasBattery, d.BatteryCapacity, d.InverterRatedPowerKw, d.ChargeMode, d.BatteryMode, d.OcppProxyUrl, id)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
