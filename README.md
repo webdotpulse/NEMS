@@ -41,31 +41,38 @@ Pulse EMS is a lightweight, highly responsive, fully UI-driven Energy Management
    ```
    *Output*: `build/nems-release-arm64.tar.gz`
 
-### Deployment (from tar.gz)
+### Deployment
 
-1. **Extract the archive on your Raspberry Pi:**
-   ```bash
-   mkdir -p /opt/nems
-   tar -xzvf build/nems-release-arm64.tar.gz -C /opt/nems
-   ```
+Pulse EMS is primarily deployed via release artifacts generated automatically by our CI/CD pipeline: a Debian (`.deb`) package and a fully pre-configured custom Raspberry Pi OS image.
 
-2. **Set up the systemd service:**
-   ```bash
-   sudo cp nems.service /etc/systemd/system/
-   ```
+#### Option A: Flash the Custom OS Image (Recommended)
+The easiest way to get started is to flash our pre-built custom Raspberry Pi OS Lite (ARM64) image onto your SD card. This image is built on Bookworm and comes pre-installed with NEMS, Nginx as a reverse proxy, and remote access tools.
+1. Download `nems-os-image.img.xz` from the latest release.
+2. Use a tool like BalenaEtcher or Raspberry Pi Imager to flash it to an SD card.
+3. Insert the SD card into your Pi and boot.
+The host is configured as `ems` (e.g. accessible at `http://ems` or `http://ems.local`).
 
-3. **Create the restricted user environment (recommended):**
+#### Option B: Install via Debian Package (.deb)
+If you already have a compatible Debian/Ubuntu ARM64 system running:
+1. Download the latest `nems_*_arm64.deb` release.
+2. Install the package:
    ```bash
-   sudo useradd -r -s /bin/false nems
-   sudo chown -R nems:nems /opt/nems
+   sudo dpkg -i nems_*_arm64.deb
+   sudo apt-get install -f # to resolve any dependencies
    ```
+The package automatically creates the restricted `nems` user environment, installs the binary and frontend to `/opt/nems`, and configures and starts the `nems.service` via systemd.
 
-4. **Enable and Start:**
+### Raspberry Pi Connect Setup
+If you are using the Custom OS Image (Option A), it includes a minimal Wayland desktop (`wayfire`), `chromium-browser`, and the official `rpi-connect` package, enabling secure remote access to your Pulse EMS without setting up a VPN or exposing ports.
+
+To enable remote screen sharing:
+1. SSH into your NEMS Raspberry Pi (or use a connected keyboard/monitor).
+2. Start the Raspberry Pi Connect service:
    ```bash
-   sudo systemctl daemon-reload
-   sudo systemctl enable nems.service
-   sudo systemctl start nems.service
+   systemctl --user start rpi-connect
    ```
+3. Follow the standard Raspberry Pi Connect pairing process to link your device to your Raspberry Pi ID.
+4. Once paired, you can securely access the minimal desktop environment via your web browser through the Raspberry Pi Connect portal, which will launch Chromium locally on the Pi to view the NEMS dashboard.
 
 ## Usage
 
