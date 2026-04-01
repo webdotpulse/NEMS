@@ -99,6 +99,9 @@ jobs:
           VERSION=${GITHUB_REF_NAME#v}
           dpkg-deb --build build/deb build/nems_${VERSION}_arm64.deb
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
       - name: Build Custom Raspberry Pi OS Image
         uses: dtcooper/rpi-image-modifier@v1
         with:
