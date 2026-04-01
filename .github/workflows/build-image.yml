@@ -1,0 +1,82 @@
+name: Build OS Image
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-image:
+    name: Build Custom OS Image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Wait for DEB Package
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          DEB_FILE="nems_${VERSION}_arm64.deb"
+          echo "Waiting for $DEB_FILE to be available in release $GITHUB_REF_NAME..."
+          for i in {1..30}; do
+            gh release download "$GITHUB_REF_NAME" -p "$DEB_FILE" -D build/ && break || echo "Not found yet, waiting 20s..."
+            sleep 20
+          done
+          if [ ! -f "build/$DEB_FILE" ]; then
+            echo "Error: DEB file not found after waiting."
+            exit 1
+          fi
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Build Custom Raspberry Pi OS Image
+        uses: dtcooper/rpi-image-modifier@v1
+        with:
+          base-image-url: https://downloads.raspberrypi.com/raspios_arm64/images/raspios_arm64-2024-11-19/2024-11-19-raspios-bookworm-arm64.img.xz
+          image-path: build/nems-os-image.img
+          compress-with-xz: true
+          run: |
+            # Install required packages
+            apt-get update
+            apt-get install -y nginx openssl
+
+            # Install the DEB package we just downloaded
+            dpkg -i /mounted-github-repo/build/nems_*_arm64.deb || apt-get install -f -y
+
+            # Configure hostname
+            echo "ems" > /etc/hostname
+            sed -i 's/raspberrypi/ems/g' /etc/hosts
+
+            # Configure Nginx as a reverse proxy with a self-signed cert
+            openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -keyout /etc/ssl/private/nginx-selfsigned.key -out /etc/ssl/certs/nginx-selfsigned.crt -subj "/CN=ems"
+
+            cat << 'EOF' > /etc/nginx/sites-available/default
+            server {
+                listen 80 default_server;
+                listen [::]:80 default_server;
+                listen 443 ssl default_server;
+                listen [::]:443 ssl default_server;
+                ssl_certificate /etc/ssl/certs/nginx-selfsigned.crt;
+                ssl_certificate_key /etc/ssl/private/nginx-selfsigned.key;
+                server_name _;
+                location / {
+                    proxy_pass http://127.0.0.1:8080;
+                    proxy_set_header Host $host;
+                    proxy_set_header X-Real-IP $remote_addr;
+                }
+            }
+            EOF
+
+            # Enable services
+            systemctl enable nginx
+            systemctl enable nems.service
+
+      - name: Upload Release Asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            build/nems-os-image.img.xz

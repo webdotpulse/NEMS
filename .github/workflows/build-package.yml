@@ -1,4 +1,4 @@
-name: Release Build
+name: Build Package
 
 on:
   push:
@@ -99,54 +99,8 @@ jobs:
           VERSION=${GITHUB_REF_NAME#v}
           dpkg-deb --build build/deb build/nems_${VERSION}_arm64.deb
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Build Custom Raspberry Pi OS Image
-        uses: dtcooper/rpi-image-modifier@v1
-        with:
-          base-image-url: https://downloads.raspberrypi.com/raspios_lite_arm64/images/raspios_lite_arm64-2024-11-19/2024-11-19-raspios-bookworm-arm64-lite.img.xz
-          image-path: build/nems-os-image.img
-          compress-with-xz: true
-          run: |
-            # Install required packages
-            apt-get update
-            apt-get install -y nginx openssl wayfire xwayland chromium-browser rpi-connect
-
-            # Install the DEB package we just built
-            dpkg -i /mounted-github-repo/build/nems_*_arm64.deb || apt-get install -f -y
-
-            # Configure hostname
-            echo "ems" > /etc/hostname
-            sed -i 's/raspberrypi/ems/g' /etc/hosts
-
-            # Configure Nginx as a reverse proxy with a self-signed cert
-            openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -keyout /etc/ssl/private/nginx-selfsigned.key -out /etc/ssl/certs/nginx-selfsigned.crt -subj "/CN=ems"
-
-            cat << 'EOF' > /etc/nginx/sites-available/default
-            server {
-                listen 80 default_server;
-                listen [::]:80 default_server;
-                listen 443 ssl default_server;
-                listen [::]:443 ssl default_server;
-                ssl_certificate /etc/ssl/certs/nginx-selfsigned.crt;
-                ssl_certificate_key /etc/ssl/private/nginx-selfsigned.key;
-                server_name _;
-                location / {
-                    proxy_pass http://127.0.0.1:8080;
-                    proxy_set_header Host $host;
-                    proxy_set_header X-Real-IP $remote_addr;
-                }
-            }
-            EOF
-
-            # Enable services
-            systemctl enable nginx
-            systemctl enable nems.service
-
       - name: Upload Release Asset
         uses: softprops/action-gh-release@v2
         with:
           files: |
             build/nems_*_arm64.deb
-            build/nems-os-image.img.xz
