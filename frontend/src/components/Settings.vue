@@ -61,7 +61,7 @@
                 <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ sysInfo.disk }}</dd>
               </div>
               <div>
-                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Build Number</dt>
+                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Build Date</dt>
                 <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ sysInfo.build }}</dd>
               </div>
             </div>
@@ -830,7 +830,12 @@ const deviceCategories = [
 const currentCategoryObj = computed(() => deviceCategories.find(c => c.id === selectedCategory.value) || null)
 const filteredTemplates = computed(() => {
   if (!selectedCategory.value) return templates.value
-  return templates.value.filter(t => t.category === selectedCategory.value)
+  return templates.value.filter(t => {
+    if (selectedCategory.value === 'charger') {
+      return t.category === 'charger' || t.category === 'evse'
+    }
+    return t.category === selectedCategory.value
+  })
 })
 const selectCategory = (cat: string) => {
   selectedCategory.value = cat
