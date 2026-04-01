@@ -8,6 +8,8 @@ The system follows a monolith architecture composed of two main parts:
 1. **Go Backend:** A statically compiled binary that serves both the JSON API, handles hardware device polling (Modbus/REST), executes energy control strategies, and serves the static frontend assets. The build number is injected as a release tag at compile time via `-ldflags` using `git describe --tags --always`, and CPU data is explicitly omitted from system info endpoints.
 2. **Vue 3 Frontend:** A Single Page Application (SPA) that provides a fully UI-driven interface for monitoring and configuring the EMS.
 
+Both parts are combined during the CI/CD release process into a single Debian (`.deb`) package, encapsulating the frontend assets and the backend binary. This package sets up the restricted `nems` system user and manages the `nems.service` systemd unit. For seamless onboarding, the project also generates a custom Raspberry Pi OS Lite image that pre-installs the `.deb` package, `nginx` as a reverse proxy, a minimal Wayland desktop (`wayfire`), and `rpi-connect` to enable out-of-the-box remote screen sharing (host set to `ems`).
+
 ```mermaid
 graph TD
     UI[Vue 3 Frontend SPA] <-->|HTTP REST & SSE| API[Go Backend API]
