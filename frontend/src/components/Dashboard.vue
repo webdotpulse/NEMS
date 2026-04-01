@@ -109,24 +109,6 @@
       <!-- Daily Aggregates Section (Energy Management) -->
       <div v-if="dailyAggregates" class="mt-8 mb-8 space-y-6">
 
-        <!-- Top Summary Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-6">
-            <div class="flex items-baseline space-x-2">
-              <span class="text-2xl font-bold text-gray-900 dark:text-white">{{ consTotal.toFixed(2) }}</span>
-              <span class="text-sm text-gray-500 dark:text-gray-400">kWh</span>
-            </div>
-            <div class="text-sm text-gray-500 dark:text-gray-400 mt-1">Consumption today</div>
-          </div>
-          <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-6">
-            <div class="flex items-baseline space-x-2">
-              <span class="text-2xl font-bold text-gray-900 dark:text-white">{{ prodConsumed.toFixed(2) }}</span>
-              <span class="text-sm text-gray-500 dark:text-gray-400">kWh</span>
-            </div>
-            <div class="text-sm text-gray-500 dark:text-gray-400 mt-1">Self-consumption energy</div>
-          </div>
-        </div>
-
         <!-- Energy Management Card -->
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
 
@@ -152,13 +134,10 @@
             </div>
           </div>
 
-          <h3 class="text-xl font-medium text-gray-900 dark:text-white mb-6">Energy Management</h3>
-
           <!-- Production Block -->
           <div class="mb-8">
             <div class="flex items-center text-gray-500 dark:text-gray-400 mb-4">
               <span class="mr-1">Production</span>
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             </div>
 
             <div class="bg-gray-50 dark:bg-gray-900 rounded-xl p-4 flex items-center justify-between relative">
@@ -192,7 +171,6 @@
           <div>
             <div class="flex items-center text-gray-500 dark:text-gray-400 mb-4">
               <span class="mr-1">Consumption</span>
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             </div>
 
             <div class="bg-gray-50 dark:bg-gray-900 rounded-xl p-4 flex items-center justify-between relative">
