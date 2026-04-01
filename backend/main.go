@@ -21,6 +21,8 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 
 	"nems/internal/ocpp"
+
+	"github.com/soheilhy/cmux"
 )
 
 
@@ -143,7 +145,7 @@ func ensureCertificates(certFile, keyFile string) error {
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		BasicConstraintsValid: true,
 		IPAddresses:           ips,
-		DNSNames:              []string{"localhost"},
+		DNSNames:              []string{"localhost", "ems.local"},
 	}
 
 	derBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, &priv.PublicKey, priv)
@@ -449,38 +451,61 @@ func main() {
 	}
 
 
-	// Try port 80 (requires root/setcap) or fallback to 8080
-	httpPort := ":80"
-	httpsPort := ":443"
-
 	handler := enableCORS(mux)
-
-	go func() {
-		log.Println("[INFO] Starting HTTP server on :80 (fallback to :8080)")
-		err := http.ListenAndServe(httpPort, handler)
-		if err != nil {
-			log.Printf("[ERROR] Failed to bind to :80 (%v). Trying :8080 instead.", err)
-			err = http.ListenAndServe(":8080", handler)
-			if err != nil {
-				log.Fatalf("[FATAL] %v", err)
-			}
-		}
-	}()
 
 	err = ensureCertificates("cert.pem", "key.pem")
 	if err != nil {
 		log.Printf("[ERROR] Failed to ensure certificates: %v. HTTPS disabled.", err)
-	} else {
-		log.Println("[INFO] Starting HTTPS server on :443 (fallback to :8443)")
-		err = http.ListenAndServeTLS(httpsPort, "cert.pem", "key.pem", handler)
+	}
+
+	// Helper to start multiplexed server on a given port
+	startMultiplexedServer := func(port string, isPrimary bool) {
+		l, err := net.Listen("tcp", port)
 		if err != nil {
-			log.Printf("[ERROR] Failed to bind to :443 (%v). Trying :8443 instead.", err)
-			err = http.ListenAndServeTLS(":8443", "cert.pem", "key.pem", handler)
-			if err != nil {
-				log.Fatalf("[FATAL] %v", err)
+			if isPrimary {
+				log.Fatalf("[FATAL] Failed to bind to primary port %s: %v", port, err)
+			} else {
+				log.Printf("[WARN] Failed to bind to optional port %s: %v", port, err)
+				return
 			}
 		}
+
+		m := cmux.New(l)
+		httpsL := m.Match(cmux.TLS())
+		httpL := m.Match(cmux.Any())
+
+		// Start HTTP server
+		go func() {
+			if err := http.Serve(httpL, handler); err != nil && err != http.ErrServerClosed {
+				log.Printf("[ERROR] HTTP server on %s failed: %v", port, err)
+			}
+		}()
+
+		// Start HTTPS server if certificates exist
+		if _, errCert := os.Stat("cert.pem"); errCert == nil {
+			go func() {
+				srv := &http.Server{Handler: handler}
+				if err := srv.ServeTLS(httpsL, "cert.pem", "key.pem"); err != nil && err != http.ErrServerClosed {
+					log.Printf("[ERROR] HTTPS server on %s failed: %v", port, err)
+				}
+			}()
+		}
+
+		// Start serving
+		go func() {
+			log.Printf("[INFO] Starting multiplexed HTTP/HTTPS server on %s", port)
+			if err := m.Serve(); err != nil && err != net.ErrClosed {
+				log.Printf("[ERROR] Multiplexer on %s failed: %v", port, err)
+			}
+		}()
 	}
+
+	// Always start on 8080 (Primary port)
+	startMultiplexedServer(":8080", true)
+
+	// Start on 80 and 443 (Optional, may require root)
+	startMultiplexedServer(":80", false)
+	startMultiplexedServer(":443", false)
 
 	select {} // Block main thread
 

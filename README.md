@@ -69,13 +69,15 @@ Pulse EMS is a lightweight, highly responsive, fully UI-driven Energy Management
 
 ## Usage
 
-Once the Pulse EMS service is running, it automatically serves both the JSON API and the frontend SPA on port `8080`.
+Once the Pulse EMS service is running, it automatically serves both the JSON API and the frontend SPA. The service multiplexes both standard HTTP and secure HTTPS traffic on the same ports.
+By default, the application binds to port `8080` (primary). If sufficient permissions are available, it also attempts to bind to standard web ports `80` and `443`.
 
 1. **Access the Web UI:**
    Open a web browser on any device in your local network and navigate to:
    ```
    http://<raspberry-pi-ip-address>:8080
    ```
+   *Note: You can also use HTTPS (e.g., `https://<raspberry-pi-ip-address>:8080`). If DNS is configured, navigating to `http://ems.local` or `https://ems.local` will also work directly without port specification.*
 
 2. **Initial Setup:**
    - Navigate to the **Settings** view in the top navigation bar.
