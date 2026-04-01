@@ -9,7 +9,10 @@
 
 @layer base {
   input[type="text"], input[type="number"], input[type="password"], select, textarea {
-    @apply px-4 py-3 text-base rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500;
+    @apply h-[50px] px-4 py-3 text-base rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500;
+  }
+  textarea {
+    @apply h-auto;
   }
 }
 
