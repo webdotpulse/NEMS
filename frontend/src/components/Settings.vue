@@ -101,10 +101,6 @@
                 </p>
               </div>
               <div class="mt-4 md:mt-0 flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-                <div class="w-full sm:w-auto">
-                  <label for="github_token" class="sr-only">GitHub Token</label>
-                  <input type="password" id="github_token" v-model="siteSettings.github_token" @change="saveSiteSettings" placeholder="GitHub Token (Private Repo)" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:w-64 border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
-                </div>
                 <button v-if="updateStatus === 'available' || updateStatus === 'installing'" @click="installUpdate" :disabled="updateStatus === 'installing'" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors disabled:opacity-50">
                   Download & Install Update
                 </button>

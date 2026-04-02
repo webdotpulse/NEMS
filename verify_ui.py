@@ -1,33 +1,26 @@
 from playwright.sync_api import sync_playwright
 
 def run_cuj(page):
-    page.goto("http://localhost:8080")
-    page.wait_for_timeout(2000)
+    page.goto("http://localhost:5173")  # Vite dev server
+    page.wait_for_timeout(1000)
 
-    # Click on the Settings tab (first occurrence is desktop nav, second is mobile, we can just use the desktop one)
+    # Click on the Settings tab (using exact role to avoid ambiguity)
     page.get_by_role("link", name="Settings").click()
     page.wait_for_timeout(1000)
 
-    # Click on the System Info tab
-    page.get_by_text("System Info").click()
+    # Click on the System Info tab within Settings (it's a button)
+    page.get_by_role("button", name="System Info").click()
     page.wait_for_timeout(1000)
 
-    # The token field is pre-filled, so we should clear it if we want to type something else.
-    # But wait, we added it to the Software Update section inside System Info! Let's scroll there or just take a screenshot
-    # Fill out the GitHub Token field
-    page.get_by_placeholder("GitHub Token (Private Repo)").fill("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")
-    page.wait_for_timeout(1000)
-
-    # Take screenshot at the key moment
-    page.screenshot(path="/home/jules/verification/screenshots/verification2.png")
+    # Take screenshot of the System Info tab where the input was
+    page.screenshot(path="/home/jules/verification/screenshots/verification.png", full_page=True)
     page.wait_for_timeout(1000)
 
 if __name__ == "__main__":
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         context = browser.new_context(
-            record_video_dir="/home/jules/verification/videos",
-            viewport={'width': 1280, 'height': 720}
+            record_video_dir="/home/jules/verification/videos"
         )
         page = context.new_page()
         try:
