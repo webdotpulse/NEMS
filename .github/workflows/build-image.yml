@@ -56,7 +56,7 @@ jobs:
             sed -i 's/raspberrypi/ems/g' /etc/hosts
 
             # Configure Nginx as a reverse proxy with a self-signed cert
-            openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -keyout /etc/ssl/private/nginx-selfsigned.key -out /etc/ssl/certs/nginx-selfsigned.crt -subj "/CN=ems"
+            openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -keyout /etc/ssl/private/nginx-selfsigned.key -out /etc/ssl/certs/nginx-selfsigned.crt -subj "/CN=ems" -addext "subjectAltName=DNS:ems,DNS:ems.local,DNS:localhost,IP:127.0.0.1"
 
             cat << 'EOF' > /etc/nginx/sites-available/default
             server {
