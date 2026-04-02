@@ -379,6 +379,7 @@ func main() {
 	ensureColumnExists(db, "site_settings", "custom_charge_schedule", "TEXT DEFAULT '[]'")
 	ensureColumnExists(db, "site_settings", "superdal_optimization_enabled", "BOOLEAN DEFAULT 0")
 	ensureColumnExists(db, "site_settings", "superdal_target_soc", "REAL DEFAULT 100.0")
+	ensureColumnExists(db, "site_settings", "github_token", "TEXT DEFAULT ''")
 
 	log.Println("[INFO] Database schema initialized")
 
