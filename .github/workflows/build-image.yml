@@ -42,7 +42,7 @@ jobs:
           run: |
             # Install required packages
             apt-get update
-            apt-get install -y nginx openssl
+            apt-get install -y nginx openssl cockpit
 
             # Install the DEB package we just downloaded
             dpkg -i /mounted-github-repo/build/nems_*_arm64.deb || apt-get install -f -y
@@ -75,6 +75,7 @@ jobs:
             mkdir -p /etc/systemd/system/multi-user.target.wants
             ln -sf /lib/systemd/system/nginx.service /etc/systemd/system/multi-user.target.wants/nginx.service
             ln -sf /etc/systemd/system/nems.service /etc/systemd/system/multi-user.target.wants/nems.service
+            find /usr/lib/systemd/system /lib/systemd/system -name "cockpit.socket" -exec ln -sf {} /etc/systemd/system/multi-user.target.wants/ \;
 
       - name: Upload Release Asset
         uses: softprops/action-gh-release@v2
