@@ -44,7 +44,7 @@ jobs:
           CGO_ENABLED: 1
           CC: aarch64-linux-gnu-gcc
         run: |
-          go build -ldflags="-X main.BuildNumber=$(date -u +'%Y-%m-%d')" -o ../build/nems-server *.go
+          go build -ldflags="-X main.BuildNumber=$(date -u +'%Y-%m-%d+%s')" -o ../build/nems-server *.go
 
       - name: Create DEB Package Structure
         run: |
@@ -78,6 +78,11 @@ jobs:
           if ! id -u nems >/dev/null 2>&1; then
               useradd -r -s /bin/false nems
           fi
+
+          # Add sudoers drop-in for nems user to run systemctl reboot
+          echo "nems ALL=(ALL) NOPASSWD: /bin/systemctl reboot, /usr/bin/systemctl reboot" > /etc/sudoers.d/nems-reboot
+          chmod 0440 /etc/sudoers.d/nems-reboot
+
           chown -R nems:nems /opt/nems
           if [ -d /run/systemd/system ]; then
               systemctl daemon-reload

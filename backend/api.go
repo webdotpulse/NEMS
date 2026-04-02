@@ -171,6 +171,9 @@ func handleSystemUpdateCheck(w http.ResponseWriter, r *http.Request) {
 
 	// Add a User-Agent header, GitHub API requires it
 	req.Header.Set("User-Agent", "NEMS-Update-Checker")
+	if token := os.Getenv("GITHUB_TOKEN"); token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
+	}
 
 	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Do(req)
@@ -247,7 +250,17 @@ func handleSystemUpdateInstall(w http.ResponseWriter, r *http.Request) {
 		time.Sleep(2 * time.Second)
 
 		// Fetch latest release info
-		resp, err := http.Get("https://api.github.com/repos/pulse-ems/NEMS/releases/latest")
+		req, err := http.NewRequest("GET", "https://api.github.com/repos/pulse-ems/NEMS/releases/latest", nil)
+		if err != nil {
+			log.Printf("[ERROR] Failed to create request for latest release: %v", err)
+			return
+		}
+		req.Header.Set("User-Agent", "NEMS-Update-Installer")
+		if token := os.Getenv("GITHUB_TOKEN"); token != "" {
+			req.Header.Set("Authorization", "Bearer "+token)
+		}
+		client := &http.Client{Timeout: 10 * time.Second}
+		resp, err := client.Do(req)
 		if err != nil {
 			log.Printf("[ERROR] Failed to fetch latest release: %v", err)
 			return
@@ -270,7 +283,15 @@ func handleSystemUpdateInstall(w http.ResponseWriter, r *http.Request) {
 
 		// Download the file
 		log.Printf("[INFO] Downloading update from %s to %s", downloadURL, targetPath)
-		cmd := exec.Command("wget", "-q", "-O", targetPath, downloadURL)
+
+		// If using private repo, wget needs auth header
+		var cmd *exec.Cmd
+		if token := os.Getenv("GITHUB_TOKEN"); token != "" {
+			cmd = exec.Command("wget", "--header=Authorization: Bearer "+token, "-q", "-O", targetPath, downloadURL)
+		} else {
+			cmd = exec.Command("wget", "-q", "-O", targetPath, downloadURL)
+		}
+
 		if out, err := cmd.CombinedOutput(); err != nil {
 			log.Printf("[ERROR] Failed to download update: %v, output: %s", err, string(out))
 			return
@@ -309,7 +330,7 @@ func handleSystemReboot(w http.ResponseWriter, r *http.Request) {
 	// Give the HTTP response time to be sent before rebooting
 	go func() {
 		time.Sleep(2 * time.Second)
-		out, err := exec.Command("systemctl", "reboot").CombinedOutput()
+		out, err := exec.Command("sudo", "systemctl", "reboot").CombinedOutput()
 		if err != nil {
 			log.Printf("[ERROR] Reboot failed: %v, output: %s", err, string(out))
 		}
@@ -524,7 +545,7 @@ func handleTemplates(w http.ResponseWriter, r *http.Request) {
 func handleDevices(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	if r.Method == "GET" {
-		rows, err := db.Query("SELECT id, name, template, host, port, modbus_id, username, password, has_grid_meter, has_battery, battery_capacity, inverter_rated_power_kw, charge_mode, battery_mode, ocpp_proxy_url FROM devices")
+		rows, err := db.Query("SELECT id, name, template, host, port, modbus_id, username, password, has_grid_meter, has_battery, battery_capacity, inverter_rated_power_kw, charge_mode, battery_mode, ocpp_proxy_url, poll_interval FROM devices")
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -539,9 +560,15 @@ func handleDevices(w http.ResponseWriter, r *http.Request) {
 			var chargeMode sql.NullString
 			var batteryMode sql.NullString
 			var proxyUrl sql.NullString
-			if err := rows.Scan(&d.ID, &d.Name, &d.Template, &d.Host, &d.Port, &d.ModbusID, &username, &password, &d.HasGridMeter, &d.HasBattery, &d.BatteryCapacity, &d.InverterRatedPowerKw, &chargeMode, &batteryMode, &proxyUrl); err != nil {
+			var pollInterval sql.NullInt64
+			if err := rows.Scan(&d.ID, &d.Name, &d.Template, &d.Host, &d.Port, &d.ModbusID, &username, &password, &d.HasGridMeter, &d.HasBattery, &d.BatteryCapacity, &d.InverterRatedPowerKw, &chargeMode, &batteryMode, &proxyUrl, &pollInterval); err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
+			}
+			if pollInterval.Valid {
+				d.PollInterval = int(pollInterval.Int64)
+			} else {
+				d.PollInterval = 5
 			}
 			if username.Valid {
 				d.Username = username.String
@@ -591,8 +618,11 @@ func handleDevices(w http.ResponseWriter, r *http.Request) {
 		if d.BatteryMode == "" {
 			d.BatteryMode = "auto"
 		}
+		if d.PollInterval == 0 {
+			d.PollInterval = 5
+		}
 
-		result, err := db.Exec("INSERT INTO devices (name, template, host, port, modbus_id, username, password, has_grid_meter, has_battery, battery_capacity, inverter_rated_power_kw, charge_mode, battery_mode, ocpp_proxy_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", d.Name, d.Template, d.Host, d.Port, d.ModbusID, d.Username, d.Password, d.HasGridMeter, d.HasBattery, d.BatteryCapacity, d.InverterRatedPowerKw, d.ChargeMode, d.BatteryMode, d.OcppProxyUrl)
+		result, err := db.Exec("INSERT INTO devices (name, template, host, port, modbus_id, username, password, has_grid_meter, has_battery, battery_capacity, inverter_rated_power_kw, charge_mode, battery_mode, ocpp_proxy_url, poll_interval) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", d.Name, d.Template, d.Host, d.Port, d.ModbusID, d.Username, d.Password, d.HasGridMeter, d.HasBattery, d.BatteryCapacity, d.InverterRatedPowerKw, d.ChargeMode, d.BatteryMode, d.OcppProxyUrl, d.PollInterval)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -677,9 +707,12 @@ func handleDevice(w http.ResponseWriter, r *http.Request) {
 		if d.BatteryMode == "" {
 			d.BatteryMode = "auto"
 		}
+		if d.PollInterval == 0 {
+			d.PollInterval = 5
+		}
 
-		_, err = db.Exec("UPDATE devices SET name = ?, template = ?, host = ?, port = ?, modbus_id = ?, username = ?, password = ?, has_grid_meter = ?, has_battery = ?, battery_capacity = ?, inverter_rated_power_kw = ?, charge_mode = ?, battery_mode = ?, ocpp_proxy_url = ? WHERE id = ?",
-			d.Name, d.Template, d.Host, d.Port, d.ModbusID, d.Username, d.Password, d.HasGridMeter, d.HasBattery, d.BatteryCapacity, d.InverterRatedPowerKw, d.ChargeMode, d.BatteryMode, d.OcppProxyUrl, id)
+		_, err = db.Exec("UPDATE devices SET name = ?, template = ?, host = ?, port = ?, modbus_id = ?, username = ?, password = ?, has_grid_meter = ?, has_battery = ?, battery_capacity = ?, inverter_rated_power_kw = ?, charge_mode = ?, battery_mode = ?, ocpp_proxy_url = ?, poll_interval = ? WHERE id = ?",
+			d.Name, d.Template, d.Host, d.Port, d.ModbusID, d.Username, d.Password, d.HasGridMeter, d.HasBattery, d.BatteryCapacity, d.InverterRatedPowerKw, d.ChargeMode, d.BatteryMode, d.OcppProxyUrl, d.PollInterval, id)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

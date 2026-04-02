@@ -159,14 +159,15 @@ func (pm *PollerManager) SyncDevices() {
 // goroutine to flush buffered data to SQLite every minute.
 func (pm *PollerManager) Start() {
 	go func() {
-		ticker := time.NewTicker(5 * time.Second)
 		fastTicker := time.NewTicker(1 * time.Second)
-		defer ticker.Stop()
 		defer fastTicker.Stop()
+
+		lastPolled := make(map[int]time.Time)
 
 		for {
 			select {
 			case <-fastTicker.C:
+				now := time.Now()
 				pollersCopy := pm.GetPollers()
 				var polledAny atomic.Bool
 				var wg sync.WaitGroup
@@ -174,9 +175,23 @@ func (pm *PollerManager) Start() {
 				for id, poller := range pollersCopy {
 					device := poller.GetDevice()
 					category := templates.GetCategory(device.Template)
-					if category != "meter" {
-						continue
+
+					interval := device.PollInterval
+					if interval <= 0 {
+						if category == "meter" {
+							interval = 1
+						} else {
+							interval = 5
+						}
 					}
+
+					if last, ok := lastPolled[id]; ok {
+						if now.Sub(last) < time.Duration(interval)*time.Second {
+							continue
+						}
+					}
+
+					lastPolled[id] = now
 					polledAny.Store(true)
 
 					wg.Add(1)
@@ -252,89 +267,6 @@ func (pm *PollerManager) Start() {
 				if polledAny.Load() {
 					pm.broadcastState()
 				}
-
-			case <-ticker.C:
-				pollersCopy := pm.GetPollers()
-				var wg sync.WaitGroup
-
-				for id, poller := range pollersCopy {
-					device := poller.GetDevice()
-					category := templates.GetCategory(device.Template)
-					if category == "meter" {
-						continue
-					}
-
-					wg.Add(1)
-					go func(id int, poller models.DevicePoller, device models.Device, category string) {
-						defer wg.Done()
-						powerW, batteryPowerW, gridPowerW, energyKwh, soc, err := poller.Poll()
-						if err != nil {
-							log.Printf("[ERROR] PollerManager: Error polling device %d: %v", id, err)
-
-							errStr := err.Error()
-							if strings.Contains(errStr, "broken pipe") || strings.Contains(errStr, "EOF") || strings.Contains(errStr, "connection reset") {
-								log.Printf("[INFO] PollerManager: Connection drop detected for device %d, attempting to reconnect...", id)
-								poller.Close()
-								if connErr := poller.Connect(); connErr != nil {
-									log.Printf("[ERROR] PollerManager: Reconnect failed for device %d: %v", id, connErr)
-								}
-							}
-
-							pm.cacheMu.Lock()
-							oldData, exists := pm.deviceCache[id]
-							if exists {
-								oldData.Status = poller.Status()
-								pm.deviceCache[id] = oldData
-							} else {
-								pm.deviceCache[id] = DeviceData{
-									PowerW:        0,
-									BatteryPowerW: 0,
-									GridPowerW:    0,
-									EnergyKwh:     0,
-									Soc:           0,
-									Status:        poller.Status(),
-									Template:      device.Template,
-									Category:      category,
-									HasGridMeter:  device.HasGridMeter,
-									HasBattery:    device.HasBattery,
-									OcppProxyUrl:  device.OcppProxyUrl,
-								}
-							}
-							pm.cacheMu.Unlock()
-							return
-						}
-
-						pm.cacheMu.Lock()
-						pm.deviceCache[id] = DeviceData{
-							PowerW:        powerW,
-							BatteryPowerW: batteryPowerW,
-							GridPowerW:    gridPowerW,
-							EnergyKwh:     energyKwh,
-							Soc:           soc,
-							Status:        poller.Status(),
-							Template:      device.Template,
-							Category:      category,
-							HasGridMeter:  device.HasGridMeter,
-							HasBattery:    device.HasBattery,
-							OcppProxyUrl:  device.OcppProxyUrl,
-						}
-						pm.cacheMu.Unlock()
-
-						// Buffer measurement
-						pm.bufferMu.Lock()
-						pm.buffer = append(pm.buffer, BufferedMeasurement{
-							DeviceID:      id,
-							PowerW:        powerW,
-							BatteryPowerW: batteryPowerW,
-							GridPowerW:    gridPowerW,
-							EnergyKwh:     energyKwh,
-						})
-						pm.bufferMu.Unlock()
-					}(id, poller, device, category)
-				}
-				wg.Wait()
-
-				pm.broadcastState()
 
 			case <-pm.stopCh:
 				log.Println("[INFO] PollerManager: Polling stopped")

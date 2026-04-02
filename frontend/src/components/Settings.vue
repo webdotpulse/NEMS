@@ -665,6 +665,15 @@
                     </div>
                   </div>
 
+                  <!-- Poll Interval -->
+                  <div class="sm:col-span-3">
+                    <label for="poll_interval" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Poll Interval (seconds)</label>
+                    <div class="mt-1">
+                      <input type="number" id="poll_interval" v-model="form.poll_interval" min="1" required
+                             class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
+                    </div>
+                  </div>
+
                   <!-- EV Charger Mode Selection -->
                   <div v-if="isCharger(form.template)" class="sm:col-span-3">
                     <label for="charge_mode" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Charge Mode</label>
@@ -787,6 +796,15 @@
                 <div class="mt-1">
                   <input type="number" step="0.1" id="edit_inverter_rated_power_kw" v-model="editForm.inverter_rated_power_kw"
                          class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
+                </div>
+              </div>
+
+              <!-- Poll Interval -->
+              <div class="sm:col-span-3">
+                <label for="edit_poll_interval" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Poll Interval (seconds)</label>
+                <div class="mt-1">
+                  <input type="number" id="edit_poll_interval" v-model="editForm.poll_interval" min="1" required
+                         class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
                 </div>
               </div>
 
@@ -916,7 +934,8 @@ const form = ref({
   battery_capacity: 0,
   inverter_rated_power_kw: 0,
   charge_mode: 'eco',
-  ocpp_proxy_url: ''
+  ocpp_proxy_url: '',
+  poll_interval: 5
 })
 
 const editingDevice = ref<Device | null>(null)
@@ -934,7 +953,8 @@ const editForm = ref({
   battery_capacity: 0,
   inverter_rated_power_kw: 0,
   charge_mode: 'eco',
-  ocpp_proxy_url: ''
+  ocpp_proxy_url: '',
+  poll_interval: 5
 })
 
 const siteSettings = ref<SiteSettings>({
@@ -1137,7 +1157,8 @@ const addDevice = async () => {
         battery_capacity: 0,
         inverter_rated_power_kw: 0,
         charge_mode: 'eco',
-        ocpp_proxy_url: ''
+        ocpp_proxy_url: '',
+        poll_interval: 5
       }
       await fetchDevices()
     }
@@ -1157,7 +1178,8 @@ const editDevice = (device: Device) => {
     battery_capacity: device.battery_capacity || 0,
     inverter_rated_power_kw: device.inverter_rated_power_kw || 0,
     charge_mode: device.charge_mode || 'eco',
-    ocpp_proxy_url: device.ocpp_proxy_url || ''
+    ocpp_proxy_url: device.ocpp_proxy_url || '',
+    poll_interval: device.poll_interval || 5
   }
 }
 
