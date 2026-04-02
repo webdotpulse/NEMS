@@ -37,6 +37,9 @@ type SiteSettings struct {
 	CustomChargeSchedule        string  `json:"custom_charge_schedule"`
 	SuperdalOptimizationEnabled bool    `json:"superdal_optimization_enabled"`
 	SuperdalTargetSoc           float64 `json:"superdal_target_soc"`
+
+	// System Update
+	GithubToken string `json:"github_token"`
 }
 
 type Device struct {

@@ -58,6 +58,7 @@ export interface SiteSettings {
   custom_charge_schedule: string;
   superdal_optimization_enabled: boolean;
   superdal_target_soc: number;
+  github_token: string;
 }
 
 export interface SiteState {
