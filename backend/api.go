@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"crypto/tls"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -163,8 +164,8 @@ func handleSystemResetDb(w http.ResponseWriter, r *http.Request) {
 func handleSystemUpdateCheck(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	// Call GitHub API to get the latest release
-	req, err := http.NewRequest("GET", "https://api.github.com/repos/pulse-ems/NEMS/releases/latest", nil)
+	// Call GitHub API to get the latest releases
+	req, err := http.NewRequest("GET", "https://api.github.com/repos/pulse-ems/NEMS/releases", nil)
 	if err != nil {
 		http.Error(w, `{"error": "Failed to create request"}`, http.StatusInternalServerError)
 		return
@@ -179,6 +180,7 @@ func handleSystemUpdateCheck(w http.ResponseWriter, r *http.Request) {
 
 	// Add a User-Agent header, GitHub API requires it
 	req.Header.Set("User-Agent", "NEMS-Update-Checker")
+	req.Header.Set("Accept", "application/vnd.github.v3+json")
 	if dbToken != "" {
 		req.Header.Set("Authorization", "Bearer "+dbToken)
 	} else if token := os.Getenv("GITHUB_TOKEN"); token != "" {
@@ -208,15 +210,25 @@ func handleSystemUpdateCheck(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var releaseInfo struct {
+	var releases []struct {
 		TagName string `json:"tag_name"`
 	}
-	if err := json.NewDecoder(resp.Body).Decode(&releaseInfo); err != nil {
+	if err := json.NewDecoder(resp.Body).Decode(&releases); err != nil {
 		http.Error(w, `{"error": "Failed to parse release info"}`, http.StatusInternalServerError)
 		return
 	}
 
-	latestVersion := releaseInfo.TagName
+	if len(releases) == 0 {
+		response := map[string]interface{}{
+			"update_available": false,
+			"latest_version":   "unknown",
+			"current_version":  BuildNumber,
+		}
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
+	latestVersion := releases[0].TagName
 	if strings.HasPrefix(latestVersion, "v") {
 		latestVersion = strings.TrimPrefix(latestVersion, "v")
 	}
@@ -259,8 +271,8 @@ func handleSystemUpdateInstall(w http.ResponseWriter, r *http.Request) {
 		// Give the HTTP response time to be sent
 		time.Sleep(2 * time.Second)
 
-		// Fetch latest release info
-		req, err := http.NewRequest("GET", "https://api.github.com/repos/pulse-ems/NEMS/releases/latest", nil)
+		// Fetch latest releases info
+		req, err := http.NewRequest("GET", "https://api.github.com/repos/pulse-ems/NEMS/releases", nil)
 		if err != nil {
 			log.Printf("[ERROR] Failed to create request for latest release: %v", err)
 			return
@@ -274,6 +286,7 @@ func handleSystemUpdateInstall(w http.ResponseWriter, r *http.Request) {
 		}
 
 		req.Header.Set("User-Agent", "NEMS-Update-Installer")
+		req.Header.Set("Accept", "application/vnd.github.v3+json")
 		if dbToken != "" {
 			req.Header.Set("Authorization", "Bearer "+dbToken)
 		} else if token := os.Getenv("GITHUB_TOKEN"); token != "" {
@@ -287,15 +300,20 @@ func handleSystemUpdateInstall(w http.ResponseWriter, r *http.Request) {
 		}
 		defer resp.Body.Close()
 
-		var releaseInfo struct {
+		var releases []struct {
 			TagName string `json:"tag_name"`
 		}
-		if err := json.NewDecoder(resp.Body).Decode(&releaseInfo); err != nil {
+		if err := json.NewDecoder(resp.Body).Decode(&releases); err != nil {
 			log.Printf("[ERROR] Failed to parse release info: %v", err)
 			return
 		}
 
-		tagName := releaseInfo.TagName
+		if len(releases) == 0 {
+			log.Printf("[ERROR] No releases found")
+			return
+		}
+
+		tagName := releases[0].TagName
 		version := strings.TrimPrefix(tagName, "v")
 		debFile := fmt.Sprintf("nems_%s_arm64.deb", version)
 		downloadURL := fmt.Sprintf("https://github.com/pulse-ems/NEMS/releases/download/%s/%s", tagName, debFile)
@@ -304,14 +322,14 @@ func handleSystemUpdateInstall(w http.ResponseWriter, r *http.Request) {
 		// Download the file
 		log.Printf("[INFO] Downloading update from %s to %s", downloadURL, targetPath)
 
-		// If using private repo, wget needs auth header
+		// If using private repo, curl needs auth header
 		var cmd *exec.Cmd
 		if dbToken != "" {
-			cmd = exec.Command("wget", "--header=Authorization: Bearer "+dbToken, "-q", "-O", targetPath, downloadURL)
+			cmd = exec.Command("curl", "-L", "-s", "-H", "Authorization: Bearer "+dbToken, "-o", targetPath, downloadURL)
 		} else if token := os.Getenv("GITHUB_TOKEN"); token != "" {
-			cmd = exec.Command("wget", "--header=Authorization: Bearer "+token, "-q", "-O", targetPath, downloadURL)
+			cmd = exec.Command("curl", "-L", "-s", "-H", "Authorization: Bearer "+token, "-o", targetPath, downloadURL)
 		} else {
-			cmd = exec.Command("wget", "-q", "-O", targetPath, downloadURL)
+			cmd = exec.Command("curl", "-L", "-s", "-o", targetPath, downloadURL)
 		}
 
 		if out, err := cmd.CombinedOutput(); err != nil {
@@ -363,12 +381,56 @@ func handleSystemMailLogs(w http.ResponseWriter, r *http.Request) {
 
 	// Since we are not guaranteed an SMTP server, we will try to send using standard localhost:25,
 	// but gracefully ignore errors to avoid crashing if it's not present.
-	err = smtp.SendMail("127.0.0.1:25", nil, "nems@localhost", []string{"info@mobilitypulse.com"}, msg)
+	c, err := smtp.Dial("127.0.0.1:25")
 	if err != nil {
-		log.Printf("[ERROR] Failed to send email: %v", err)
-		http.Error(w, "Failed to send email. Ensure local SMTP server is running.", http.StatusInternalServerError)
+		log.Printf("[ERROR] Failed to connect to SMTP server: %v", err)
+		http.Error(w, "Failed to connect to local SMTP server.", http.StatusInternalServerError)
 		return
 	}
+	defer c.Close()
+
+	if ok, _ := c.Extension("STARTTLS"); ok {
+		config := &tls.Config{InsecureSkipVerify: true}
+		if err = c.StartTLS(config); err != nil {
+			log.Printf("[ERROR] Failed to start TLS: %v", err)
+			http.Error(w, "Failed to start TLS.", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	if err = c.Mail("nems@localhost"); err != nil {
+		log.Printf("[ERROR] Failed to set sender: %v", err)
+		http.Error(w, "Failed to set sender.", http.StatusInternalServerError)
+		return
+	}
+
+	if err = c.Rcpt("info@mobilitypulse.com"); err != nil {
+		log.Printf("[ERROR] Failed to set recipient: %v", err)
+		http.Error(w, "Failed to set recipient.", http.StatusInternalServerError)
+		return
+	}
+
+	wc, err := c.Data()
+	if err != nil {
+		log.Printf("[ERROR] Failed to start data transmission: %v", err)
+		http.Error(w, "Failed to send email data.", http.StatusInternalServerError)
+		return
+	}
+
+	if _, err = wc.Write(msg); err != nil {
+		log.Printf("[ERROR] Failed to write message: %v", err)
+		http.Error(w, "Failed to send email content.", http.StatusInternalServerError)
+		return
+	}
+
+	err = wc.Close()
+	if err != nil {
+		log.Printf("[ERROR] Failed to close data transmission: %v", err)
+		http.Error(w, "Failed to complete email transmission.", http.StatusInternalServerError)
+		return
+	}
+
+	c.Quit()
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
