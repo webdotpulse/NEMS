@@ -72,8 +72,9 @@ jobs:
             EOF
 
             # Enable services
-            systemctl enable nginx
-            systemctl enable nems.service
+            mkdir -p /etc/systemd/system/multi-user.target.wants
+            ln -sf /lib/systemd/system/nginx.service /etc/systemd/system/multi-user.target.wants/nginx.service
+            ln -sf /etc/systemd/system/nems.service /etc/systemd/system/multi-user.target.wants/nems.service
 
       - name: Upload Release Asset
         uses: softprops/action-gh-release@v2
