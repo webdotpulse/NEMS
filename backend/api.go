@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -155,6 +156,143 @@ func handleSystemResetDb(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"status": "database reset"}`))
+}
+
+// handleSystemUpdateCheck checks the GitHub releases API for a newer version.
+func handleSystemUpdateCheck(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	// Call GitHub API to get the latest release
+	req, err := http.NewRequest("GET", "https://api.github.com/repos/pulse-ems/NEMS/releases/latest", nil)
+	if err != nil {
+		http.Error(w, `{"error": "Failed to create request"}`, http.StatusInternalServerError)
+		return
+	}
+
+	// Add a User-Agent header, GitHub API requires it
+	req.Header.Set("User-Agent", "NEMS-Update-Checker")
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(req)
+
+	if err != nil {
+		http.Error(w, `{"error": "Failed to fetch latest release"}`, http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		// Log the status and body for debugging
+		log.Printf("[ERROR] GitHub API returned status: %d", resp.StatusCode)
+		// Instead of returning 500, we could just return update available = false
+		// since we cannot get the version.
+		response := map[string]interface{}{
+			"update_available": false,
+			"latest_version":   "unknown",
+			"current_version":  BuildNumber,
+		}
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
+	var releaseInfo struct {
+		TagName string `json:"tag_name"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&releaseInfo); err != nil {
+		http.Error(w, `{"error": "Failed to parse release info"}`, http.StatusInternalServerError)
+		return
+	}
+
+	latestVersion := releaseInfo.TagName
+	if strings.HasPrefix(latestVersion, "v") {
+		latestVersion = strings.TrimPrefix(latestVersion, "v")
+	}
+
+	// Compare with BuildNumber
+	// Assuming BuildNumber could be a date or a version tag like "0.0.1"
+	// For simplicity, if latestVersion != BuildNumber and not "development", we assume an update is available.
+	// If BuildNumber is a date (e.g., 2024-01-01), this comparison might be tricky, but since it's injected,
+	// maybe it's best to just say update available if they differ and BuildNumber != "development".
+
+	updateAvailable := false
+	if BuildNumber != "development" && BuildNumber != latestVersion {
+		updateAvailable = true
+	} else if BuildNumber == "development" {
+		// During development, let's assume we can always show the update if a release exists.
+		updateAvailable = latestVersion != ""
+	}
+
+	response := map[string]interface{}{
+		"update_available": updateAvailable,
+		"latest_version":   latestVersion,
+		"current_version":  BuildNumber,
+	}
+	json.NewEncoder(w).Encode(response)
+}
+
+// handleSystemUpdateInstall downloads the latest .deb package and installs it.
+func handleSystemUpdateInstall(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"status": "installing"}`))
+
+	// Run the update process in the background
+	go func() {
+		// Give the HTTP response time to be sent
+		time.Sleep(2 * time.Second)
+
+		// Fetch latest release info
+		resp, err := http.Get("https://api.github.com/repos/pulse-ems/NEMS/releases/latest")
+		if err != nil {
+			log.Printf("[ERROR] Failed to fetch latest release: %v", err)
+			return
+		}
+		defer resp.Body.Close()
+
+		var releaseInfo struct {
+			TagName string `json:"tag_name"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&releaseInfo); err != nil {
+			log.Printf("[ERROR] Failed to parse release info: %v", err)
+			return
+		}
+
+		tagName := releaseInfo.TagName
+		version := strings.TrimPrefix(tagName, "v")
+		debFile := fmt.Sprintf("nems_%s_arm64.deb", version)
+		downloadURL := fmt.Sprintf("https://github.com/pulse-ems/NEMS/releases/download/%s/%s", tagName, debFile)
+		targetPath := filepath.Join("/tmp", debFile)
+
+		// Download the file
+		log.Printf("[INFO] Downloading update from %s to %s", downloadURL, targetPath)
+		cmd := exec.Command("wget", "-q", "-O", targetPath, downloadURL)
+		if out, err := cmd.CombinedOutput(); err != nil {
+			log.Printf("[ERROR] Failed to download update: %v, output: %s", err, string(out))
+			return
+		}
+
+		// Install the package
+		log.Printf("[INFO] Installing %s...", targetPath)
+		cmd = exec.Command("dpkg", "-i", targetPath)
+		if out, err := cmd.CombinedOutput(); err != nil {
+			log.Printf("[ERROR] Failed to install update: %v, output: %s", err, string(out))
+			return
+		}
+
+		// Restart the service
+		log.Printf("[INFO] Restarting nems service...")
+		cmd = exec.Command("systemctl", "restart", "nems.service")
+		if out, err := cmd.CombinedOutput(); err != nil {
+			log.Printf("[ERROR] Failed to restart service: %v, output: %s", err, string(out))
+			return
+		}
+		log.Printf("[INFO] Update and restart completed successfully.")
+	}()
 }
 
 // handleSystemReboot is the HTTP handler for the /api/system/reboot endpoint.
