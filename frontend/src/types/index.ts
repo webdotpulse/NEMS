@@ -15,6 +15,7 @@ export interface Device {
   battery_capacity?: number;
   inverter_rated_power_kw?: number;
   ocpp_proxy_url?: string;
+  poll_interval?: number;
 }
 
 export interface SiteSettings {

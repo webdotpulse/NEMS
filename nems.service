@@ -8,6 +8,7 @@ Type=simple
 User=nems
 Group=nems
 WorkingDirectory=/opt/nems
+EnvironmentFile=-/etc/default/nems
 ExecStart=/opt/nems/nems-server
 Restart=always
 RestartSec=5
