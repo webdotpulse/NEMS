@@ -716,7 +716,7 @@ table {
   width: 100%;
 }
 td, th {
-  @apply border border-gray-200 dark:border-gray-700 text-left p-4;
+  /* @apply border border-gray-200 dark:border-gray-700 text-left p-4; */
 }
 
 /*Simple scrollbar*/
