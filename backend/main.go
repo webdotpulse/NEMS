@@ -145,7 +145,7 @@ func ensureCertificates(certFile, keyFile string) error {
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		BasicConstraintsValid: true,
 		IPAddresses:           ips,
-		DNSNames:              []string{"localhost", "ems.local"},
+		DNSNames:              []string{"localhost", "ems", "ems.local"},
 	}
 
 	derBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, &priv.PublicKey, priv)

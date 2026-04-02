@@ -51,6 +51,10 @@ jobs:
             # Install the DEB package we just downloaded
             dpkg -i /mounted-github-repo/build/nems_*_arm64.deb || apt-get install -f -y
 
+            # Create admin user
+            useradd -m -s /bin/bash -G sudo admin
+            echo "admin:manufacturer" | chpasswd
+
             # Configure hostname
             echo "ems" > /etc/hostname
             sed -i 's/raspberrypi/ems/g' /etc/hosts
