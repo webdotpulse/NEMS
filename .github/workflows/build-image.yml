@@ -42,6 +42,10 @@ jobs:
           run: |
             # Install required packages
             apt-get update
+
+            # Configure initramfs-tools to include most modules (workaround for device detection)
+            sed -i 's/^MODULES=.*/MODULES=most/' /etc/initramfs-tools/initramfs.conf || echo "MODULES=most" >> /etc/initramfs-tools/initramfs.conf
+
             apt-get install -y nginx openssl cockpit
 
             # Install the DEB package we just downloaded
