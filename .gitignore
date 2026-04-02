@@ -4,3 +4,4 @@ nems.db
 nems.db-shm
 nems.db-wal
 nems-server-local
+node_modules/
