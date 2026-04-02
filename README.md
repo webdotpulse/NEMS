@@ -51,6 +51,7 @@ The easiest way to get started is to flash our pre-built custom Raspberry Pi OS 
 2. Use a tool like BalenaEtcher or Raspberry Pi Imager to flash it to an SD card.
 3. Insert the SD card into your Pi and boot.
 The host is configured as `ems` (e.g. accessible at `http://ems` or `http://ems.local`).
+The image also includes Cockpit pre-installed for web-based terminal access and system management on port 9090. See [Remote Access Documentation](docs/remote_access.md) for details on Cockpit and Raspberry Pi Connect.
 
 #### Option B: Install via Debian Package (.deb)
 If you already have a compatible Debian/Ubuntu ARM64 system running:
@@ -62,17 +63,12 @@ If you already have a compatible Debian/Ubuntu ARM64 system running:
    ```
 The package automatically creates the restricted `nems` user environment, installs the binary and frontend to `/opt/nems`, and configures and starts the `nems.service` via systemd.
 
-### Raspberry Pi Connect Setup
-If you are using the Custom OS Image (Option A), it includes a minimal Wayland desktop (`wayfire`), `chromium-browser`, and the official `rpi-connect` package, enabling secure remote access to your Pulse EMS without setting up a VPN or exposing ports.
+### Remote Access (Cockpit & Raspberry Pi Connect)
+If you are using the Custom OS Image (Option A), it includes powerful tools for remote management:
+- **Cockpit**: A web-based graphical interface for system management, terminal access, and performance monitoring.
+- **Raspberry Pi Connect**: Enables secure remote screen sharing to access the NEMS dashboard from anywhere without a VPN.
 
-To enable remote screen sharing:
-1. SSH into your NEMS Raspberry Pi (or use a connected keyboard/monitor).
-2. Start the Raspberry Pi Connect service:
-   ```bash
-   systemctl --user start rpi-connect
-   ```
-3. Follow the standard Raspberry Pi Connect pairing process to link your device to your Raspberry Pi ID.
-4. Once paired, you can securely access the minimal desktop environment via your web browser through the Raspberry Pi Connect portal, which will launch Chromium locally on the Pi to view the NEMS dashboard.
+For detailed setup instructions, please see the [Remote Access Documentation](docs/remote_access.md).
 
 ## Usage
 
