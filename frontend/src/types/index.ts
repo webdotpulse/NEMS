@@ -39,6 +39,8 @@ export interface SiteSettings {
   peak_shaving_rampup_w: number;
   timezone: string;
   log_level: string;
+  language: string;
+  address: string;
 
   // Energy Contract
   contract_type: string;

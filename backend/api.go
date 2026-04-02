@@ -8,6 +8,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/smtp"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -316,6 +317,43 @@ func handleSystemUpdateInstall(w http.ResponseWriter, r *http.Request) {
 	}()
 }
 
+// handleSystemMailLogs is the HTTP handler for the /api/system/mail-logs endpoint.
+func handleSystemMailLogs(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var address string
+	err := db.QueryRow("SELECT address FROM site_settings WHERE id = 1").Scan(&address)
+	if err != nil {
+		address = "Unknown Address"
+	}
+	if address == "" {
+		address = "Unknown Address"
+	}
+
+	logs := logBuffer.GetLogs()
+	logText := strings.Join(logs, "\n")
+
+	subject := fmt.Sprintf("Subject: EMS logs - [%s]\r\n", address)
+	body := "Here are the latest system logs:\r\n\r\n" + logText
+	msg := []byte(subject + "\r\n" + body)
+
+	// Since we are not guaranteed an SMTP server, we will try to send using standard localhost:25,
+	// but gracefully ignore errors to avoid crashing if it's not present.
+	err = smtp.SendMail("127.0.0.1:25", nil, "nems@localhost", []string{"info@mobilitypulse.com"}, msg)
+	if err != nil {
+		log.Printf("[ERROR] Failed to send email: %v", err)
+		http.Error(w, "Failed to send email. Ensure local SMTP server is running.", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"status": "email sent"}`))
+}
+
 // handleSystemReboot is the HTTP handler for the /api/system/reboot endpoint.
 func handleSystemReboot(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
@@ -453,9 +491,9 @@ func handleTariffsToday(w http.ResponseWriter, r *http.Request) {
 func handleSettings(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	if r.Method == "GET" {
-		row := db.QueryRow("SELECT strategy_mode, capacity_peak_limit_kw, active_inverter_curtailment, battery_grid_charge_strategy, force_charge_below_euro, force_discharge_above_euro, smart_ev_cheapest_hours, grid_nominal_current_a, grid_system, allowed_grid_import_kw, allowed_grid_export_kw, appliance_turn_on_excess_w, peak_shaving_buffer_w, peak_shaving_rampup_w, timezone, latitude, longitude, contract_type, fixed_price_peak_kwh, fixed_price_off_peak_kwh, fixed_inject_price_kwh, dynamic_markup_kwh, engie_markup_peak, engie_markup_off_peak, engie_markup_super_off_peak, engie_multiplier, engie_base_fee, custom_charge_schedule, superdal_optimization_enabled, superdal_target_soc FROM site_settings WHERE id = 1")
+		row := db.QueryRow("SELECT strategy_mode, capacity_peak_limit_kw, active_inverter_curtailment, battery_grid_charge_strategy, force_charge_below_euro, force_discharge_above_euro, smart_ev_cheapest_hours, grid_nominal_current_a, grid_system, allowed_grid_import_kw, allowed_grid_export_kw, appliance_turn_on_excess_w, peak_shaving_buffer_w, peak_shaving_rampup_w, timezone, language, address, latitude, longitude, contract_type, fixed_price_peak_kwh, fixed_price_off_peak_kwh, fixed_inject_price_kwh, dynamic_markup_kwh, engie_markup_peak, engie_markup_off_peak, engie_markup_super_off_peak, engie_multiplier, engie_base_fee, custom_charge_schedule, superdal_optimization_enabled, superdal_target_soc FROM site_settings WHERE id = 1")
 		var settings models.SiteSettings
-		err := row.Scan(&settings.StrategyMode, &settings.CapacityPeakLimitKw, &settings.ActiveInverterCurtailment, &settings.BatteryGridChargeStrategy, &settings.ForceChargeBelowEuro, &settings.ForceDischargeAboveEuro, &settings.SmartEvCheapestHours, &settings.GridNominalCurrentA, &settings.GridSystem, &settings.AllowedGridImportKw, &settings.AllowedGridExportKw, &settings.ApplianceTurnOnExcessW, &settings.PeakShavingBufferW, &settings.PeakShavingRampupW, &settings.Timezone, &settings.Latitude, &settings.Longitude, &settings.ContractType, &settings.FixedPricePeakKwh, &settings.FixedPriceOffPeakKwh, &settings.FixedInjectPriceKwh, &settings.DynamicMarkupKwh, &settings.EngieMarkupPeak, &settings.EngieMarkupOffPeak, &settings.EngieMarkupSuperOffPeak, &settings.EngieMultiplier, &settings.EngieBaseFee, &settings.CustomChargeSchedule, &settings.SuperdalOptimizationEnabled, &settings.SuperdalTargetSoc)
+		err := row.Scan(&settings.StrategyMode, &settings.CapacityPeakLimitKw, &settings.ActiveInverterCurtailment, &settings.BatteryGridChargeStrategy, &settings.ForceChargeBelowEuro, &settings.ForceDischargeAboveEuro, &settings.SmartEvCheapestHours, &settings.GridNominalCurrentA, &settings.GridSystem, &settings.AllowedGridImportKw, &settings.AllowedGridExportKw, &settings.ApplianceTurnOnExcessW, &settings.PeakShavingBufferW, &settings.PeakShavingRampupW, &settings.Timezone, &settings.Language, &settings.Address, &settings.Latitude, &settings.Longitude, &settings.ContractType, &settings.FixedPricePeakKwh, &settings.FixedPriceOffPeakKwh, &settings.FixedInjectPriceKwh, &settings.DynamicMarkupKwh, &settings.EngieMarkupPeak, &settings.EngieMarkupOffPeak, &settings.EngieMarkupSuperOffPeak, &settings.EngieMultiplier, &settings.EngieBaseFee, &settings.CustomChargeSchedule, &settings.SuperdalOptimizationEnabled, &settings.SuperdalTargetSoc)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				// Fallback
@@ -475,6 +513,8 @@ func handleSettings(w http.ResponseWriter, r *http.Request) {
 					PeakShavingBufferW:          200.0,
 					PeakShavingRampupW:          500.0,
 					Timezone:                    "Europe/Brussels",
+					Language:                    "EN",
+					Address:                     "",
 					Latitude:                    50.8503,
 					Longitude:                   4.3517,
 					ContractType:                "dynamic",
@@ -517,8 +557,8 @@ func handleSettings(w http.ResponseWriter, r *http.Request) {
 			settings.CustomChargeSchedule = "[]"
 		}
 
-		_, err := db.Exec("UPDATE site_settings SET strategy_mode = ?, capacity_peak_limit_kw = ?, active_inverter_curtailment = ?, battery_grid_charge_strategy = ?, force_charge_below_euro = ?, force_discharge_above_euro = ?, smart_ev_cheapest_hours = ?, grid_nominal_current_a = ?, grid_system = ?, allowed_grid_import_kw = ?, allowed_grid_export_kw = ?, appliance_turn_on_excess_w = ?, peak_shaving_buffer_w = ?, peak_shaving_rampup_w = ?, timezone = ?, latitude = ?, longitude = ?, contract_type = ?, fixed_price_peak_kwh = ?, fixed_price_off_peak_kwh = ?, fixed_inject_price_kwh = ?, dynamic_markup_kwh = ?, engie_markup_peak = ?, engie_markup_off_peak = ?, engie_markup_super_off_peak = ?, engie_multiplier = ?, engie_base_fee = ?, custom_charge_schedule = ?, superdal_optimization_enabled = ?, superdal_target_soc = ? WHERE id = 1",
-			settings.StrategyMode, settings.CapacityPeakLimitKw, settings.ActiveInverterCurtailment, settings.BatteryGridChargeStrategy, settings.ForceChargeBelowEuro, settings.ForceDischargeAboveEuro, settings.SmartEvCheapestHours, settings.GridNominalCurrentA, settings.GridSystem, settings.AllowedGridImportKw, settings.AllowedGridExportKw, settings.ApplianceTurnOnExcessW, settings.PeakShavingBufferW, settings.PeakShavingRampupW, settings.Timezone, settings.Latitude, settings.Longitude, settings.ContractType, settings.FixedPricePeakKwh, settings.FixedPriceOffPeakKwh, settings.FixedInjectPriceKwh, settings.DynamicMarkupKwh, settings.EngieMarkupPeak, settings.EngieMarkupOffPeak, settings.EngieMarkupSuperOffPeak, settings.EngieMultiplier, settings.EngieBaseFee, settings.CustomChargeSchedule, settings.SuperdalOptimizationEnabled, settings.SuperdalTargetSoc)
+		_, err := db.Exec("UPDATE site_settings SET strategy_mode = ?, capacity_peak_limit_kw = ?, active_inverter_curtailment = ?, battery_grid_charge_strategy = ?, force_charge_below_euro = ?, force_discharge_above_euro = ?, smart_ev_cheapest_hours = ?, grid_nominal_current_a = ?, grid_system = ?, allowed_grid_import_kw = ?, allowed_grid_export_kw = ?, appliance_turn_on_excess_w = ?, peak_shaving_buffer_w = ?, peak_shaving_rampup_w = ?, timezone = ?, language = ?, address = ?, latitude = ?, longitude = ?, contract_type = ?, fixed_price_peak_kwh = ?, fixed_price_off_peak_kwh = ?, fixed_inject_price_kwh = ?, dynamic_markup_kwh = ?, engie_markup_peak = ?, engie_markup_off_peak = ?, engie_markup_super_off_peak = ?, engie_multiplier = ?, engie_base_fee = ?, custom_charge_schedule = ?, superdal_optimization_enabled = ?, superdal_target_soc = ? WHERE id = 1",
+			settings.StrategyMode, settings.CapacityPeakLimitKw, settings.ActiveInverterCurtailment, settings.BatteryGridChargeStrategy, settings.ForceChargeBelowEuro, settings.ForceDischargeAboveEuro, settings.SmartEvCheapestHours, settings.GridNominalCurrentA, settings.GridSystem, settings.AllowedGridImportKw, settings.AllowedGridExportKw, settings.ApplianceTurnOnExcessW, settings.PeakShavingBufferW, settings.PeakShavingRampupW, settings.Timezone, settings.Language, settings.Address, settings.Latitude, settings.Longitude, settings.ContractType, settings.FixedPricePeakKwh, settings.FixedPriceOffPeakKwh, settings.FixedInjectPriceKwh, settings.DynamicMarkupKwh, settings.EngieMarkupPeak, settings.EngieMarkupOffPeak, settings.EngieMarkupSuperOffPeak, settings.EngieMultiplier, settings.EngieBaseFee, settings.CustomChargeSchedule, settings.SuperdalOptimizationEnabled, settings.SuperdalTargetSoc)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

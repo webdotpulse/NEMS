@@ -26,6 +26,9 @@
               System Info
             </h2>
             <div class="flex gap-4">
+              <button @click="mailLogs" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                Mail Logs
+              </button>
               <button @click="resetDatabase" class="inline-flex items-center px-4 py-2 border border-red-500 text-sm font-medium rounded-md shadow-sm text-red-500 bg-transparent hover:bg-red-50 dark:hover:bg-red-900/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
                 Reset Database
               </button>
@@ -126,15 +129,15 @@
                     Grid Connection
                   </h3>
                 </div>
-                <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-                  <div class="sm:col-span-2">
+                <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-4">
+                  <div class="sm:col-span-1">
                     <label for="grid_nominal_current_a" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nominal Current (A)</label>
                     <div class="mt-1">
                       <input type="number" step="0.1" id="grid_nominal_current_a" v-model="siteSettings.grid_nominal_current_a" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
                     </div>
                   </div>
 
-                  <div class="sm:col-span-2">
+                  <div class="sm:col-span-1">
                     <label for="grid_system" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Grid System</label>
                     <div class="mt-1">
                       <select id="grid_system" v-model="siteSettings.grid_system"
@@ -146,7 +149,7 @@
                     </div>
                   </div>
 
-                  <div class="sm:col-span-2">
+                  <div class="sm:col-span-1">
                     <label for="allowed_grid_import_kw" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Allowed Grid Import (kW)</label>
                     <div class="mt-1">
                       <input type="number" step="0.1" id="allowed_grid_import_kw" v-model="siteSettings.allowed_grid_import_kw" :placeholder="maxGridPowerKw" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
@@ -154,7 +157,7 @@
                     <p class="mt-1 text-xs text-gray-500">Proposed max: {{ maxGridPowerKw }} kW</p>
                   </div>
 
-                  <div class="sm:col-span-2">
+                  <div class="sm:col-span-1">
                     <label for="allowed_grid_export_kw" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Allowed Grid Export (kW)</label>
                     <div class="mt-1">
                       <input type="number" step="0.1" id="allowed_grid_export_kw" v-model="siteSettings.allowed_grid_export_kw" :placeholder="maxGridPowerKw" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
@@ -173,8 +176,8 @@
                     Location
                   </h3>
                 </div>
-                <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-                  <div class="sm:col-span-2">
+                <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-4">
+                  <div class="sm:col-span-1">
                     <label for="timezone" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Time Zone</label>
                     <div class="mt-1">
                       <select id="timezone" v-model="siteSettings.timezone"
@@ -187,17 +190,36 @@
                     </div>
                   </div>
 
-                  <div class="sm:col-span-2">
+                  <div class="sm:col-span-1">
+                    <label for="language" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Language</label>
+                    <div class="mt-1">
+                      <select id="language" v-model="siteSettings.language"
+                              class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
+                        <option value="EN">EN</option>
+                        <option value="NL">NL</option>
+                        <option value="FR">FR</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="sm:col-span-1">
                     <label for="latitude" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Latitude</label>
                     <div class="mt-1">
                       <input type="number" step="0.0001" id="latitude" v-model="siteSettings.latitude" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
                     </div>
                   </div>
 
-                  <div class="sm:col-span-2">
+                  <div class="sm:col-span-1">
                     <label for="longitude" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Longitude</label>
                     <div class="mt-1">
                       <input type="number" step="0.0001" id="longitude" v-model="siteSettings.longitude" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                    </div>
+                  </div>
+
+                  <div class="sm:col-span-4">
+                    <label for="address" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Address</label>
+                    <div class="mt-1">
+                      <input type="text" id="address" v-model="siteSettings.address" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
                     </div>
                   </div>
                 </div>
@@ -977,6 +999,8 @@ const siteSettings = ref<SiteSettings>({
   peak_shaving_buffer_w: 200.0,
   peak_shaving_rampup_w: 500.0,
   timezone: 'Europe/Brussels',
+  language: 'EN',
+  address: '',
   log_level: 'INFO',
   contract_type: 'dynamic',
   fixed_price_peak_kwh: 0.35,
@@ -1219,6 +1243,22 @@ const deleteDevice = async (id: number) => {
     }
   } catch (e) {
     console.error("Failed to delete device:", e)
+  }
+}
+
+const mailLogs = async () => {
+  if (confirm("Are you sure you want to email the logs to info@mobilitypulse.com?")) {
+    try {
+      const res = await fetch(`${getApiBase()}/api/system/mail-logs`, { method: 'POST' })
+      if (res.ok) {
+        alert("Logs successfully sent to info@mobilitypulse.com.")
+      } else {
+        alert("Failed to send email. Ensure the system has internet and mail configured.")
+      }
+    } catch (e) {
+      console.error("Failed to mail logs:", e)
+      alert("Failed to connect to the backend to mail logs.")
+    }
   }
 }
 

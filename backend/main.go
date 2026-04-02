@@ -360,6 +360,8 @@ func main() {
 	ensureColumnExists(db, "site_settings", "peak_shaving_buffer_w", "REAL DEFAULT 200.0")
 	ensureColumnExists(db, "site_settings", "peak_shaving_rampup_w", "REAL DEFAULT 500.0")
 	ensureColumnExists(db, "site_settings", "timezone", "TEXT DEFAULT 'Europe/Brussels'")
+	ensureColumnExists(db, "site_settings", "language", "TEXT DEFAULT 'EN'")
+	ensureColumnExists(db, "site_settings", "address", "TEXT DEFAULT ''")
 	ensureColumnExists(db, "site_settings", "latitude", "REAL DEFAULT 50.8503")
 	ensureColumnExists(db, "site_settings", "longitude", "REAL DEFAULT 4.3517")
 
@@ -393,6 +395,7 @@ func main() {
 	mux.HandleFunc("/api/system/update/install", handleSystemUpdateInstall)
 	mux.HandleFunc("/api/system/reboot", handleSystemReboot)
 	mux.HandleFunc("/api/system/reset-db", handleSystemResetDb)
+	mux.HandleFunc("/api/system/mail-logs", handleSystemMailLogs)
 	mux.HandleFunc("/api/network/scan", handleNetworkScan)
 
 	mux.HandleFunc("/api/tariffs/today", handleTariffsToday)
