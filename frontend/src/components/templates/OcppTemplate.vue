@@ -53,7 +53,7 @@ const wsUrl = computed(() => {
     base = base.replace(/^http/, 'ws')
   } else {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-    base = `${protocol}//${window.location.host}`
+    base = `${protocol}//{IP Address ems}:8080`
   }
   return `${base}/api/ocpp/${chargePointId}`
 })

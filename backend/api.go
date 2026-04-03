@@ -169,6 +169,12 @@ func handleSystemUpdateCheck(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var githubToken string
+	db.QueryRow("SELECT github_token FROM site_settings WHERE id = 1").Scan(&githubToken)
+	if githubToken != "" {
+		req.Header.Set("Authorization", "Bearer "+githubToken)
+	}
+
 	// Add a User-Agent header, GitHub API requires it
 	req.Header.Set("User-Agent", "NEMS-Update-Checker")
 	req.Header.Set("Accept", "application/vnd.github.v3+json")
@@ -261,6 +267,12 @@ func handleSystemUpdateInstall(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		var githubToken string
+		db.QueryRow("SELECT github_token FROM site_settings WHERE id = 1").Scan(&githubToken)
+		if githubToken != "" {
+			req.Header.Set("Authorization", "Bearer "+githubToken)
+		}
+
 		req.Header.Set("User-Agent", "NEMS-Update-Installer")
 		req.Header.Set("Accept", "application/vnd.github.v3+json")
 		client := &http.Client{Timeout: 10 * time.Second}
@@ -294,7 +306,13 @@ func handleSystemUpdateInstall(w http.ResponseWriter, r *http.Request) {
 		log.Printf("[INFO] Downloading update from %s to %s", downloadURL, targetPath)
 
 		var cmd *exec.Cmd
-		cmd = exec.Command("curl", "-L", "-s", "-o", targetPath, downloadURL)
+
+		if githubToken != "" {
+			// If token is provided, add it to curl
+			cmd = exec.Command("curl", "-L", "-H", "Authorization: Bearer "+githubToken, "-H", "Accept: application/octet-stream", "-s", "-o", targetPath, downloadURL)
+		} else {
+			cmd = exec.Command("curl", "-L", "-s", "-o", targetPath, downloadURL)
+		}
 
 		if out, err := cmd.CombinedOutput(); err != nil {
 			log.Printf("[ERROR] Failed to download update: %v, output: %s", err, string(out))
