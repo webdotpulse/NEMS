@@ -2,14 +2,12 @@ package main
 
 import (
 	"bufio"
-	"crypto/tls"
 	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net"
 	"net/http"
-	"net/smtp"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -326,87 +324,6 @@ func handleSystemUpdateInstall(w http.ResponseWriter, r *http.Request) {
 		}
 		log.Printf("[INFO] Update and restart completed successfully.")
 	}()
-}
-
-// handleSystemMailLogs is the HTTP handler for the /api/system/mail-logs endpoint.
-func handleSystemMailLogs(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	var address string
-	err := db.QueryRow("SELECT address FROM site_settings WHERE id = 1").Scan(&address)
-	if err != nil {
-		address = "Unknown Address"
-	}
-	if address == "" {
-		address = "Unknown Address"
-	}
-
-	logs := logBuffer.GetLogs()
-	logText := strings.Join(logs, "\n")
-
-	subject := fmt.Sprintf("Subject: EMS logs - [%s]\r\n", address)
-	body := "Here are the latest system logs:\r\n\r\n" + logText
-	msg := []byte(subject + "\r\n" + body)
-
-	// Since we are not guaranteed an SMTP server, we will try to send using standard localhost:25,
-	// but gracefully ignore errors to avoid crashing if it's not present.
-	c, err := smtp.Dial("127.0.0.1:25")
-	if err != nil {
-		log.Printf("[ERROR] Failed to connect to SMTP server: %v", err)
-		http.Error(w, "Failed to connect to local SMTP server.", http.StatusInternalServerError)
-		return
-	}
-	defer c.Close()
-
-	if ok, _ := c.Extension("STARTTLS"); ok {
-		config := &tls.Config{InsecureSkipVerify: true}
-		if err = c.StartTLS(config); err != nil {
-			log.Printf("[ERROR] Failed to start TLS: %v", err)
-			http.Error(w, "Failed to start TLS.", http.StatusInternalServerError)
-			return
-		}
-	}
-
-	if err = c.Mail("nems@localhost"); err != nil {
-		log.Printf("[ERROR] Failed to set sender: %v", err)
-		http.Error(w, "Failed to set sender.", http.StatusInternalServerError)
-		return
-	}
-
-	if err = c.Rcpt("info@mobilitypulse.com"); err != nil {
-		log.Printf("[ERROR] Failed to set recipient: %v", err)
-		http.Error(w, "Failed to set recipient.", http.StatusInternalServerError)
-		return
-	}
-
-	wc, err := c.Data()
-	if err != nil {
-		log.Printf("[ERROR] Failed to start data transmission: %v", err)
-		http.Error(w, "Failed to send email data.", http.StatusInternalServerError)
-		return
-	}
-
-	if _, err = wc.Write(msg); err != nil {
-		log.Printf("[ERROR] Failed to write message: %v", err)
-		http.Error(w, "Failed to send email content.", http.StatusInternalServerError)
-		return
-	}
-
-	err = wc.Close()
-	if err != nil {
-		log.Printf("[ERROR] Failed to close data transmission: %v", err)
-		http.Error(w, "Failed to complete email transmission.", http.StatusInternalServerError)
-		return
-	}
-
-	c.Quit()
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"status": "email sent"}`))
 }
 
 // handleSystemReboot is the HTTP handler for the /api/system/reboot endpoint.

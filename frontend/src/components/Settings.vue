@@ -26,9 +26,6 @@
               System Info
             </h2>
             <div class="flex gap-4">
-              <button @click="mailLogs" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-                Mail Logs
-              </button>
               <button @click="resetDatabase" class="inline-flex items-center px-4 py-2 border border-red-500 text-sm font-medium rounded-md shadow-sm text-red-500 bg-transparent hover:bg-red-50 dark:hover:bg-red-900/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
                 Reset Database
               </button>
@@ -1244,22 +1241,6 @@ const deleteDevice = async (id: number) => {
     }
   } catch (e) {
     console.error("Failed to delete device:", e)
-  }
-}
-
-const mailLogs = async () => {
-  if (confirm("Are you sure you want to email the logs to info@mobilitypulse.com?")) {
-    try {
-      const res = await fetch(`${getApiBase()}/api/system/mail-logs`, { method: 'POST' })
-      if (res.ok) {
-        alert("Logs successfully sent to info@mobilitypulse.com.")
-      } else {
-        alert("Failed to send email. Ensure the system has internet and mail configured.")
-      }
-    } catch (e) {
-      console.error("Failed to mail logs:", e)
-      alert("Failed to connect to the backend to mail logs.")
-    }
   }
 }
 
