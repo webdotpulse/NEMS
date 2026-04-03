@@ -172,7 +172,6 @@ func handleSystemUpdateCheck(w http.ResponseWriter, r *http.Request) {
 	// Add a User-Agent header, GitHub API requires it
 	req.Header.Set("User-Agent", "NEMS-Update-Checker")
 	req.Header.Set("Accept", "application/vnd.github.v3+json")
-	req.Header.Set("Authorization", "Bearer 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")
 
 	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Do(req)
@@ -216,9 +215,6 @@ func handleSystemUpdateCheck(w http.ResponseWriter, r *http.Request) {
 	}
 
 	latestVersion := releases[0].TagName
-	if strings.HasPrefix(latestVersion, "v") {
-		latestVersion = strings.TrimPrefix(latestVersion, "v")
-	}
 
 	// Compare with BuildNumber
 	// Assuming BuildNumber could be a date or a version tag like "0.0.1"
@@ -267,7 +263,6 @@ func handleSystemUpdateInstall(w http.ResponseWriter, r *http.Request) {
 
 		req.Header.Set("User-Agent", "NEMS-Update-Installer")
 		req.Header.Set("Accept", "application/vnd.github.v3+json")
-		req.Header.Set("Authorization", "Bearer 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")
 		client := &http.Client{Timeout: 10 * time.Second}
 		resp, err := client.Do(req)
 		if err != nil {
@@ -298,9 +293,8 @@ func handleSystemUpdateInstall(w http.ResponseWriter, r *http.Request) {
 		// Download the file
 		log.Printf("[INFO] Downloading update from %s to %s", downloadURL, targetPath)
 
-		// If using private repo, curl needs auth header
 		var cmd *exec.Cmd
-		cmd = exec.Command("curl", "-L", "-s", "-H", "Authorization: Bearer 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", "-o", targetPath, downloadURL)
+		cmd = exec.Command("curl", "-L", "-s", "-o", targetPath, downloadURL)
 
 		if out, err := cmd.CombinedOutput(); err != nil {
 			log.Printf("[ERROR] Failed to download update: %v, output: %s", err, string(out))

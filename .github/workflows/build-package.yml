@@ -44,7 +44,7 @@ jobs:
           CGO_ENABLED: 1
           CC: aarch64-linux-gnu-gcc
         run: |
-          go build -ldflags="-X main.BuildNumber=$(date -u +'%Y-%m-%d+%s')" -o ../build/nems-server *.go
+          go build -ldflags="-X main.BuildNumber=${GITHUB_REF_NAME}" -o ../build/nems-server *.go
 
       - name: Create DEB Package Structure
         run: |
