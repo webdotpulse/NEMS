@@ -321,7 +321,7 @@ func handleSystemUpdateInstall(w http.ResponseWriter, r *http.Request) {
 
 		// Install the package
 		log.Printf("[INFO] Installing %s...", targetPath)
-		cmd = exec.Command("dpkg", "-i", targetPath)
+		cmd = exec.Command("sudo", "dpkg", "-i", targetPath)
 		if out, err := cmd.CombinedOutput(); err != nil {
 			log.Printf("[ERROR] Failed to install update: %v, output: %s", err, string(out))
 			return
@@ -329,7 +329,7 @@ func handleSystemUpdateInstall(w http.ResponseWriter, r *http.Request) {
 
 		// Restart the service
 		log.Printf("[INFO] Restarting nems service...")
-		cmd = exec.Command("systemctl", "restart", "nems.service")
+		cmd = exec.Command("sudo", "systemctl", "restart", "nems.service")
 		if out, err := cmd.CombinedOutput(); err != nil {
 			log.Printf("[ERROR] Failed to restart service: %v, output: %s", err, string(out))
 			return
