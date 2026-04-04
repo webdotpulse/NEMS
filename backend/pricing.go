@@ -61,6 +61,18 @@ func CalculateEffectivePrice(timestamp time.Time, rawEpexPrice float64, settings
 
 		return settings.EngieBaseFee + (rawEpexPrice * settings.EngieMultiplier) + markup
 
+	case "luminus_dynamic":
+		return settings.LuminusBaseFee + (rawEpexPrice * settings.LuminusMultiplier) + settings.LuminusMarkup
+
+	case "eneco_dynamic":
+		return settings.EnecoBaseFee + (rawEpexPrice * settings.EnecoMultiplier) + settings.EnecoMarkup
+
+	case "frank_energie_dynamic":
+		return settings.FrankBaseFee + (rawEpexPrice * settings.FrankMultiplier) + settings.FrankMarkup
+
+	case "ecopower_dynamic":
+		return settings.EcopowerBaseFee + (rawEpexPrice * settings.EcopowerMultiplier) + settings.EcopowerMarkup
+
 	default:
 		// Fallback to dynamic if unknown
 		return rawEpexPrice + settings.DynamicMarkupKwh

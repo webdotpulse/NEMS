@@ -32,6 +32,18 @@ type SiteSettings struct {
 	EngieMarkupSuperOffPeak float64 `json:"engie_markup_super_off_peak"`
 	EngieMultiplier         float64 `json:"engie_multiplier"`
 	EngieBaseFee            float64 `json:"engie_base_fee"`
+	LuminusMarkup           float64 `json:"luminus_markup"`
+	LuminusMultiplier       float64 `json:"luminus_multiplier"`
+	LuminusBaseFee          float64 `json:"luminus_base_fee"`
+	EnecoMarkup             float64 `json:"eneco_markup"`
+	EnecoMultiplier         float64 `json:"eneco_multiplier"`
+	EnecoBaseFee            float64 `json:"eneco_base_fee"`
+	FrankMarkup             float64 `json:"frank_markup"`
+	FrankMultiplier         float64 `json:"frank_multiplier"`
+	FrankBaseFee            float64 `json:"frank_base_fee"`
+	EcopowerMarkup          float64 `json:"ecopower_markup"`
+	EcopowerMultiplier      float64 `json:"ecopower_multiplier"`
+	EcopowerBaseFee         float64 `json:"ecopower_base_fee"`
 
 	// Custom Schedules & Optimization
 	CustomChargeSchedule        string  `json:"custom_charge_schedule"`
