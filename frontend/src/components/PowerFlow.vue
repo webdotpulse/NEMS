@@ -86,9 +86,9 @@
                 </span>
                 <span v-else class="text-blue-500 dark:text-blue-400 text-xs">&rarr; 0 W</span>
 
-                <div v-if="state?.projected_quarter_peak_w !== undefined && state?.projected_quarter_peak_w !== null" class="text-[10px] text-gray-500 mt-0.5">
+                <!--<div v-if="state?.projected_quarter_peak_w !== undefined && state?.projected_quarter_peak_w !== null" class="text-[10px] text-gray-500 mt-0.5">
                   Proj. 15m Peak: {{ state.projected_quarter_peak_w?.toFixed(0) }} W
-                </div>
+                </div>-->
               </div>
             </div>
           </div>
