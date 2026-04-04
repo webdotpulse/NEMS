@@ -135,6 +135,7 @@ import { ref, onMounted, computed } from 'vue';
 import { marked } from 'marked';
 import { getApiBase } from '../api';
 
+const repository = 'webdotpulse/nems'; // Based on github url in memory
 const currentVersion = ref('v0.0.0');
 
 const latestRelease = ref<any>(null);
@@ -142,6 +143,7 @@ const loading = ref(true);
 const error = ref<string | null>(null);
 const lastChecked = ref('');
 const installing = ref(false);
+const githubToken = ref('');
 
 const fetchSystemInfo = async () => {
   try {
@@ -157,23 +159,48 @@ const fetchSystemInfo = async () => {
   }
 };
 
+const fetchSettings = async () => {
+    try {
+        const res = await fetch(`${getApiBase()}/api/settings`);
+        if (res.ok) {
+            const data = await res.json();
+            if (data.github_token) {
+                githubToken.value = data.github_token;
+            }
+        }
+    } catch (e) {
+        console.error("Failed to fetch settings for github token:", e);
+    }
+};
+
 const checkUpdate = async () => {
     loading.value = true;
     error.value = null;
 
     try {
-        const response = await fetch(`${getApiBase()}/api/system/update/check`);
+        const headers: Record<string, string> = {
+            'Accept': 'application/vnd.github.v3+json'
+        };
+        if (githubToken.value) {
+            headers['Authorization'] = `Bearer ${githubToken.value}`;
+        }
+        const response = await fetch(`https://api.github.com/repos/${repository}/releases`, {
+            headers
+        });
+
+        if (response.status === 404) {
+            throw new Error(`No releases found for ${repository} yet.`);
+        }
 
         if (!response.ok) {
-            const errText = await response.text();
-            throw new Error(errText.trim() || `API returned ${response.status}: ${response.statusText}`);
+            throw new Error(`API returned ${response.status}: ${response.statusText}`);
         }
 
         const data = await response.json();
-        if (data.release) {
-            latestRelease.value = data.release;
+        if (data.length > 0) {
+            latestRelease.value = data[0];
         } else {
-            throw new Error(`No releases found yet.`);
+            throw new Error(`No releases found for ${repository} yet.`);
         }
 
         lastChecked.value = new Date().toLocaleTimeString();
@@ -204,6 +231,7 @@ const installUpdate = async () => {
 
 onMounted(async () => {
     await fetchSystemInfo();
+    await fetchSettings();
     checkUpdate();
 });
 

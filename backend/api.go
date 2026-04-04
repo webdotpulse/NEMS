@@ -208,12 +208,22 @@ func handleSystemUpdateCheck(w http.ResponseWriter, r *http.Request) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
+		// Log the status and body for debugging
 		log.Printf("[ERROR] GitHub API returned status: %d", resp.StatusCode)
-		http.Error(w, fmt.Sprintf("API returned %d", resp.StatusCode), http.StatusInternalServerError)
+		// Instead of returning 500, we could just return update available = false
+		// since we cannot get the version.
+		response := map[string]interface{}{
+			"update_available": false,
+			"latest_version":   "unknown",
+			"current_version":  BuildNumber,
+		}
+		json.NewEncoder(w).Encode(response)
 		return
 	}
 
-	var releases []map[string]interface{}
+	var releases []struct {
+		TagName string `json:"tag_name"`
+	}
 	if err := json.NewDecoder(resp.Body).Decode(&releases); err != nil {
 		http.Error(w, `{"error": "Failed to parse release info"}`, http.StatusInternalServerError)
 		return
@@ -229,13 +239,19 @@ func handleSystemUpdateCheck(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	latestRelease := releases[0]
-	latestVersion, _ := latestRelease["tag_name"].(string)
+	latestVersion := releases[0].TagName
+
+	// Compare with BuildNumber
+	// Assuming BuildNumber could be a date or a version tag like "0.0.1"
+	// For simplicity, if latestVersion != BuildNumber and not "development", we assume an update is available.
+	// If BuildNumber is a date (e.g., 2024-01-01), this comparison might be tricky, but since it's injected,
+	// maybe it's best to just say update available if they differ and BuildNumber != "development".
 
 	updateAvailable := false
 	if BuildNumber != "development" && BuildNumber != latestVersion {
 		updateAvailable = true
 	} else if BuildNumber == "development" {
+		// During development, let's assume we can always show the update if a release exists.
 		updateAvailable = latestVersion != ""
 	}
 
@@ -243,7 +259,6 @@ func handleSystemUpdateCheck(w http.ResponseWriter, r *http.Request) {
 		"update_available": updateAvailable,
 		"latest_version":   latestVersion,
 		"current_version":  BuildNumber,
-		"release":          latestRelease,
 	}
 	json.NewEncoder(w).Encode(response)
 }
