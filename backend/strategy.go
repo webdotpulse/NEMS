@@ -253,7 +253,10 @@ func (sc *StrategyController) executeControlLoop(settings models.SiteSettings) {
 	// Step 2: Apply Dynamic Tariffs Base Intent
 
 	// Battery Arbitrage Discharge Intent
-	if currentCachedPrice > settings.ForceDischargeAboveEuro {
+	// Calculate the minimum profitable discharge price considering a ~20% round-trip efficiency loss (0.80 efficiency).
+	minProfitableDischargePrice := settings.ForceChargeBelowEuro / 0.80
+
+	if currentCachedPrice > settings.ForceDischargeAboveEuro && currentCachedPrice > minProfitableDischargePrice {
 		for id, poller := range pollers {
 			if _, ok := poller.(models.BatteryController); ok {
 				dev := poller.GetDevice()
