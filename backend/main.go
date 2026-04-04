@@ -320,6 +320,7 @@ func main() {
 	ensureColumnExists(db, "devices", "battery_mode", "TEXT DEFAULT 'auto'")
 	ensureColumnExists(db, "devices", "inverter_rated_power_kw", "REAL DEFAULT 0")
 	ensureColumnExists(db, "devices", "poll_interval", "INTEGER DEFAULT 5")
+	ensureColumnExists(db, "devices", "ocpp_proxy_url", "TEXT DEFAULT ''")
 
 	createEpexPricesSQL := `
 	CREATE TABLE IF NOT EXISTS epex_prices (
@@ -365,12 +366,10 @@ func main() {
 	ensureColumnExists(db, "site_settings", "longitude", "REAL DEFAULT 4.3517")
 
 	ensureColumnExists(db, "site_settings", "contract_type", "TEXT DEFAULT 'dynamic'")
-	ensureColumnExists(db, "site_settings", "scale_factor_epex_spot_consumption", "REAL DEFAULT 1.0")
-	ensureColumnExists(db, "site_settings", "energy_prices_consumption", "REAL DEFAULT 0.0")
-	ensureColumnExists(db, "site_settings", "grid_costs_consumption", "REAL DEFAULT 0.0")
-	ensureColumnExists(db, "site_settings", "scale_factor_epex_spot_injection", "REAL DEFAULT 0.0")
-	ensureColumnExists(db, "site_settings", "energy_prices_injection", "REAL DEFAULT 0.0")
-	ensureColumnExists(db, "site_settings", "grid_costs_injection", "REAL DEFAULT 0.0")
+	ensureColumnExists(db, "site_settings", "fixed_price_peak_kwh", "REAL DEFAULT 0.0")
+	ensureColumnExists(db, "site_settings", "fixed_price_off_peak_kwh", "REAL DEFAULT 0.0")
+	ensureColumnExists(db, "site_settings", "fixed_inject_price_kwh", "REAL DEFAULT 0.0")
+	ensureColumnExists(db, "site_settings", "dynamic_markup_kwh", "REAL DEFAULT 0.0")
 	ensureColumnExists(db, "site_settings", "engie_markup_peak", "REAL DEFAULT 0.0")
 	ensureColumnExists(db, "site_settings", "engie_markup_off_peak", "REAL DEFAULT 0.0")
 	ensureColumnExists(db, "site_settings", "engie_markup_super_off_peak", "REAL DEFAULT 0.0")
@@ -409,6 +408,22 @@ func main() {
 	mux.HandleFunc("/api/devices/", handleDevice)
 
 	// OCPP WebSocket endpoint
+	ocpp.GetDeviceProxyUrl = func(chargePointId string) string {
+		if PollerMgr == nil {
+			return ""
+		}
+		for _, data := range PollerMgr.GetDeviceCache() {
+			// Find the device matching this host (ChargePoint ID) and return its Proxy URL
+			if data.Category == "charger" {
+				for _, p := range PollerMgr.GetPollers() {
+					if p.GetDevice().Host == chargePointId {
+						return p.GetDevice().OcppProxyUrl
+					}
+				}
+			}
+		}
+		return ""
+	}
 	mux.HandleFunc("/api/ocpp/", ocpp.HandleWebSocket)
 
 	// Serve frontend SPA
