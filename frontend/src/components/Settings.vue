@@ -110,6 +110,14 @@
                 </button>
               </div>
             </div>
+
+            <div v-if="updateStatus === 'installing' || updateLogs.length > 0" class="mt-4">
+              <div class="bg-gray-900 rounded-md p-4 max-h-64 overflow-y-auto">
+                <div v-for="(log, idx) in updateLogs" :key="idx" class="font-mono text-xs text-green-400 whitespace-pre-wrap break-words">
+                  > {{ log }}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -897,7 +905,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { getApiBase } from '../api'
 import type { Device, SiteSettings, Template, SystemInfo } from '../types'
 
@@ -915,6 +923,35 @@ const sysInfo = ref<SystemInfo | null>(null)
 
 const updateStatus = ref<string>('')
 const newVersion = ref<string>('')
+
+const updateLogs = ref<string[]>([])
+let updatePollInterval: ReturnType<typeof setInterval> | null = null
+
+const pollUpdateStatus = async () => {
+  try {
+    const res = await fetch(`${getApiBase()}/api/system/update/status`)
+    if (res.ok) {
+      const data = await res.json()
+      updateLogs.value = data.logs || []
+
+      if (data.status === 'done' || data.status === 'error') {
+        if (updatePollInterval) {
+          clearInterval(updatePollInterval)
+          updatePollInterval = null
+        }
+        if (data.status === 'done') {
+          setTimeout(() => {
+            window.location.reload()
+          }, 10000)
+        } else {
+          updateStatus.value = 'error'
+        }
+      }
+    }
+  } catch (e) {
+    // Expected to fail when system restarts.
+  }
+}
 
 const selectedCategory = ref<string | null>(null)
 const deviceCategories = [
@@ -1312,19 +1349,31 @@ const checkForUpdates = async () => {
 const installUpdate = async () => {
   if (confirm("Are you sure you want to download and install the new update? The system will reboot automatically when finished.")) {
     updateStatus.value = 'installing'
+    updateLogs.value = []
+
+    // Start polling for logs right away
+    if (updatePollInterval) clearInterval(updatePollInterval)
+    updatePollInterval = setInterval(pollUpdateStatus, 1000)
+
     try {
       const res = await fetch(`${getApiBase()}/api/system/update/install`, { method: 'POST' })
       if (!res.ok) {
         updateStatus.value = 'error'
+        if (updatePollInterval) clearInterval(updatePollInterval)
         alert("Failed to start update process.")
       }
     } catch (e) {
       console.error("Failed to install update:", e)
       updateStatus.value = 'error'
+      if (updatePollInterval) clearInterval(updatePollInterval)
       alert("Failed to start update process.")
     }
   }
 }
+
+onUnmounted(() => {
+  if (updatePollInterval) clearInterval(updatePollInterval)
+})
 
 onMounted(() => {
   fetchSystemInfo()

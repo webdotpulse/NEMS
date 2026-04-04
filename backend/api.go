@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"nems/internal/models"
@@ -177,6 +178,39 @@ func handleSystemResetDb(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(`{"status": "database reset"}`))
 }
 
+var (
+	updateState string // "idle", "installing", "done", "error"
+	updateLogs  []string
+	updateMu    sync.Mutex
+)
+
+func logUpdate(msg string, a ...interface{}) {
+	text := fmt.Sprintf(msg, a...)
+	log.Printf("[UPDATE] %s", text)
+
+	updateMu.Lock()
+	defer updateMu.Unlock()
+	updateLogs = append(updateLogs, text)
+	// Keep log size bounded
+	if len(updateLogs) > 100 {
+		updateLogs = updateLogs[len(updateLogs)-100:]
+	}
+}
+
+// handleSystemUpdateStatus returns the current status and logs of the system update.
+func handleSystemUpdateStatus(w http.ResponseWriter, r *http.Request) {
+	updateMu.Lock()
+	defer updateMu.Unlock()
+
+	response := map[string]interface{}{
+		"status": updateState,
+		"logs":   updateLogs,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
 // handleSystemUpdateCheck checks the GitHub releases API for a newer version.
 func handleSystemUpdateCheck(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
@@ -274,15 +308,34 @@ func handleSystemUpdateInstall(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"status": "installing"}`))
 
+	updateMu.Lock()
+	if updateState == "installing" {
+		updateMu.Unlock()
+		http.Error(w, "Update already in progress", http.StatusConflict)
+		return
+	}
+	updateState = "installing"
+	updateLogs = []string{"Starting update process..."}
+	updateMu.Unlock()
+
 	// Run the update process in the background
 	go func() {
+		defer func() {
+			updateMu.Lock()
+			if updateState == "installing" {
+				updateState = "error"
+			}
+			updateMu.Unlock()
+		}()
+
 		// Give the HTTP response time to be sent
 		time.Sleep(2 * time.Second)
 
+		logUpdate("Fetching latest release info from GitHub...")
 		// Fetch latest releases info
 		req, err := http.NewRequest("GET", "https://api.github.com/repos/webdotpulse/NEMS/releases", nil)
 		if err != nil {
-			log.Printf("[ERROR] Failed to create request for latest release: %v", err)
+			logUpdate("Failed to create request for latest release: %v", err)
 			return
 		}
 
@@ -297,7 +350,7 @@ func handleSystemUpdateInstall(w http.ResponseWriter, r *http.Request) {
 		client := &http.Client{Timeout: 10 * time.Second}
 		resp, err := client.Do(req)
 		if err != nil {
-			log.Printf("[ERROR] Failed to fetch latest release: %v", err)
+			logUpdate("Failed to fetch latest release: %v", err)
 			return
 		}
 		defer resp.Body.Close()
@@ -306,12 +359,12 @@ func handleSystemUpdateInstall(w http.ResponseWriter, r *http.Request) {
 			TagName string `json:"tag_name"`
 		}
 		if err := json.NewDecoder(resp.Body).Decode(&releases); err != nil {
-			log.Printf("[ERROR] Failed to parse release info: %v", err)
+			logUpdate("Failed to parse release info: %v", err)
 			return
 		}
 
 		if len(releases) == 0 {
-			log.Printf("[ERROR] No releases found")
+			logUpdate("No releases found")
 			return
 		}
 
@@ -322,7 +375,7 @@ func handleSystemUpdateInstall(w http.ResponseWriter, r *http.Request) {
 		targetPath := filepath.Join("/tmp", debFile)
 
 		// Download the file
-		log.Printf("[INFO] Downloading update from %s to %s", downloadURL, targetPath)
+		logUpdate("Downloading update (%s) to %s...", debFile, targetPath)
 
 		var cmd *exec.Cmd
 
@@ -334,32 +387,38 @@ func handleSystemUpdateInstall(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if out, err := cmd.CombinedOutput(); err != nil {
-			log.Printf("[ERROR] Failed to download update: %v, output: %s", err, string(out))
+			logUpdate("Failed to download update: %v\nOutput:\n%s", err, string(out))
 			return
 		}
+		logUpdate("Download completed successfully.")
 
 		// Create a flag file so the deb postinst script knows an update is happening
 		// from the web UI and shouldn't restart the service mid-install.
 		if err := os.WriteFile("/tmp/nems_web_update_in_progress", []byte("1"), 0644); err != nil {
-			log.Printf("[ERROR] Failed to write update flag file: %v", err)
+			logUpdate("Failed to write update flag file: %v", err)
 		}
 
 		// Install the package
-		log.Printf("[INFO] Installing %s...", targetPath)
+		logUpdate("Installing package %s...", debFile)
 		cmd = exec.Command("sudo", "dpkg", "-i", targetPath)
 		if out, err := cmd.CombinedOutput(); err != nil {
-			log.Printf("[ERROR] Failed to install update: %v, output: %s", err, string(out))
+			logUpdate("Failed to install update: %v\nOutput:\n%s", err, string(out))
 			return
 		}
+		logUpdate("Installation successful.")
+
+		updateMu.Lock()
+		updateState = "done"
+		updateMu.Unlock()
 
 		// Restart the service
-		log.Printf("[INFO] Restarting nems service...")
+		logUpdate("Restarting nems service. The connection will be lost momentarily...")
 		cmd = exec.Command("sudo", "systemctl", "restart", "nems.service")
 		if out, err := cmd.CombinedOutput(); err != nil {
-			log.Printf("[ERROR] Failed to restart service: %v, output: %s", err, string(out))
+			logUpdate("Failed to restart service: %v\nOutput:\n%s", err, string(out))
 			return
 		}
-		log.Printf("[INFO] Update and restart completed successfully.")
+		logUpdate("Update and restart completed successfully.")
 	}()
 }
 
