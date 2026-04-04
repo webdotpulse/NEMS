@@ -319,6 +319,12 @@ func handleSystemUpdateInstall(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		// Create a flag file so the deb postinst script knows an update is happening
+		// from the web UI and shouldn't restart the service mid-install.
+		if err := os.WriteFile("/tmp/nems_web_update_in_progress", []byte("1"), 0644); err != nil {
+			log.Printf("[ERROR] Failed to write update flag file: %v", err)
+		}
+
 		// Install the package
 		log.Printf("[INFO] Installing %s...", targetPath)
 		cmd = exec.Command("sudo", "dpkg", "-i", targetPath)

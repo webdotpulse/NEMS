@@ -92,7 +92,11 @@ jobs:
           if [ -d /run/systemd/system ]; then
               systemctl daemon-reload
               systemctl enable nems.service
-              systemctl restart nems.service
+              if [ -f /tmp/nems_web_update_in_progress ]; then
+                  rm -f /tmp/nems_web_update_in_progress
+              else
+                  systemctl restart nems.service || true
+              fi
           fi
           EOF
           chmod +x build/deb/DEBIAN/postinst
@@ -101,9 +105,11 @@ jobs:
           cat <<'EOF' > build/deb/DEBIAN/prerm
           #!/bin/sh
           set -e
-          if [ -d /run/systemd/system ]; then
-              systemctl stop nems.service || true
-              systemctl disable nems.service || true
+          if [ "$1" = "remove" ] || [ "$1" = "deconfigure" ]; then
+              if [ -d /run/systemd/system ]; then
+                  systemctl stop nems.service || true
+                  systemctl disable nems.service || true
+              fi
           fi
           EOF
           chmod +x build/deb/DEBIAN/prerm
