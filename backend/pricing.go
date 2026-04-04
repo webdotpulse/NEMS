@@ -6,28 +6,21 @@ import (
 	"nems/internal/models"
 )
 
-// CalculateEffectivePrice returns the effective price per kWh for consumption at a given timestamp
+// CalculateEffectivePrice returns the effective price per kWh for consumption or injection at a given timestamp
 // based on the configured energy contract.
-func CalculateEffectivePrice(timestamp time.Time, rawEpexPrice float64, settings models.SiteSettings) float64 {
+func CalculateEffectivePrice(timestamp time.Time, rawEpexPrice float64, settings models.SiteSettings, isInjection bool) float64 {
 	switch settings.ContractType {
 	case "fixed":
-		// Assume peak is Monday-Friday 07:00-22:00
-		weekday := timestamp.Weekday()
-		hour := timestamp.Hour()
-		isPeak := false
-		if weekday >= time.Monday && weekday <= time.Friday {
-			if hour >= 7 && hour < 22 {
-				isPeak = true
-			}
+		if isInjection {
+			return settings.EnergyPricesInjection + settings.GridCostsInjection
 		}
-
-		if isPeak {
-			return settings.FixedPricePeakKwh
-		}
-		return settings.FixedPriceOffPeakKwh
+		return settings.EnergyPricesConsumption + settings.GridCostsConsumption
 
 	case "dynamic":
-		return rawEpexPrice + settings.DynamicMarkupKwh
+		if isInjection {
+			return (rawEpexPrice * settings.ScaleFactorEpexSpotInjection) + settings.EnergyPricesInjection + settings.GridCostsInjection
+		}
+		return (rawEpexPrice * settings.ScaleFactorEpexSpotConsumption) + settings.EnergyPricesConsumption + settings.GridCostsConsumption
 
 	case "engie_flextime":
 		// Engie EMPOWER Variabel met Flextime
@@ -63,6 +56,9 @@ func CalculateEffectivePrice(timestamp time.Time, rawEpexPrice float64, settings
 
 	default:
 		// Fallback to dynamic if unknown
-		return rawEpexPrice + settings.DynamicMarkupKwh
+		if isInjection {
+			return (rawEpexPrice * settings.ScaleFactorEpexSpotInjection) + settings.EnergyPricesInjection + settings.GridCostsInjection
+		}
+		return (rawEpexPrice * settings.ScaleFactorEpexSpotConsumption) + settings.EnergyPricesConsumption + settings.GridCostsConsumption
 	}
 }

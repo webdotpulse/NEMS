@@ -44,10 +44,12 @@ export interface SiteSettings {
 
   // Energy Contract
   contract_type: string;
-  fixed_price_peak_kwh: number;
-  fixed_price_off_peak_kwh: number;
-  fixed_inject_price_kwh: number;
-  dynamic_markup_kwh: number;
+  scale_factor_epex_spot_consumption: number;
+  energy_prices_consumption: number;
+  grid_costs_consumption: number;
+  scale_factor_epex_spot_injection: number;
+  energy_prices_injection: number;
+  grid_costs_injection: number;
   engie_markup_peak: number;
   engie_markup_off_peak: number;
   engie_markup_super_off_peak: number;
@@ -100,4 +102,5 @@ export interface SystemInfo {
   memory: string;
   disk: string;
   build: string;
+  asset_tag?: string;
 }

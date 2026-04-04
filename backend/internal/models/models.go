@@ -22,12 +22,14 @@ type SiteSettings struct {
 	Longitude                 float64 `json:"longitude"`
 
 	// Energy Contract Configuration
-	ContractType            string  `json:"contract_type"`
-	FixedPricePeakKwh       float64 `json:"fixed_price_peak_kwh"`
-	FixedPriceOffPeakKwh    float64 `json:"fixed_price_off_peak_kwh"`
-	FixedInjectPriceKwh     float64 `json:"fixed_inject_price_kwh"`
-	DynamicMarkupKwh        float64 `json:"dynamic_markup_kwh"`
-	EngieMarkupPeak         float64 `json:"engie_markup_peak"`
+	ContractType                 string  `json:"contract_type"`
+	ScaleFactorEpexSpotConsumption float64 `json:"scale_factor_epex_spot_consumption"`
+	EnergyPricesConsumption        float64 `json:"energy_prices_consumption"`
+	GridCostsConsumption           float64 `json:"grid_costs_consumption"`
+	ScaleFactorEpexSpotInjection   float64 `json:"scale_factor_epex_spot_injection"`
+	EnergyPricesInjection          float64 `json:"energy_prices_injection"`
+	GridCostsInjection             float64 `json:"grid_costs_injection"`
+	EngieMarkupPeak              float64 `json:"engie_markup_peak"`
 	EngieMarkupOffPeak      float64 `json:"engie_markup_off_peak"`
 	EngieMarkupSuperOffPeak float64 `json:"engie_markup_super_off_peak"`
 	EngieMultiplier         float64 `json:"engie_multiplier"`
@@ -59,7 +61,6 @@ type Device struct {
 	HasBattery           bool    `json:"has_battery"`
 	BatteryCapacity      float64 `json:"battery_capacity"`
 	InverterRatedPowerKw float64 `json:"inverter_rated_power_kw,omitempty"`
-	OcppProxyUrl         string  `json:"ocpp_proxy_url,omitempty"`
 	PollInterval         int     `json:"poll_interval"`
 }
 

@@ -80,7 +80,7 @@ func (sc *StrategyController) updatePricingCache(settings models.SiteSettings) {
 		rawPrice = 999.0
 	}
 
-	newPrice := CalculateEffectivePrice(now, rawPrice, settings)
+	newPrice := CalculateEffectivePrice(now, rawPrice, settings, false)
 
 	newIsCheapest := false
 	if settings.SmartEvCheapestHours > 0 {
@@ -119,8 +119,8 @@ func (sc *StrategyController) Start() {
 			select {
 			case <-ticker.C:
 				var settings models.SiteSettings
-				row := db.QueryRow("SELECT strategy_mode, capacity_peak_limit_kw, active_inverter_curtailment, battery_grid_charge_strategy, force_charge_below_euro, force_discharge_above_euro, smart_ev_cheapest_hours, appliance_turn_on_excess_w, peak_shaving_buffer_w, peak_shaving_rampup_w, timezone, contract_type, fixed_price_peak_kwh, fixed_price_off_peak_kwh, fixed_inject_price_kwh, dynamic_markup_kwh, engie_markup_peak, engie_markup_off_peak, engie_markup_super_off_peak, engie_multiplier, engie_base_fee, custom_charge_schedule, superdal_optimization_enabled, superdal_target_soc FROM site_settings WHERE id = 1")
-				err := row.Scan(&settings.StrategyMode, &settings.CapacityPeakLimitKw, &settings.ActiveInverterCurtailment, &settings.BatteryGridChargeStrategy, &settings.ForceChargeBelowEuro, &settings.ForceDischargeAboveEuro, &settings.SmartEvCheapestHours, &settings.ApplianceTurnOnExcessW, &settings.PeakShavingBufferW, &settings.PeakShavingRampupW, &settings.Timezone, &settings.ContractType, &settings.FixedPricePeakKwh, &settings.FixedPriceOffPeakKwh, &settings.FixedInjectPriceKwh, &settings.DynamicMarkupKwh, &settings.EngieMarkupPeak, &settings.EngieMarkupOffPeak, &settings.EngieMarkupSuperOffPeak, &settings.EngieMultiplier, &settings.EngieBaseFee, &settings.CustomChargeSchedule, &settings.SuperdalOptimizationEnabled, &settings.SuperdalTargetSoc)
+				row := db.QueryRow("SELECT strategy_mode, capacity_peak_limit_kw, active_inverter_curtailment, battery_grid_charge_strategy, force_charge_below_euro, force_discharge_above_euro, smart_ev_cheapest_hours, appliance_turn_on_excess_w, peak_shaving_buffer_w, peak_shaving_rampup_w, timezone, contract_type, scale_factor_epex_spot_consumption, energy_prices_consumption, grid_costs_consumption, scale_factor_epex_spot_injection, energy_prices_injection, grid_costs_injection, engie_markup_peak, engie_markup_off_peak, engie_markup_super_off_peak, engie_multiplier, engie_base_fee, custom_charge_schedule, superdal_optimization_enabled, superdal_target_soc FROM site_settings WHERE id = 1")
+				err := row.Scan(&settings.StrategyMode, &settings.CapacityPeakLimitKw, &settings.ActiveInverterCurtailment, &settings.BatteryGridChargeStrategy, &settings.ForceChargeBelowEuro, &settings.ForceDischargeAboveEuro, &settings.SmartEvCheapestHours, &settings.ApplianceTurnOnExcessW, &settings.PeakShavingBufferW, &settings.PeakShavingRampupW, &settings.Timezone, &settings.ContractType, &settings.ScaleFactorEpexSpotConsumption, &settings.EnergyPricesConsumption, &settings.GridCostsConsumption, &settings.ScaleFactorEpexSpotInjection, &settings.EnergyPricesInjection, &settings.GridCostsInjection, &settings.EngieMarkupPeak, &settings.EngieMarkupOffPeak, &settings.EngieMarkupSuperOffPeak, &settings.EngieMultiplier, &settings.EngieBaseFee, &settings.CustomChargeSchedule, &settings.SuperdalOptimizationEnabled, &settings.SuperdalTargetSoc)
 				if err != nil {
 					if err == sql.ErrNoRows {
 						settings = models.SiteSettings{
@@ -136,10 +136,12 @@ func (sc *StrategyController) Start() {
 							PeakShavingRampupW: 500.0,
 							Timezone: "Europe/Brussels",
 							ContractType: "dynamic",
-							FixedPricePeakKwh: 0.35,
-							FixedPriceOffPeakKwh: 0.30,
-							FixedInjectPriceKwh: 0.05,
-							DynamicMarkupKwh: 0.15,
+							ScaleFactorEpexSpotConsumption: 1.0,
+							EnergyPricesConsumption: 0.14,
+							GridCostsConsumption: 0.0,
+							ScaleFactorEpexSpotInjection: 0.0,
+							EnergyPricesInjection: 0.0,
+							GridCostsInjection: 0.0,
 							EngieMarkupPeak: 0.15,
 							EngieMarkupOffPeak: 0.15,
 							EngieMarkupSuperOffPeak: 0.15,
