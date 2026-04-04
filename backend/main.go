@@ -376,6 +376,22 @@ func main() {
 	ensureColumnExists(db, "site_settings", "engie_multiplier", "REAL DEFAULT 1.0")
 	ensureColumnExists(db, "site_settings", "engie_base_fee", "REAL DEFAULT 0.0")
 
+	ensureColumnExists(db, "site_settings", "luminus_markup", "REAL DEFAULT 0.0")
+	ensureColumnExists(db, "site_settings", "luminus_multiplier", "REAL DEFAULT 1.0")
+	ensureColumnExists(db, "site_settings", "luminus_base_fee", "REAL DEFAULT 0.0")
+
+	ensureColumnExists(db, "site_settings", "eneco_markup", "REAL DEFAULT 0.0")
+	ensureColumnExists(db, "site_settings", "eneco_multiplier", "REAL DEFAULT 1.0")
+	ensureColumnExists(db, "site_settings", "eneco_base_fee", "REAL DEFAULT 0.0")
+
+	ensureColumnExists(db, "site_settings", "frank_markup", "REAL DEFAULT 0.0")
+	ensureColumnExists(db, "site_settings", "frank_multiplier", "REAL DEFAULT 1.0")
+	ensureColumnExists(db, "site_settings", "frank_base_fee", "REAL DEFAULT 0.0")
+
+	ensureColumnExists(db, "site_settings", "ecopower_markup", "REAL DEFAULT 0.0")
+	ensureColumnExists(db, "site_settings", "ecopower_multiplier", "REAL DEFAULT 1.0")
+	ensureColumnExists(db, "site_settings", "ecopower_base_fee", "REAL DEFAULT 0.0")
+
 	ensureColumnExists(db, "site_settings", "custom_charge_schedule", "TEXT DEFAULT '[]'")
 	ensureColumnExists(db, "site_settings", "superdal_optimization_enabled", "BOOLEAN DEFAULT 0")
 	ensureColumnExists(db, "site_settings", "superdal_target_soc", "REAL DEFAULT 100.0")

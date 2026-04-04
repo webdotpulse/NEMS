@@ -53,6 +53,18 @@ export interface SiteSettings {
   engie_markup_super_off_peak: number;
   engie_multiplier: number;
   engie_base_fee: number;
+  luminus_markup: number;
+  luminus_multiplier: number;
+  luminus_base_fee: number;
+  eneco_markup: number;
+  eneco_multiplier: number;
+  eneco_base_fee: number;
+  frank_markup: number;
+  frank_multiplier: number;
+  frank_base_fee: number;
+  ecopower_markup: number;
+  ecopower_multiplier: number;
+  ecopower_base_fee: number;
 
   // Custom Schedules & Optimization
   custom_charge_schedule: string;
