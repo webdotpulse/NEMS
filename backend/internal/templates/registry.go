@@ -55,6 +55,15 @@ func GetCategory(id string) string {
 	return ""
 }
 
+func GetType(id string) string {
+	mu.RLock()
+	defer mu.RUnlock()
+	if t, ok := templates[id]; ok {
+		return t.Metadata.Type
+	}
+	return ""
+}
+
 func CreatePoller(id string, device models.Device) models.DevicePoller {
 	mu.RLock()
 	defer mu.RUnlock()
