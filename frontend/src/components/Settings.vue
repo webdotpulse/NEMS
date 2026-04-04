@@ -72,46 +72,6 @@
           </div>
         </div>
 
-        <!-- Software Update Section -->
-        <div v-if="sysInfo" class="mb-8">
-          <div class="flex items-center justify-between mb-4">
-            <h2 class="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:text-3xl sm:truncate">
-              Software Update
-            </h2>
-          </div>
-          <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg">
-            <div class="px-4 py-5 sm:p-6 flex flex-col md:flex-row md:items-center md:justify-between">
-              <div>
-                <p class="text-sm text-gray-900 dark:text-gray-100">
-                  Current Version: <span class="font-semibold">{{ sysInfo.build }}</span>
-                </p>
-                <p v-if="updateStatus === 'checking'" class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                  Checking for updates...
-                </p>
-                <p v-else-if="updateStatus === 'available'" class="mt-1 text-sm text-green-600 dark:text-green-400">
-                  New version available: {{ newVersion }}
-                </p>
-                <p v-else-if="updateStatus === 'up-to-date'" class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                  System is up to date.
-                </p>
-                <p v-else-if="updateStatus === 'error'" class="mt-1 text-sm text-red-600 dark:text-red-400">
-                  Error checking for updates.
-                </p>
-                <p v-else-if="updateStatus === 'installing'" class="mt-1 text-sm text-indigo-600 dark:text-indigo-400">
-                  Installing update... System will reboot shortly.
-                </p>
-              </div>
-              <div class="mt-4 md:mt-0 flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-                <button v-if="updateStatus === 'available' || updateStatus === 'installing'" @click="installUpdate" :disabled="updateStatus === 'installing'" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors disabled:opacity-50">
-                  Download & Install Update
-                </button>
-                <button @click="checkForUpdates" :disabled="updateStatus === 'checking' || updateStatus === 'installing'" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors disabled:opacity-50">
-                  Check for Updates
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
 
       <!-- TAB: STRATEGY -->
@@ -952,9 +912,6 @@ const activeTab = ref('strategy')
 
 const sysInfo = ref<SystemInfo | null>(null)
 
-const updateStatus = ref<string>('')
-const newVersion = ref<string>('')
-
 const selectedCategory = ref<string | null>(null)
 const deviceCategories = [
   { id: 'inverter', name: 'Inverter / Solar', svg: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M6.993 12c0 2.761 2.246 5.007 5.007 5.007s5.007-2.246 5.007-5.007S14.761 6.993 12 6.993 6.993 9.239 6.993 12zM12 8.993c1.658 0 3.007 1.349 3.007 3.007S13.658 15.007 12 15.007 8.993 13.658 8.993 12 10.342 8.993 12 8.993zM10.998 19h2v3h-2zm0-17h2v3h-2zm-9 9h3v2h-3zm17 0h3v2h-3zM4.219 18.363l2.12-2.122 1.415 1.414-2.12 2.122zM16.24 6.344l2.122-2.122 1.414 1.414-2.122 2.122zM6.342 7.759 4.22 5.637l1.415-1.414 2.12 2.122zm13.434 10.605-1.414 1.414-2.122-2.122 1.414-1.414z"/></svg>', color: 'text-yellow-500' },
@@ -996,8 +953,9 @@ const form = ref({
   battery_capacity: 0,
   inverter_rated_power_kw: 0,
   charge_mode: 'eco',
+  ocpp_proxy_url: '',
   poll_interval: 5
-})
+} as any)
 
 const editingDevice = ref<Device | null>(null)
 const editForm = ref({
@@ -1014,8 +972,9 @@ const editForm = ref({
   battery_capacity: 0,
   inverter_rated_power_kw: 0,
   charge_mode: 'eco',
+  ocpp_proxy_url: '',
   poll_interval: 5
-})
+} as any)
 
 const siteSettings = ref<SiteSettings>({
   strategy_mode: 'eco',
@@ -1222,7 +1181,8 @@ const addDevice = async () => {
         battery_capacity: 0,
         inverter_rated_power_kw: 0,
         charge_mode: 'eco',
-              poll_interval: 5
+        ocpp_proxy_url: '',
+        poll_interval: 5
       }
       await fetchDevices()
     }
@@ -1323,44 +1283,6 @@ const fetchSystemInfo = async () => {
     }
   } catch (e) {
     console.error("Failed to fetch system info:", e)
-  }
-}
-
-const checkForUpdates = async () => {
-  updateStatus.value = 'checking'
-  try {
-    const res = await fetch(`${getApiBase()}/api/system/update/check`)
-    if (res.ok) {
-      const data = await res.json()
-      if (data.update_available) {
-        updateStatus.value = 'available'
-        newVersion.value = data.latest_version
-      } else {
-        updateStatus.value = 'up-to-date'
-      }
-    } else {
-      updateStatus.value = 'error'
-    }
-  } catch (e) {
-    console.error("Failed to check for updates:", e)
-    updateStatus.value = 'error'
-  }
-}
-
-const installUpdate = async () => {
-  if (confirm("Are you sure you want to download and install the new update? The system will reboot automatically when finished.")) {
-    updateStatus.value = 'installing'
-    try {
-      const res = await fetch(`${getApiBase()}/api/system/update/install`, { method: 'POST' })
-      if (!res.ok) {
-        updateStatus.value = 'error'
-        alert("Failed to start update process.")
-      }
-    } catch (e) {
-      console.error("Failed to install update:", e)
-      updateStatus.value = 'error'
-      alert("Failed to start update process.")
-    }
   }
 }
 
