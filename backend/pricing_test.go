@@ -12,14 +12,13 @@ func TestCalculateEffectivePrice(t *testing.T) {
 	// Let's create a base setting for each
 	settingsFixed := models.SiteSettings{
 		ContractType:         "fixed",
-		EnergyPricesConsumption: 0.14,
-		GridCostsConsumption:    0.0,
+		FixedPricePeakKwh:    0.35,
+		FixedPriceOffPeakKwh: 0.25,
 	}
 
 	settingsDynamic := models.SiteSettings{
 		ContractType:     "dynamic",
-		ScaleFactorEpexSpotConsumption: 1.0,
-		EnergyPricesConsumption: 0.15,
+		DynamicMarkupKwh: 0.15,
 	}
 
 	settingsEngie := models.SiteSettings{
@@ -35,39 +34,39 @@ func TestCalculateEffectivePrice(t *testing.T) {
 
 	// Test Fixed: Monday 10:00 (Peak)
 	tMon10 := time.Date(2023, 10, 2, 10, 0, 0, 0, time.UTC) // Monday
-	if CalculateEffectivePrice(tMon10, rawEpex, settingsFixed, false) != 0.14 {
+	if CalculateEffectivePrice(tMon10, rawEpex, settingsFixed) != 0.35 {
 		t.Errorf("Fixed peak failed")
 	}
 
 	// Test Fixed: Sunday 10:00 (Off-Peak)
 	tSun10 := time.Date(2023, 10, 1, 10, 0, 0, 0, time.UTC) // Sunday
-	if CalculateEffectivePrice(tSun10, rawEpex, settingsFixed, false) != 0.14 {
+	if CalculateEffectivePrice(tSun10, rawEpex, settingsFixed) != 0.25 {
 		t.Errorf("Fixed off-peak failed")
 	}
 
 	// Test Dynamic
-	if CalculateEffectivePrice(tMon10, rawEpex, settingsDynamic, false) != 0.25 {
+	if CalculateEffectivePrice(tMon10, rawEpex, settingsDynamic) != 0.25 {
 		t.Errorf("Dynamic failed")
 	}
 
 	// Test Engie Super-Dal: Mon 03:00
 	tMon03 := time.Date(2023, 10, 2, 3, 0, 0, 0, time.UTC)
 	// Base (0.05) + (Raw (0.10) * Mul (1.2)) + SuperOffPeak (0.01) = 0.05 + 0.12 + 0.01 = 0.18
-	if fmt.Sprintf("%.2f", CalculateEffectivePrice(tMon03, rawEpex, settingsEngie, false)) != "0.18" {
-		t.Errorf("Engie super dal failed: %v", CalculateEffectivePrice(tMon03, rawEpex, settingsEngie, false))
+	if fmt.Sprintf("%.2f", CalculateEffectivePrice(tMon03, rawEpex, settingsEngie)) != "0.18" {
+		t.Errorf("Engie super dal failed: %v", CalculateEffectivePrice(tMon03, rawEpex, settingsEngie))
 	}
 
 	// Test Engie Peak: Mon 08:00
 	tMon08 := time.Date(2023, 10, 2, 8, 0, 0, 0, time.UTC)
 	// Base (0.05) + (Raw (0.10) * Mul (1.2)) + Peak (0.03) = 0.05 + 0.12 + 0.03 = 0.20
-	if fmt.Sprintf("%.2f", CalculateEffectivePrice(tMon08, rawEpex, settingsEngie, false)) != "0.20" {
-		t.Errorf("Engie peak failed: %v", CalculateEffectivePrice(tMon08, rawEpex, settingsEngie, false))
+	if fmt.Sprintf("%.2f", CalculateEffectivePrice(tMon08, rawEpex, settingsEngie)) != "0.20" {
+		t.Errorf("Engie peak failed: %v", CalculateEffectivePrice(tMon08, rawEpex, settingsEngie))
 	}
 
 	// Test Engie Weekend Dal: Sun 08:00
 	tSun10 = time.Date(2023, 10, 1, 10, 0, 0, 0, time.UTC) // Sunday
 	// Base (0.05) + (Raw (0.10) * Mul (1.2)) + OffPeak (0.02) = 0.05 + 0.12 + 0.02 = 0.19
-	if fmt.Sprintf("%.2f", CalculateEffectivePrice(tSun10, rawEpex, settingsEngie, false)) != "0.19" {
-		t.Errorf("Engie weekend dal failed: %v", CalculateEffectivePrice(tSun10, rawEpex, settingsEngie, false))
+	if fmt.Sprintf("%.2f", CalculateEffectivePrice(tSun10, rawEpex, settingsEngie)) != "0.19" {
+		t.Errorf("Engie weekend dal failed: %v", CalculateEffectivePrice(tSun10, rawEpex, settingsEngie))
 	}
 }
