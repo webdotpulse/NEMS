@@ -172,6 +172,8 @@ func (pm *PollerManager) Start() {
 				var polledAny atomic.Bool
 				var wg sync.WaitGroup
 
+				staggerDelay := time.Duration(0)
+
 				for id, poller := range pollersCopy {
 					device := poller.GetDevice()
 					category := templates.GetCategory(device.Template)
@@ -194,9 +196,18 @@ func (pm *PollerManager) Start() {
 					lastPolled[id] = now
 					polledAny.Store(true)
 
+					currentDelay := time.Duration(0)
+					if templates.GetType(device.Template) == "modbus" {
+						currentDelay = staggerDelay
+						staggerDelay += 200 * time.Millisecond
+					}
+
 					wg.Add(1)
-					go func(id int, poller models.DevicePoller, device models.Device, category string) {
+					go func(id int, poller models.DevicePoller, device models.Device, category string, delay time.Duration) {
 						defer wg.Done()
+						if delay > 0 {
+							time.Sleep(delay)
+						}
 						powerW, batteryPowerW, gridPowerW, energyKwh, soc, err := poller.Poll()
 						if err != nil {
 							log.Printf("[ERROR] PollerManager: Error polling device %d: %v", id, err)
@@ -260,7 +271,7 @@ func (pm *PollerManager) Start() {
 							EnergyKwh:     energyKwh,
 						})
 						pm.bufferMu.Unlock()
-					}(id, poller, device, category)
+					}(id, poller, device, category, currentDelay)
 				}
 				wg.Wait()
 
