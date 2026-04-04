@@ -42,10 +42,6 @@ func (p *OcppChargerPoller) Status() string {
 	if state != nil && state.IsConnected() {
 		_, _, lastSeen := state.GetTelemetry()
 		if time.Since(lastSeen) < 5*time.Minute {
-			// If proxy is configured, verify it is also connected to be considered fully online
-			if p.Device.OcppProxyUrl != "" && state.ProxyConn == nil {
-				return "error"
-			}
 			return "online"
 		}
 	}

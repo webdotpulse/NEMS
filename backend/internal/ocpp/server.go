@@ -19,8 +19,7 @@ var upgrader = websocket.Upgrader{
 	Subprotocols: []string{"ocpp1.6", "ocpp2.0.1"},
 }
 
-// GetDeviceProxyUrl is injected from main/poller to retrieve proxy url by host
-var GetDeviceProxyUrl func(chargePointId string) string
+
 
 // OcppState holds the current known state of an OCPP charger
 type OcppState struct {
@@ -32,9 +31,6 @@ type OcppState struct {
 	writeMu       sync.Mutex // Protects concurrent writes to Conn
 	LastSeen      time.Time
 
-	ProxyConn     *websocket.Conn
-	proxyWriteMu  sync.Mutex // Protects concurrent writes to ProxyConn
-	OcppProxyUrl  string
 }
 
 var (
@@ -106,60 +102,12 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("[INFO] OCPP CP %s connected via %s", chargePointId, conn.Subprotocol())
 
-	var proxyUrl string
-	if GetDeviceProxyUrl != nil {
-		proxyUrl = GetDeviceProxyUrl(chargePointId)
-	}
+
 
 	state := &OcppState{
 		ChargePointId: chargePointId,
 		Conn:          conn,
 		LastSeen:      time.Now(),
-		OcppProxyUrl:  proxyUrl,
-	}
-
-	if proxyUrl != "" {
-		log.Printf("[INFO] OCPP CP %s attempting to proxy to %s", chargePointId, proxyUrl)
-
-		dialer := websocket.DefaultDialer
-		header := http.Header{}
-		if conn.Subprotocol() != "" {
-			header.Add("Sec-WebSocket-Protocol", conn.Subprotocol())
-		}
-
-		proxyConn, _, err := dialer.Dial(proxyUrl, header)
-		if err != nil {
-			log.Printf("[WARN] OCPP CP %s proxy connection failed: %v", chargePointId, err)
-			state.OcppProxyUrl = "" // Disable proxying for this session
-		} else {
-			state.ProxyConn = proxyConn
-			log.Printf("[INFO] OCPP CP %s proxy connected successfully", chargePointId)
-
-			// Start proxy -> charger forwarder
-			go func() {
-				defer proxyConn.Close()
-				for {
-					msgType, msg, err := proxyConn.ReadMessage()
-					if err != nil {
-						log.Printf("[WARN] OCPP proxy read error for %s: %v", chargePointId, err)
-						break
-					}
-					if msgType == websocket.TextMessage {
-						state.writeMu.Lock()
-						err = state.Conn.WriteMessage(websocket.TextMessage, msg)
-						state.writeMu.Unlock()
-						if err != nil {
-							log.Printf("[WARN] OCPP write error to charger %s from proxy: %v", chargePointId, err)
-							break
-						}
-					}
-				}
-				// If proxy disconnects, we might want to close the local connection too,
-				// but requirements say "allow the local connection to remain (optionally configurable)".
-				// Actually requirement 5: "Ensure both connections close if either side terminates."
-				conn.Close()
-			}()
-		}
 	}
 
 	chargersMu.Lock()
@@ -169,15 +117,12 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		log.Printf("[INFO] OCPP CP %s disconnected", chargePointId)
 		conn.Close()
-		if state.ProxyConn != nil {
-			state.ProxyConn.Close()
-		}
+
 		chargersMu.Lock()
 		if chargers[chargePointId] == state {
 			// Only remove if it hasn't reconnected and overwritten the map
 			state.mu.Lock()
 			state.Conn = nil
-			state.ProxyConn = nil
 			state.mu.Unlock()
 		}
 		chargersMu.Unlock()
@@ -195,20 +140,7 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 			state.mu.Unlock()
 
 			// Always parse to keep local NEMS state up to date
-			handleOcppMessage(conn, state, message, state.ProxyConn != nil)
-
-			// If proxied, forward the raw message to the upstream CSMS
-			if state.ProxyConn != nil {
-				state.proxyWriteMu.Lock()
-				err = state.ProxyConn.WriteMessage(websocket.TextMessage, message)
-				state.proxyWriteMu.Unlock()
-				if err != nil {
-					log.Printf("[WARN] OCPP proxy write error for %s: %v", chargePointId, err)
-					// Requirement 5: Ensure both connections close if either side terminates
-					conn.Close()
-					break
-				}
-			}
+			handleOcppMessage(conn, state, message, false)
 		}
 	}
 }

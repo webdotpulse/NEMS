@@ -35,7 +35,11 @@
             </div>
           </div>
           <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg">
-            <div class="px-4 py-5 sm:p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="px-4 py-5 sm:p-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div>
+                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Asset tag</dt>
+                <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ sysInfo?.asset_tag || 'unknown' }}</dd>
+              </div>
               <div>
                 <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Hostname</dt>
                 <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ sysInfo.hostname }}</dd>
@@ -310,6 +314,7 @@
                   <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
                     Configure your energy provider contract to accurately calculate costs and optimization thresholds.
                   </p>
+                  <p class="text-xs text-gray-500 mt-2">You can find these values on your energy contract.</p>
                 </div>
 
                 <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
@@ -327,22 +332,29 @@
 
                   <!-- Fixed Price -->
                   <template v-if="siteSettings.contract_type === 'fixed'">
-                    <div class="sm:col-span-2">
-                      <label for="fixed_price_peak_kwh" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Peak Price (€/kWh)</label>
+                    <div class="sm:col-span-6">
+                      <label for="energy_prices_consumption" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Energy prices consumption (€/kWh)</label>
                       <div class="mt-1">
-                        <input type="number" step="0.0001" id="fixed_price_peak_kwh" v-model="siteSettings.fixed_price_peak_kwh" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                        <input type="number" step="0.0001" id="energy_prices_consumption" v-model="siteSettings.energy_prices_consumption" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
                       </div>
                     </div>
-                    <div class="sm:col-span-2">
-                      <label for="fixed_price_off_peak_kwh" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Off-Peak Price (€/kWh)</label>
+                    <div class="sm:col-span-6">
+                      <label for="grid_costs_consumption" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Grid costs consumption (€/kWh)</label>
                       <div class="mt-1">
-                        <input type="number" step="0.0001" id="fixed_price_off_peak_kwh" v-model="siteSettings.fixed_price_off_peak_kwh" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                        <input type="number" step="0.0001" id="grid_costs_consumption" v-model="siteSettings.grid_costs_consumption" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
                       </div>
                     </div>
-                    <div class="sm:col-span-2">
-                      <label for="fixed_inject_price_kwh" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Injection Return (€/kWh)</label>
+                    <div class="sm:col-span-6 border-t border-gray-200 dark:border-gray-700 pt-4 mt-2"></div>
+                    <div class="sm:col-span-6">
+                      <label for="energy_prices_injection" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Energy prices injection (€/kWh)</label>
                       <div class="mt-1">
-                        <input type="number" step="0.0001" id="fixed_inject_price_kwh" v-model="siteSettings.fixed_inject_price_kwh" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                        <input type="number" step="0.0001" id="energy_prices_injection" v-model="siteSettings.energy_prices_injection" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                      </div>
+                    </div>
+                    <div class="sm:col-span-6">
+                      <label for="grid_costs_injection" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Grid costs injection (€/kWh)</label>
+                      <div class="mt-1">
+                        <input type="number" step="0.0001" id="grid_costs_injection" v-model="siteSettings.grid_costs_injection" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
                       </div>
                     </div>
                   </template>
@@ -350,9 +362,40 @@
                   <!-- Standard Dynamic -->
                   <template v-if="siteSettings.contract_type === 'dynamic'">
                     <div class="sm:col-span-6">
-                      <label for="dynamic_markup_kwh" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Markup / Taxes on top of EPEX (€/kWh)</label>
+                      <label for="scale_factor_epex_spot_consumption" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Scale factor EPEX SPOT consumption (kWh)</label>
                       <div class="mt-1">
-                        <input type="number" step="0.0001" id="dynamic_markup_kwh" v-model="siteSettings.dynamic_markup_kwh" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                        <input type="number" step="0.0001" id="scale_factor_epex_spot_consumption" v-model="siteSettings.scale_factor_epex_spot_consumption" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                      </div>
+                    </div>
+                    <div class="sm:col-span-6">
+                      <label for="energy_prices_consumption" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Energy prices consumption (€/kWh)</label>
+                      <div class="mt-1">
+                        <input type="number" step="0.0001" id="energy_prices_consumption" v-model="siteSettings.energy_prices_consumption" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                      </div>
+                    </div>
+                    <div class="sm:col-span-6">
+                      <label for="grid_costs_consumption" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Grid costs consumption (€/kWh)</label>
+                      <div class="mt-1">
+                        <input type="number" step="0.0001" id="grid_costs_consumption" v-model="siteSettings.grid_costs_consumption" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                      </div>
+                    </div>
+                    <div class="sm:col-span-6 border-t border-gray-200 dark:border-gray-700 pt-4 mt-2"></div>
+                    <div class="sm:col-span-6">
+                      <label for="scale_factor_epex_spot_injection" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Scale factor EPEX SPOT injection (kWh)</label>
+                      <div class="mt-1">
+                        <input type="number" step="0.0001" id="scale_factor_epex_spot_injection" v-model="siteSettings.scale_factor_epex_spot_injection" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                      </div>
+                    </div>
+                    <div class="sm:col-span-6">
+                      <label for="energy_prices_injection" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Energy prices injection (€/kWh)</label>
+                      <div class="mt-1">
+                        <input type="number" step="0.0001" id="energy_prices_injection" v-model="siteSettings.energy_prices_injection" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                      </div>
+                    </div>
+                    <div class="sm:col-span-6">
+                      <label for="grid_costs_injection" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Grid costs injection (€/kWh)</label>
+                      <div class="mt-1">
+                        <input type="number" step="0.0001" id="grid_costs_injection" v-model="siteSettings.grid_costs_injection" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
                       </div>
                     </div>
                   </template>
@@ -953,7 +996,6 @@ const form = ref({
   battery_capacity: 0,
   inverter_rated_power_kw: 0,
   charge_mode: 'eco',
-  ocpp_proxy_url: '',
   poll_interval: 5
 })
 
@@ -972,7 +1014,6 @@ const editForm = ref({
   battery_capacity: 0,
   inverter_rated_power_kw: 0,
   charge_mode: 'eco',
-  ocpp_proxy_url: '',
   poll_interval: 5
 })
 
@@ -1000,10 +1041,12 @@ const siteSettings = ref<SiteSettings>({
   address: '',
   log_level: 'INFO',
   contract_type: 'dynamic',
-  fixed_price_peak_kwh: 0.35,
-  fixed_price_off_peak_kwh: 0.30,
-  fixed_inject_price_kwh: 0.05,
-  dynamic_markup_kwh: 0.15,
+  scale_factor_epex_spot_consumption: 1.0,
+  energy_prices_consumption: 0.14,
+  grid_costs_consumption: 0.0,
+  scale_factor_epex_spot_injection: 0.0,
+  energy_prices_injection: 0.0,
+  grid_costs_injection: 0.0,
   engie_markup_peak: 0.15,
   engie_markup_off_peak: 0.15,
   engie_markup_super_off_peak: 0.15,
@@ -1179,8 +1222,7 @@ const addDevice = async () => {
         battery_capacity: 0,
         inverter_rated_power_kw: 0,
         charge_mode: 'eco',
-        ocpp_proxy_url: '',
-        poll_interval: 5
+              poll_interval: 5
       }
       await fetchDevices()
     }
