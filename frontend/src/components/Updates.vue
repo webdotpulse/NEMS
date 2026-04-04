@@ -135,7 +135,7 @@ import { ref, onMounted, computed } from 'vue';
 import { marked } from 'marked';
 import { getApiBase } from '../api';
 
-const repository = 'webdotpulse/nems'; // Based on github url in memory
+const repository = 'pulse-ems/NEMS'; // Based on github url in memory
 const currentVersion = ref('v0.0.0');
 
 const latestRelease = ref<any>(null);
