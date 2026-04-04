@@ -394,6 +394,7 @@ func main() {
 	mux.HandleFunc("/api/system/info", handleSystemInfo)
 	mux.HandleFunc("/api/system/update/check", handleSystemUpdateCheck)
 	mux.HandleFunc("/api/system/update/install", handleSystemUpdateInstall)
+	mux.HandleFunc("/api/system/update/status", handleSystemUpdateStatus)
 	mux.HandleFunc("/api/system/reboot", handleSystemReboot)
 	mux.HandleFunc("/api/system/reset-db", handleSystemResetDb)
 	mux.HandleFunc("/api/network/scan", handleNetworkScan)

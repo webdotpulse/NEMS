@@ -15,7 +15,7 @@ RestartSec=5
 # Adjust these based on the security context
 NoNewPrivileges=no
 PrivateTmp=yes
-ProtectSystem=full
+ProtectSystem=yes
 
 [Install]
 WantedBy=multi-user.target
