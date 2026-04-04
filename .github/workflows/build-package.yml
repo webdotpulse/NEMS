@@ -79,9 +79,14 @@ jobs:
               useradd -r -s /bin/false nems
           fi
 
-          # Add sudoers drop-in for nems user to run systemctl reboot
-          echo "nems ALL=(ALL) NOPASSWD: /bin/systemctl reboot, /usr/bin/systemctl reboot" > /etc/sudoers.d/nems-reboot
-          chmod 0440 /etc/sudoers.d/nems-reboot
+          # Clean up old sudoers file if it exists
+          if [ -f /etc/sudoers.d/nems-reboot ]; then
+              rm -f /etc/sudoers.d/nems-reboot
+          fi
+
+          # Add sudoers drop-in for nems user
+          echo "nems ALL=(ALL) NOPASSWD: /bin/systemctl reboot, /usr/bin/systemctl reboot, /bin/systemctl restart nems.service, /usr/bin/systemctl restart nems.service, /bin/dpkg -i /tmp/nems_*.deb, /usr/bin/dpkg -i /tmp/nems_*.deb" > /etc/sudoers.d/nems-permissions
+          chmod 0440 /etc/sudoers.d/nems-permissions
 
           chown -R nems:nems /opt/nems
           if [ -d /run/systemd/system ]; then
