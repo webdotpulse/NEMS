@@ -62,6 +62,24 @@ func handleSystemInfo(w http.ResponseWriter, r *http.Request) {
 	gateway := "unknown"
 	memInfo := "unknown"
 	diskInfo := "unknown"
+	assetTag := "unknown"
+
+	// Get Asset Tag (Serial from /proc/cpuinfo)
+	cpuFile, err := os.Open("/proc/cpuinfo")
+	if err == nil {
+		defer cpuFile.Close()
+		scanner := bufio.NewScanner(cpuFile)
+		for scanner.Scan() {
+			line := scanner.Text()
+			if strings.HasPrefix(line, "Serial") {
+				parts := strings.Split(line, ":")
+				if len(parts) == 2 {
+					assetTag = strings.TrimSpace(parts[1])
+					break
+				}
+			}
+		}
+	}
 
 	// Get gateway
 	out, err := exec.Command("ip", "route").Output()
@@ -111,13 +129,14 @@ func handleSystemInfo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	info := map[string]string{
-		"hostname": hostname,
-		"ip":       primaryIP,
-		"netmask":  primaryNetmask,
-		"gateway":  gateway,
-		"memory":   memInfo,
-		"disk":     diskInfo,
-		"build":    BuildNumber,
+		"hostname":  hostname,
+		"ip":        primaryIP,
+		"netmask":   primaryNetmask,
+		"gateway":   gateway,
+		"memory":    memInfo,
+		"disk":      diskInfo,
+		"build":     BuildNumber,
+		"asset_tag": assetTag,
 	}
 
 	json.NewEncoder(w).Encode(info)

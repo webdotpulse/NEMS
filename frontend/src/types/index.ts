@@ -100,4 +100,5 @@ export interface SystemInfo {
   memory: string;
   disk: string;
   build: string;
+  asset_tag: string;
 }

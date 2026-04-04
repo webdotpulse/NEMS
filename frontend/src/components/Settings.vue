@@ -35,7 +35,7 @@
             </div>
           </div>
           <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg">
-            <div class="px-4 py-5 sm:p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="px-4 py-5 sm:p-6 grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
                 <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Hostname</dt>
                 <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ sysInfo.hostname }}</dd>
@@ -63,6 +63,10 @@
               <div>
                 <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Build Version</dt>
                 <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ sysInfo.build }}</dd>
+              </div>
+              <div>
+                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Asset tag</dt>
+                <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ sysInfo.asset_tag }}</dd>
               </div>
             </div>
           </div>
