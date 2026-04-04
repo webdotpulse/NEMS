@@ -182,7 +182,7 @@ func handleSystemUpdateCheck(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	// Call GitHub API to get the latest releases
-	req, err := http.NewRequest("GET", "https://api.github.com/repos/pulse-ems/NEMS/releases", nil)
+	req, err := http.NewRequest("GET", "https://api.github.com/repos/webdotpulse/nems/releases", nil)
 	if err != nil {
 		http.Error(w, `{"error": "Failed to create request"}`, http.StatusInternalServerError)
 		return
@@ -280,7 +280,7 @@ func handleSystemUpdateInstall(w http.ResponseWriter, r *http.Request) {
 		time.Sleep(2 * time.Second)
 
 		// Fetch latest releases info
-		req, err := http.NewRequest("GET", "https://api.github.com/repos/pulse-ems/NEMS/releases", nil)
+		req, err := http.NewRequest("GET", "https://api.github.com/repos/webdotpulse/nems/releases", nil)
 		if err != nil {
 			log.Printf("[ERROR] Failed to create request for latest release: %v", err)
 			return
@@ -318,7 +318,7 @@ func handleSystemUpdateInstall(w http.ResponseWriter, r *http.Request) {
 		tagName := releases[0].TagName
 		version := strings.TrimPrefix(tagName, "v")
 		debFile := fmt.Sprintf("nems_%s_arm64.deb", version)
-		downloadURL := fmt.Sprintf("https://github.com/pulse-ems/NEMS/releases/download/%s/%s", tagName, debFile)
+		downloadURL := fmt.Sprintf("https://github.com/webdotpulse/nems/releases/download/%s/%s", tagName, debFile)
 		targetPath := filepath.Join("/tmp", debFile)
 
 		// Download the file
