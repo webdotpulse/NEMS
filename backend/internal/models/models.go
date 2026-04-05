@@ -62,6 +62,17 @@ type SiteSettings struct {
 
 	// System Update
 	GithubToken string `json:"github_token"`
+
+	AlertWebhookUrl string `json:"alert_webhook_url"`
+
+	// Reporting
+	WeeklyReportEnabled bool   `json:"weekly_report_enabled"`
+	ReportEmail         string `json:"report_email"`
+	SmtpHost            string `json:"smtp_host"`
+	SmtpPort            int    `json:"smtp_port"`
+	SmtpUsername        string `json:"smtp_username"`
+	SmtpPassword        string `json:"smtp_password"`
+	SmtpSender          string `json:"smtp_sender"`
 }
 
 type Device struct {

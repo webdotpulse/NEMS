@@ -1,6 +1,6 @@
 <template>
   <div class="w-full flex justify-center items-center">
-    <div class="relative w-full h-[460px] bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+    <div class="relative w-full h-[460px] bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden border border-gray-100 dark:border-gray-700">
 
       <!-- Loader Overlay -->
       <div v-if="!state || !isDevicesLoaded" class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">

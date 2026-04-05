@@ -39,6 +39,9 @@ var gridImportSamples []TimeValue
 var projectedQuarterPeakWMu sync.RWMutex
 var projectedQuarterPeakW float64
 
+var lastPeakAlertTime time.Time
+var peakAlertMu sync.Mutex
+
 func GetProjectedQuarterPeakW() float64 {
 	projectedQuarterPeakWMu.RLock()
 	defer projectedQuarterPeakWMu.RUnlock()
@@ -506,6 +509,19 @@ func (sc *StrategyController) executeControlLoop(settings models.SiteSettings) {
 
 		// Check if our projected load exceeds threshold
 		// We use the projected 15-minute average to determine excess
+
+		// Proactive Webhook Alert for near peak (e.g. > 90% of CapacityPeakLimitKw limit)
+		absoluteLimitW := settings.CapacityPeakLimitKw * 1000
+		if projectedPeak > absoluteLimitW * 0.90 {
+			peakAlertMu.Lock()
+			if time.Since(lastPeakAlertTime) > 15*time.Minute {
+				msg := fmt.Sprintf("⚠️ Peak Capacity Warning: Projected 15-min peak is %.1f W, which is nearing your %.1f kW limit.", projectedPeak, settings.CapacityPeakLimitKw)
+				go SendWebhookAlert(msg)
+				lastPeakAlertTime = time.Now()
+			}
+			peakAlertMu.Unlock()
+		}
+
 		if projectedPeak > threshold {
 			excess := (projectedPeak - threshold) * (900.0 / remSec)
 

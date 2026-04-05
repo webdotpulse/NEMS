@@ -79,6 +79,14 @@ export interface SiteSettings {
   superdal_target_soc: number;
   home_base_load_w: number;
   github_token: string;
+  alert_webhook_url: string;
+  weekly_report_enabled: boolean;
+  report_email: string;
+  smtp_host: string;
+  smtp_port: number;
+  smtp_username: string;
+  smtp_password: string;
+  smtp_sender: string;
 }
 
 export interface SiteState {

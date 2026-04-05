@@ -9,7 +9,7 @@
       <div v-if="state" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
 
         <!-- Grid Power Card -->
-        <div v-if="state.grid_power_w !== null" class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
+        <div v-if="state.grid_power_w !== null" class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg border border-gray-100 dark:border-gray-700">
           <div class="p-5">
             <div class="flex items-center">
               <div class="flex-shrink-0">
@@ -33,7 +33,7 @@
         </div>
 
         <!-- Solar Power Card -->
-        <div v-if="state.solar_power_w !== null" class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
+        <div v-if="state.solar_power_w !== null" class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg border border-gray-100 dark:border-gray-700">
           <div class="p-5">
             <div class="flex items-center">
               <div class="flex-shrink-0">
@@ -55,7 +55,7 @@
         </div>
 
         <!-- Battery Power Card -->
-        <div v-if="state.battery_power_w !== null" class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
+        <div v-if="state.battery_power_w !== null" class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg border border-gray-100 dark:border-gray-700">
           <div class="p-5">
             <div class="flex items-center">
               <div class="flex-shrink-0">
@@ -79,7 +79,7 @@
         </div>
 
         <!-- Total Load Card -->
-        <div v-if="state.total_load_w !== null" class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
+        <div v-if="state.total_load_w !== null" class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg border border-gray-100 dark:border-gray-700">
           <div class="p-5">
             <div class="flex items-center">
               <div class="flex-shrink-0">

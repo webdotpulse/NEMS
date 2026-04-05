@@ -14,43 +14,15 @@
           <button @click="activeTab = 'info'" :class="[activeTab === 'info' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300', 'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors']">
             System Info
           </button>
+          <button @click="activeTab = 'notifications'" :class="[activeTab === 'notifications' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300', 'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors']">
+            Notifications
+          </button>
         </nav>
       </div>
 
       <!-- TAB: SYSTEM INFO -->
       <div v-if="activeTab === 'info'">
         <!-- System Info Section -->
-        <!-- Logging Settings Card -->
-        <div class="mb-8">
-          <div class="flex items-center justify-between mb-4">
-            <h2 class="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:text-3xl sm:truncate">
-              System Logging
-            </h2>
-          </div>
-          <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg mb-6">
-            <div class="px-4 py-5 sm:p-6">
-              <div class="mb-4">
-                <p class="text-sm text-gray-500 dark:text-gray-400">
-                  Enable debugging to show raw logic that triggered faults and other detailed system information in the logger view.
-                </p>
-              </div>
-              <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-                <div class="sm:col-span-3">
-                  <label for="log_level" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Debugging</label>
-                  <div class="mt-1">
-                    <select id="log_level" v-model="siteSettings.log_level" @change="saveSiteSettings"
-                            class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
-                      <option value="INFO">Off</option>
-                      <option value="DEBUG">On</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Software Update Section -->
         <div v-if="sysInfo" class="mb-8">
           <div class="flex items-center justify-between mb-4">
             <h2 class="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:text-3xl sm:truncate">
@@ -151,6 +123,37 @@
             </div>
           </div>
         </div>
+
+        <!-- Logging Settings Card -->
+        <div class="mb-8">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:text-3xl sm:truncate">
+              System Logging
+            </h2>
+          </div>
+          <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg mb-6">
+            <div class="px-4 py-5 sm:p-6">
+              <div class="mb-4">
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                  Enable debugging to show raw logic that triggered faults and other detailed system information in the logger view.
+                </p>
+              </div>
+              <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                <div class="sm:col-span-3">
+                  <label for="log_level" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Debugging</label>
+                  <div class="mt-1">
+                    <select id="log_level" v-model="siteSettings.log_level" @change="saveSiteSettings"
+                            class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
+                      <option value="INFO">Off</option>
+                      <option value="DEBUG">On</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
 
       <!-- TAB: STRATEGY -->
@@ -748,6 +751,114 @@
         </div>
       </div>
 
+      <!-- TAB: NOTIFICATIONS -->
+      <div v-if="activeTab === 'notifications'">
+        <div class="mb-8">
+          <h2 class="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:text-3xl sm:truncate mb-4">
+            Notifications & Alerts
+          </h2>
+          <form @submit.prevent="saveSiteSettings" class="space-y-6">
+            <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg mb-6">
+              <div class="px-4 py-5 sm:p-6">
+                <div class="mb-4 border-b border-gray-200 dark:border-gray-700 pb-4">
+                  <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-gray-100">
+                    Webhook Alerts
+                  </h3>
+                  <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    Receive proactive notifications (e.g. device offline, approaching peak capacity) by providing a Webhook URL (e.g. Slack, Discord, Ntfy).
+                  </p>
+                </div>
+                <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                  <div class="sm:col-span-6">
+                    <label for="alert_webhook_url" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Webhook URL</label>
+                    <div class="mt-1">
+                      <input type="text" id="alert_webhook_url" v-model="siteSettings.alert_webhook_url" placeholder="https://..."
+                             class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg mb-6">
+              <div class="px-4 py-5 sm:p-6">
+                <div class="mb-4 border-b border-gray-200 dark:border-gray-700 pb-4 flex justify-between items-center">
+                  <div>
+                    <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-gray-100">
+                      Weekly Email Report
+                    </h3>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                      Receive a PDF report of your energy consumption every week.
+                    </p>
+                  </div>
+                  <div class="flex items-center">
+                    <input id="weekly_report_enabled" type="checkbox" v-model="siteSettings.weekly_report_enabled"
+                           class="h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600 transition-colors" />
+                  </div>
+                </div>
+                <div v-if="siteSettings.weekly_report_enabled" class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                  <div class="sm:col-span-6">
+                    <label for="report_email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Recipient Email Address</label>
+                    <div class="mt-1">
+                      <input type="email" id="report_email" v-model="siteSettings.report_email"
+                             class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                    </div>
+                  </div>
+                  <div class="sm:col-span-4">
+                    <label for="smtp_host" class="block text-sm font-medium text-gray-700 dark:text-gray-300">SMTP Host</label>
+                    <div class="mt-1">
+                      <input type="text" id="smtp_host" v-model="siteSettings.smtp_host" placeholder="smtp.gmail.com"
+                             class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                    </div>
+                  </div>
+                  <div class="sm:col-span-2">
+                    <label for="smtp_port" class="block text-sm font-medium text-gray-700 dark:text-gray-300">SMTP Port</label>
+                    <div class="mt-1">
+                      <input type="number" id="smtp_port" v-model="siteSettings.smtp_port"
+                             class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                    </div>
+                  </div>
+                  <div class="sm:col-span-3">
+                    <label for="smtp_username" class="block text-sm font-medium text-gray-700 dark:text-gray-300">SMTP Username</label>
+                    <div class="mt-1">
+                      <input type="text" id="smtp_username" v-model="siteSettings.smtp_username"
+                             class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                    </div>
+                  </div>
+                  <div class="sm:col-span-3">
+                    <label for="smtp_password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">SMTP Password</label>
+                    <div class="mt-1">
+                      <input type="password" id="smtp_password" v-model="siteSettings.smtp_password"
+                             class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                    </div>
+                  </div>
+                  <div class="sm:col-span-6">
+                    <label for="smtp_sender" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Sender Email Address</label>
+                    <div class="mt-1">
+                      <input type="email" id="smtp_sender" v-model="siteSettings.smtp_sender" placeholder="noreply@example.com"
+                             class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg">
+              <div class="px-4 py-5 sm:p-6 flex items-center justify-between">
+                <div v-if="saveSettingsSuccess" class="text-sm font-medium text-green-600 dark:text-green-400 transition-opacity">
+                  Settings saved successfully!
+                </div>
+                <div v-else></div>
+                <button type="submit"
+                        class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                  Save Settings
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
       <!-- TAB: DEVICES -->
       <div v-if="activeTab === 'devices'">
         <!-- Current Devices Section -->
@@ -1266,7 +1377,15 @@ const siteSettings = ref<SiteSettings>({
   superdal_optimization_enabled: false,
   superdal_target_soc: 100.0,
   home_base_load_w: 300.0,
-  github_token: ''
+  github_token: '',
+  alert_webhook_url: '',
+  weekly_report_enabled: false,
+  report_email: '',
+  smtp_host: '',
+  smtp_port: 587,
+  smtp_username: '',
+  smtp_password: '',
+  smtp_sender: ''
 })
 
 const parsedChargeSchedule = ref<Array<{start: string, end: string, target_soc: number}>>([])

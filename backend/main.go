@@ -404,6 +404,14 @@ func main() {
 	ensureColumnExists(db, "site_settings", "superdal_target_soc", "REAL DEFAULT 100.0")
 	ensureColumnExists(db, "site_settings", "home_base_load_w", "REAL DEFAULT 300.0")
 	ensureColumnExists(db, "site_settings", "github_token", "TEXT DEFAULT ''")
+	ensureColumnExists(db, "site_settings", "alert_webhook_url", "TEXT DEFAULT ''")
+	ensureColumnExists(db, "site_settings", "weekly_report_enabled", "BOOLEAN DEFAULT 0")
+	ensureColumnExists(db, "site_settings", "report_email", "TEXT DEFAULT ''")
+	ensureColumnExists(db, "site_settings", "smtp_host", "TEXT DEFAULT ''")
+	ensureColumnExists(db, "site_settings", "smtp_port", "INTEGER DEFAULT 587")
+	ensureColumnExists(db, "site_settings", "smtp_username", "TEXT DEFAULT ''")
+	ensureColumnExists(db, "site_settings", "smtp_password", "TEXT DEFAULT ''")
+	ensureColumnExists(db, "site_settings", "smtp_sender", "TEXT DEFAULT ''")
 
 	// Load global log level on startup
 	db.QueryRow("SELECT log_level FROM site_settings WHERE id = 1").Scan(&GlobalLogLevel)
@@ -468,6 +476,9 @@ func main() {
 	if TariffMgr != nil {
 		TariffMgr.Start()
 	}
+
+	// Initialize Reporter
+	InitReporter()
 
 	// Example: Call Elia API for general system load (not imbalance)
 	go func() {
