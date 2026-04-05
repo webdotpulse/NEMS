@@ -743,60 +743,6 @@
               </div>
             </div>
 
-            <!-- Thermal Control Card -->
-            <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg mb-6">
-              <div class="px-4 py-5 sm:p-6">
-                <div class="mb-4 border-b border-gray-200 dark:border-gray-700 pb-4">
-                  <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-gray-100">
-                    Thermal Control (Thermostats & Heat Pumps)
-                  </h3>
-                  <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                    Control flexible thermal loads by pre-heating or pre-cooling your home during cheap dynamic price hours or when there is excess solar power.
-                  </p>
-                </div>
-
-                <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-                  <div class="sm:col-span-6">
-                    <div class="flex items-center">
-                      <input id="smart_thermostat_cheapest_hours_enabled" type="checkbox" :checked="siteSettings.smart_thermostat_cheapest_hours > 0" @change="e => siteSettings.smart_thermostat_cheapest_hours = (e.target as HTMLInputElement).checked ? 1 : 0" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" />
-                      <label for="smart_thermostat_cheapest_hours_enabled" class="ml-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Pre-heat/cool during Cheapest Hours
-                      </label>
-                    </div>
-                    <div class="mt-2 ml-6 text-sm text-gray-500 dark:text-gray-400">
-                      Boost temperature setpoints during the cheapest hours of the day.
-                    </div>
-                    <div class="mt-2 ml-6" v-if="siteSettings.smart_thermostat_cheapest_hours > 0">
-                      <label for="smart_thermostat_cheapest_hours" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Number of cheapest hours to boost</label>
-                      <input type="number" step="1" min="1" max="24" id="smart_thermostat_cheapest_hours" v-model="siteSettings.smart_thermostat_cheapest_hours" class="mt-1 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:w-1/2 border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
-                    </div>
-                  </div>
-
-                  <div class="sm:col-span-6">
-                    <label for="thermostat_turn_on_excess_w" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Boost Temperature above Solar Excess (W)</label>
-                    <div class="mt-1">
-                      <input type="number" step="1" min="0" id="thermostat_turn_on_excess_w" v-model="siteSettings.thermostat_turn_on_excess_w" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
-                      <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Set to 0 to disable excess solar boosting.</p>
-                    </div>
-                  </div>
-
-                  <div class="sm:col-span-3">
-                    <label for="thermostat_normal_temp" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Normal Temperature (°C)</label>
-                    <div class="mt-1">
-                      <input type="number" step="0.5" id="thermostat_normal_temp" v-model="siteSettings.thermostat_normal_temp" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
-                    </div>
-                  </div>
-
-                  <div class="sm:col-span-3">
-                    <label for="thermostat_boost_temp" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Boost Temperature (°C)</label>
-                    <div class="mt-1">
-                      <input type="number" step="0.5" id="thermostat_boost_temp" v-model="siteSettings.thermostat_boost_temp" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
             <!-- Save Actions Card -->
             <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg">
               <div class="px-4 py-5 sm:p-6 flex items-center justify-between">
@@ -963,24 +909,6 @@
                     </div>
                   </div>
 
-                  <!-- Thermostat Multi-zone Overrides -->
-                  <template v-if="getDeviceCategory(form.template) === 'Thermostats & Heating'">
-                    <div class="sm:col-span-3">
-                      <label for="thermostat_normal_temp" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Zone Normal Temp (°C)</label>
-                      <div class="mt-1">
-                        <input type="number" step="0.5" id="thermostat_normal_temp" v-model="form.thermostat_normal_temp" placeholder="Fallback to Global"
-                               class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
-                      </div>
-                    </div>
-                    <div class="sm:col-span-3">
-                      <label for="thermostat_boost_temp" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Zone Boost Temp (°C)</label>
-                      <div class="mt-1">
-                        <input type="number" step="0.5" id="thermostat_boost_temp" v-model="form.thermostat_boost_temp" placeholder="Fallback to Global"
-                               class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
-                      </div>
-                    </div>
-                  </template>
-
                   <!-- EV Charger Mode Selection -->
                   <div v-if="isCharger(form.template)" class="sm:col-span-3">
                     <label for="charge_mode" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Charge Mode</label>
@@ -1114,24 +1042,6 @@
                          class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
                 </div>
               </div>
-
-              <!-- Thermostat Multi-zone Overrides -->
-              <template v-if="getDeviceCategory(editForm.template) === 'Thermostats & Heating'">
-                <div class="sm:col-span-3">
-                  <label for="edit_thermostat_normal_temp" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Zone Normal Temp (°C)</label>
-                  <div class="mt-1">
-                    <input type="number" step="0.5" id="edit_thermostat_normal_temp" v-model="editForm.thermostat_normal_temp" placeholder="Fallback to Global"
-                           class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
-                  </div>
-                </div>
-                <div class="sm:col-span-3">
-                  <label for="edit_thermostat_boost_temp" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Zone Boost Temp (°C)</label>
-                  <div class="mt-1">
-                    <input type="number" step="0.5" id="edit_thermostat_boost_temp" v-model="editForm.thermostat_boost_temp" placeholder="Fallback to Global"
-                           class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
-                  </div>
-                </div>
-              </template>
 
               <!-- EV Charger Mode Selection -->
               <div v-if="isCharger(editForm.template)" class="sm:col-span-3">
@@ -1289,9 +1199,7 @@ const form = ref({
   inverter_rated_power_kw: 0,
   charge_mode: 'eco',
   ocpp_proxy_url: '',
-  poll_interval: 5,
-  thermostat_normal_temp: 0,
-  thermostat_boost_temp: 0
+  poll_interval: 5
 })
 
 const editingDevice = ref<Device | null>(null)
@@ -1310,9 +1218,7 @@ const editForm = ref({
   inverter_rated_power_kw: 0,
   charge_mode: 'eco',
   ocpp_proxy_url: '',
-  poll_interval: 5,
-  thermostat_normal_temp: 0,
-  thermostat_boost_temp: 0
+  poll_interval: 5
 })
 
 const siteSettings = ref<SiteSettings>({
@@ -1335,10 +1241,6 @@ const siteSettings = ref<SiteSettings>({
   allowed_grid_import_kw: 0.0,
   allowed_grid_export_kw: 0.0,
   appliance_turn_on_excess_w: 0.0,
-  smart_thermostat_cheapest_hours: 0,
-  thermostat_turn_on_excess_w: 0.0,
-  thermostat_normal_temp: 20.0,
-  thermostat_boost_temp: 22.0,
   peak_shaving_buffer_w: 200.0,
   peak_shaving_rampup_w: 500.0,
   timezone: 'Europe/Brussels',
@@ -1425,7 +1327,6 @@ const getDeviceCategory = (templateId: string) => {
   if (id.includes('battery')) return 'Batteries & Storage'
   if (id.includes('charger') || id.includes('wallbox') || id.includes('easee') || id.includes('alfen') || id.includes('raedian') || id.includes('peblar') || id.includes('phoenix') || id.includes('bender')) return 'EV Chargers'
   if (id.includes('relay') || id.includes('plug') || id.includes('appliance')) return 'Relays & Appliances'
-  if (id.includes('thermostat') || id.includes('heatpump') || id.includes('tado') || id.includes('nest')) return 'Thermostats & Heating'
   return 'Other'
 }
 
@@ -1436,7 +1337,6 @@ const categorizedDevices = computed(() => {
     'Batteries & Storage': [],
     'EV Chargers': [],
     'Relays & Appliances': [],
-    'Thermostats & Heating': [],
     'Other': []
   }
 
@@ -1549,9 +1449,7 @@ const addDevice = async () => {
         inverter_rated_power_kw: 0,
         charge_mode: 'eco',
         ocpp_proxy_url: '',
-  poll_interval: 5,
-  thermostat_normal_temp: 0,
-  thermostat_boost_temp: 0
+        poll_interval: 5
       }
       await fetchDevices()
     }
@@ -1572,9 +1470,7 @@ const editDevice = (device: Device) => {
     inverter_rated_power_kw: device.inverter_rated_power_kw || 0,
     charge_mode: device.charge_mode || 'eco',
     ocpp_proxy_url: device.ocpp_proxy_url || '',
-    poll_interval: device.poll_interval || 5,
-    thermostat_normal_temp: device.thermostat_normal_temp ?? 0,
-    thermostat_boost_temp: device.thermostat_boost_temp ?? 0
+    poll_interval: device.poll_interval || 5
   }
 }
 
