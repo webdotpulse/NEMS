@@ -1,13 +1,30 @@
-# Proposed Improvements for Energy Arbitrage & Optimization
+# Proposed Improvements for Pulse EMS
 
-## 1. Implement Round-Trip Efficiency Loss Arbitrage Filtering
-Currently, the system uses static Euro thresholds (`force_charge_below_euro`, `force_discharge_above_euro`) to govern arbitrage. This relies heavily on the user perfectly analyzing the difference between prices in the Day-Ahead Market. However, batteries lose typically 15-20% round-trip efficiency (charging and discharging). The arbitrage algorithm should mathematically incorporate this round-trip efficiency penalty. It should refuse to discharge the battery to the grid unless the spread between the purchased price (at time of charging) and the current EPEX spot injection price outweighs the round trip loss cost.
+## 1. Real-time Tariff Integration and Automation
+Currently, the system relies on day-ahead prices stored in the local SQLite `epex_prices` table. While effective for basic planning, this could be enhanced by:
+*   Integrating live APIs (e.g., ENTSO-E or local provider APIs) to automatically fetch next-day Day-Ahead prices, eliminating the need for external systems to populate the database.
+*   Adding support for real-time imbalance pricing, allowing the system to react dynamically to grid frequency deviations or negative pricing events not captured in day-ahead forecasts.
 
-## 2. Differentiate between Consumption and Injection Contracts
-Most Belgian dynamic contracts separate consumption formulas and injection formulas (e.g. Injection is often *pure* Belpex * multiplier with zero base fee). Right now, the `CalculateEffectivePrice` function applies a single base formula to `rawEpexPrice` without necessarily factoring in whether the energy is flowing *to* the house or *from* the house. Future iterations should accept an `isInjection bool` and allow users to provide their Injection Multiplier vs Consumption Multiplier separately.
+## 2. Enhanced Battery Health and Wear Management
+The current arbitrage logic forces charging and discharging based on price spreads. To maximize the lifespan of the home battery, the EMS should track and manage battery wear:
+*   Implement cycle counting and Depth of Discharge (DoD) tracking.
+*   Add logic to avoid micro-cycling around SOC limits (e.g., oscillating between 99% and 100%).
+*   Allow users to configure a "Wear Cost" (in €/kWh) that is factored into the arbitrage spread calculation, ensuring that a discharge cycle is only initiated if the profit exceeds the degradation cost of the battery.
 
-## 3. Dynamic Forecasting Arbitrage vs. Static Thresholds
-Right now, the Smart EV charging does check the cheapest hours, but home batteries only check static prices. NEMS should calculate the optimal charging curve for the home battery by forecasting the highest delta spreads over the coming 24 hours, factoring in the solar generation forecast, and charging the battery intelligently during the lowest price slots specifically sized to cover the home's projected net load during the highest price slots.
+## 3. Multi-zone Temperature Control & Flexible Load Integration
+Expand beyond EV chargers and batteries to control flexible thermal loads:
+*   Integrate with smart thermostats (e.g., Tado, Nest) and heat pumps (via Modbus/API).
+*   Use these systems as thermal batteries: precooling or preheating the house during cheap hours or periods of high solar excess, and coasting through expensive peak hours.
 
-## 4. Advanced "Superdal" Detection
-Currently, only Engie Empower Flextime has hard-coded 'Superdal' specific rules mapped to times 01:00 to 07:00. This could be genericized so that any contract could configure an array of "Off-Peak" and "Super-Peak" blocks, to remove the hard-coded Engie dependencies in the main logic.
+## 4. Machine Learning Based Load Forecasting
+The `dynamic_forecast` strategy currently relies on a static user-configured `home_base_load_w` parameter.
+*   Replace or supplement this with an adaptive machine learning model that analyzes historical consumption patterns (from the `state.go` time-series data) to predict future home load profiles.
+*   This would significantly improve the accuracy of the 24-hour optimal charging plan by anticipating periods of high baseline consumption (e.g., cooking in the evening).
+
+## 5. Proactive Notification and Alerting System
+Currently, the system operates autonomously but lacks a direct communication channel to the user for critical events.
+*   Implement a notification engine (supporting email, webhooks, or push notifications).
+*   Alert users about critical events, such as:
+    *   A device going offline (failing to poll).
+    *   The projected peak capacity (`ProjectedQuarterPeakW` in Flanders mode) nearing the contract limit despite throttling efforts.
+    *   Failing to fetch tariff data.
