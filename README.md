@@ -1,6 +1,6 @@
 # Pulse EMS
 
-Pulse EMS is a lightweight, highly responsive, fully UI-driven Energy Management System (EMS) optimized for running on a Raspberry Pi. It provides real-time monitoring, historical tracking, and active control of your home energy usage—coordinating Grid, Solar, Battery, and EV Charger hardware to optimize energy consumption and reduce costs.
+Pulse EMS is a lightweight, highly responsive, fully UI-driven Energy Management System (EMS) optimized for running on a Raspberry Pi, specifically designed for home owners and small residential installations. It provides real-time monitoring, historical tracking, and active control of your home energy usage—coordinating Grid, Solar, Battery, and EV Charger hardware to optimize energy consumption and reduce costs.
 
 ## Features
 

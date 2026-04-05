@@ -6,10 +6,14 @@ You are building a lightweight, highly responsive, fully UI-driven Energy Manage
 ## Core Constraints & Rules
 1. **NO Car Integration:** Do not include any APIs, UI elements, or logic for vehicle APIs, SOC tracking for cars, or car discovery.
 2. **NO Billing/Tokens:** Exclude all funding, payment, RFID token, or billing features.
-3. **Fully UI-Driven:** This EMS must allow device configuration, addition, and removal entirely through the frontend UI.
-4. **Hardware Target:** Optimized for Raspberry Pi (Debian/Linux). Minimize SD card writes (batch DB writes, use Write-Ahead Logging).
-5. **System Info & Build Number:** Do NOT include CPU information in the System Info UI. The build number must use the release tag (`git describe --tags --always`).
-6. **Deployment:** Deployed via a `.deb` package that creates a `nems` user and `nems.service`. Also built as a custom Raspberry Pi OS image with `nginx` proxy, a minimal Wayland desktop (`wayfire`), `cockpit` for web-based terminal access on port 9090, and `rpi-connect` for remote screen sharing.
+3. **NO Imbalance Logic:** Do not implement imbalance logic.
+4. **NO ENTSO-E API:** Do not implement the ENTSO-E API.
+5. **Target Audience:** Keep this EMS specifically designed for home owners and small installations.
+6. **Elia API:** Only include the Elia API if possible or necessary for features other than imbalance.
+7. **Fully UI-Driven:** This EMS must allow device configuration, addition, and removal entirely through the frontend UI.
+8. **Hardware Target:** Optimized for Raspberry Pi (Debian/Linux). Minimize SD card writes (batch DB writes, use Write-Ahead Logging).
+9. **System Info & Build Number:** Do NOT include CPU information in the System Info UI. The build number must use the release tag (`git describe --tags --always`).
+10. **Deployment:** Deployed via a `.deb` package that creates a `nems` user and `nems.service`. Also built as a custom Raspberry Pi OS image with `nginx` proxy, a minimal Wayland desktop (`wayfire`), `cockpit` for web-based terminal access on port 9090, and `rpi-connect` for remote screen sharing.
 
 ## Required Devices (Templates)
 Implement a modular plugin system for devices. The system MUST include templates for:

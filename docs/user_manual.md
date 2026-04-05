@@ -95,11 +95,9 @@ Visualizes and modifies how your electricity price is calculated per kWh based o
   * **`dynamic_inject_multiplier`**: Multiplier applied to spot prices for energy injection (usually to calculate provider fees on return).
   * **Provider Configurations (Engie, Luminus, Eneco, Frank, Ecopower)**: Includes unique combinations of base fees (e.g. `engie_base_fee`), markup structures, and pricing multipliers (`*_multiplier`, `*_inject_multiplier`) allowing exact mapping of your energy bill parameters to the UI calculations.
 
-### 4.4 Imbalance & Smart Modes
-Advanced configuration for power-users who have access to real-time grid imbalance tariffs.
+### 4.4 Smart Modes
+Advanced configuration for optimizing your home consumption.
 
-* **`imbalance_force_charge_below_euro`**: Spot charging limit based on real-time Elia grid imbalance prices instead of Day-Ahead EPEX prices.
-* **`imbalance_force_discharge_above_euro`**: Spot discharging limit based on grid imbalance prices.
 * **`smart_ev_cheapest_hours`**: Automatically identifies the $N$ cheapest hours of the day to charge your Electric Vehicle.
 * **`home_base_load_w`**: Estimated average background consumption of the house used for predicting future battery behavior in the `dynamic_forecast` mode.
 
