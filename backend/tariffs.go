@@ -138,6 +138,7 @@ func (tm *TariffManager) fetchIfNeeded() {
 	prices, err := tm.provider.FetchPrices(startOfToday, endOfTomorrow)
 	if err != nil {
 		log.Printf("[ERROR] TariffManager: Failed to fetch prices: %v", err)
+		go SendWebhookAlert("🚨 Tariff Error: Failed to fetch Day-Ahead energy prices from provider.")
 		return
 	}
 

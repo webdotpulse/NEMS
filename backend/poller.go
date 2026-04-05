@@ -158,6 +158,7 @@ func (pm *PollerManager) Start() {
 		defer fastTicker.Stop()
 
 		lastPolled := make(map[int]time.Time)
+		consecutiveErrors := make(map[int]int)
 
 		for {
 			select {
@@ -207,6 +208,16 @@ func (pm *PollerManager) Start() {
 						if err != nil {
 							log.Printf("[ERROR] PollerManager: Error polling device %d: %v", id, err)
 
+							pm.mu.Lock()
+							consecutiveErrors[id]++
+							errCount := consecutiveErrors[id]
+							pm.mu.Unlock()
+
+							if errCount == 5 {
+								msg := "🚨 Device Offline: " + device.Name + " (" + device.Template + ") has failed to poll 5 times in a row."
+								SendWebhookAlert(msg)
+							}
+
 							if GlobalLogLevel == "DEBUG" || GlobalLogLevel == "TRACE" {
 								log.Printf("[DEBUG] PollerManager: Polling raw error detail for device %d: %+v", id, err)
 							}
@@ -242,6 +253,14 @@ func (pm *PollerManager) Start() {
 							pm.cacheMu.Unlock()
 							return
 						}
+
+						pm.mu.Lock()
+						if count, ok := consecutiveErrors[id]; ok && count >= 5 {
+							msg := "✅ Device Restored: " + device.Name + " (" + device.Template + ") is back online."
+							SendWebhookAlert(msg)
+						}
+						consecutiveErrors[id] = 0
+						pm.mu.Unlock()
 
 						pm.cacheMu.Lock()
 						pm.deviceCache[id] = DeviceData{
