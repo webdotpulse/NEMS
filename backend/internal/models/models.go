@@ -56,6 +56,9 @@ type SiteSettings struct {
 	SuperdalOptimizationEnabled bool    `json:"superdal_optimization_enabled"`
 	SuperdalTargetSoc           float64 `json:"superdal_target_soc"`
 
+	// Dynamic Forecast
+	HomeBaseLoadW float64 `json:"home_base_load_w"`
+
 	// System Update
 	GithubToken string `json:"github_token"`
 }

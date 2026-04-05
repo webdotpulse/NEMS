@@ -22,6 +22,7 @@ export interface SiteSettings {
   strategy_mode: string;
   capacity_peak_limit_kw: number;
   active_inverter_curtailment: boolean;
+  battery_grid_charge_strategy: string;
   force_charge_below_euro: number;
   force_discharge_above_euro: number;
   smart_ev_cheapest_hours: number;
@@ -76,6 +77,7 @@ export interface SiteSettings {
   custom_charge_schedule: string;
   superdal_optimization_enabled: boolean;
   superdal_target_soc: number;
+  home_base_load_w: number;
   github_token: string;
 }
 

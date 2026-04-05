@@ -586,18 +586,42 @@
 
                 <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
                   <div class="sm:col-span-6">
-                    <label for="force_charge_below_euro" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Force Charge Battery if price drops below (€/kWh)</label>
+                    <label for="battery_grid_charge_strategy" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Battery Grid Charge Strategy</label>
                     <div class="mt-1">
-                      <input type="number" step="0.01" id="force_charge_below_euro" v-model="siteSettings.force_charge_below_euro" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                      <select id="battery_grid_charge_strategy" v-model="siteSettings.battery_grid_charge_strategy"
+                              class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
+                        <option value="price_only">Price Thresholds Only</option>
+                        <option value="super_dal_only">Super-dal Only</option>
+                        <option value="hybrid">Hybrid (Price & Super-dal)</option>
+                        <option value="dynamic_forecast">Dynamic Forecast</option>
+                      </select>
                     </div>
                   </div>
 
-                  <div class="sm:col-span-6">
-                    <label for="force_discharge_above_euro" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Force Discharge Battery to Grid if price rises above (€/kWh)</label>
-                    <div class="mt-1">
-                      <input type="number" step="0.01" id="force_discharge_above_euro" v-model="siteSettings.force_discharge_above_euro" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                  <template v-if="siteSettings.battery_grid_charge_strategy === 'dynamic_forecast'">
+                    <div class="sm:col-span-6">
+                      <label for="home_base_load_w" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Estimated Home Base Load (W)</label>
+                      <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Used to calculate net load against solar forecast for dynamic battery arbitration sizing.</p>
+                      <div class="mt-1">
+                        <input type="number" step="1" id="home_base_load_w" v-model="siteSettings.home_base_load_w" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                      </div>
                     </div>
-                  </div>
+                  </template>
+                  <template v-else>
+                    <div class="sm:col-span-6">
+                      <label for="force_charge_below_euro" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Force Charge Battery if price drops below (€/kWh)</label>
+                      <div class="mt-1">
+                        <input type="number" step="0.01" id="force_charge_below_euro" v-model="siteSettings.force_charge_below_euro" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                      </div>
+                    </div>
+
+                    <div class="sm:col-span-6">
+                      <label for="force_discharge_above_euro" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Force Discharge Battery to Grid if price rises above (€/kWh)</label>
+                      <div class="mt-1">
+                        <input type="number" step="0.01" id="force_discharge_above_euro" v-model="siteSettings.force_discharge_above_euro" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                      </div>
+                    </div>
+                  </template>
 
                   <div class="sm:col-span-6">
                     <label for="smart_ev_cheapest_hours" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Smart EV Charging: Charge during the cheapest hours of the day</label>
@@ -1165,6 +1189,7 @@ const siteSettings = ref<SiteSettings>({
   strategy_mode: 'eco',
   capacity_peak_limit_kw: 2.5,
   active_inverter_curtailment: false,
+  battery_grid_charge_strategy: 'price_only',
   force_charge_below_euro: 0.0,
   force_discharge_above_euro: 999.0,
   smart_ev_cheapest_hours: 0,
@@ -1215,6 +1240,7 @@ const siteSettings = ref<SiteSettings>({
   custom_charge_schedule: '[]',
   superdal_optimization_enabled: false,
   superdal_target_soc: 100.0,
+  home_base_load_w: 300.0,
   github_token: ''
 })
 
