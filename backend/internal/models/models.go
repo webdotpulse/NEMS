@@ -56,19 +56,11 @@ type SiteSettings struct {
 	SuperdalOptimizationEnabled bool    `json:"superdal_optimization_enabled"`
 	SuperdalTargetSoc           float64 `json:"superdal_target_soc"`
 
-	// Imbalance Pricing
-	ImbalanceForceChargeBelowEuro    float64 `json:"imbalance_force_charge_below_euro"`
-	ImbalanceForceDischargeAboveEuro float64 `json:"imbalance_force_discharge_above_euro"`
-
 	// Dynamic Forecast
 	HomeBaseLoadW float64 `json:"home_base_load_w"`
 
 	// System Update
 	GithubToken string `json:"github_token"`
-
-	// ENTSO-E
-	EntsoeApiKey   string `json:"entsoe_api_key"`
-	EntsoeAreaCode string `json:"entsoe_area_code"`
 }
 
 type Device struct {

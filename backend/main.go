@@ -403,10 +403,6 @@ func main() {
 	ensureColumnExists(db, "site_settings", "superdal_target_soc", "REAL DEFAULT 100.0")
 	ensureColumnExists(db, "site_settings", "home_base_load_w", "REAL DEFAULT 300.0")
 	ensureColumnExists(db, "site_settings", "github_token", "TEXT DEFAULT ''")
-	ensureColumnExists(db, "site_settings", "imbalance_force_charge_below_euro", "REAL DEFAULT -999.0")
-	ensureColumnExists(db, "site_settings", "imbalance_force_discharge_above_euro", "REAL DEFAULT 999.0")
-	ensureColumnExists(db, "site_settings", "entsoe_api_key", "TEXT DEFAULT ''")
-	ensureColumnExists(db, "site_settings", "entsoe_area_code", "TEXT DEFAULT '10YBE----------2'")
 
 	log.Println("[INFO] Database schema initialized")
 
@@ -428,7 +424,6 @@ func main() {
 
 	mux.HandleFunc("/api/tariffs/today", handleTariffsToday)
 	mux.HandleFunc("/api/tariffs/forecast", handleTariffForecast)
-	mux.HandleFunc("/api/tariffs/imbalance", handleTariffsImbalance)
 	mux.HandleFunc("/api/solar/forecast", handleSolarForecast)
 	mux.HandleFunc("/api/settings", handleSettings)
 	mux.HandleFunc("/api/templates", handleTemplates)
