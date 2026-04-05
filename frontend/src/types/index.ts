@@ -48,22 +48,28 @@ export interface SiteSettings {
   fixed_price_off_peak_kwh: number;
   fixed_inject_price_kwh: number;
   dynamic_markup_kwh: number;
+  dynamic_inject_multiplier: number;
   engie_markup_peak: number;
   engie_markup_off_peak: number;
   engie_markup_super_off_peak: number;
   engie_multiplier: number;
+  engie_inject_multiplier: number;
   engie_base_fee: number;
   luminus_markup: number;
   luminus_multiplier: number;
+  luminus_inject_multiplier: number;
   luminus_base_fee: number;
   eneco_markup: number;
   eneco_multiplier: number;
+  eneco_inject_multiplier: number;
   eneco_base_fee: number;
   frank_markup: number;
   frank_multiplier: number;
+  frank_inject_multiplier: number;
   frank_base_fee: number;
   ecopower_markup: number;
   ecopower_multiplier: number;
+  ecopower_inject_multiplier: number;
   ecopower_base_fee: number;
 
   // Custom Schedules & Optimization
