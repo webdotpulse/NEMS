@@ -16,6 +16,7 @@ type SiteSettings struct {
 	PeakShavingBufferW        float64 `json:"peak_shaving_buffer_w"`
 	PeakShavingRampupW        float64 `json:"peak_shaving_rampup_w"`
 	Timezone                  string  `json:"timezone"`
+	LogLevel                  string  `json:"log_level"`
 	Language                  string  `json:"language"`
 	Address                   string  `json:"address"`
 	Latitude                  float64 `json:"latitude"`

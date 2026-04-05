@@ -207,6 +207,10 @@ func (pm *PollerManager) Start() {
 						if err != nil {
 							log.Printf("[ERROR] PollerManager: Error polling device %d: %v", id, err)
 
+							if GlobalLogLevel == "DEBUG" || GlobalLogLevel == "TRACE" {
+								log.Printf("[DEBUG] PollerManager: Polling raw error detail for device %d: %+v", id, err)
+							}
+
 							errStr := err.Error()
 							if strings.Contains(errStr, "broken pipe") || strings.Contains(errStr, "EOF") || strings.Contains(errStr, "connection reset") {
 								log.Printf("[INFO] PollerManager: Connection drop detected for device %d, attempting to reconnect...", id)

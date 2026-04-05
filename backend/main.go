@@ -181,6 +181,8 @@ func ensureCertificates(certFile, keyFile string) error {
 
 var db *sql.DB
 
+var GlobalLogLevel = "INFO"
+
 func ensureColumnExists(db *sql.DB, tableName, colName, colDef string) {
 	query := fmt.Sprintf("PRAGMA table_info(%s);", tableName)
 	rows, err := db.Query(query)
@@ -358,6 +360,7 @@ func main() {
 	ensureColumnExists(db, "site_settings", "peak_shaving_buffer_w", "REAL DEFAULT 200.0")
 	ensureColumnExists(db, "site_settings", "peak_shaving_rampup_w", "REAL DEFAULT 500.0")
 	ensureColumnExists(db, "site_settings", "timezone", "TEXT DEFAULT 'Europe/Brussels'")
+	ensureColumnExists(db, "site_settings", "log_level", "TEXT DEFAULT 'INFO'")
 	ensureColumnExists(db, "site_settings", "language", "TEXT DEFAULT 'EN'")
 	ensureColumnExists(db, "site_settings", "address", "TEXT DEFAULT ''")
 	ensureColumnExists(db, "site_settings", "latitude", "REAL DEFAULT 50.8503")
@@ -401,6 +404,9 @@ func main() {
 	ensureColumnExists(db, "site_settings", "superdal_target_soc", "REAL DEFAULT 100.0")
 	ensureColumnExists(db, "site_settings", "home_base_load_w", "REAL DEFAULT 300.0")
 	ensureColumnExists(db, "site_settings", "github_token", "TEXT DEFAULT ''")
+
+	// Load global log level on startup
+	db.QueryRow("SELECT log_level FROM site_settings WHERE id = 1").Scan(&GlobalLogLevel)
 
 	log.Println("[INFO] Database schema initialized")
 
