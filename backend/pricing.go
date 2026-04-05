@@ -6,11 +6,14 @@ import (
 	"nems/internal/models"
 )
 
-// CalculateEffectivePrice returns the effective price per kWh for consumption at a given timestamp
+// CalculateEffectivePrice returns the effective price per kWh for consumption or injection at a given timestamp
 // based on the configured energy contract.
-func CalculateEffectivePrice(timestamp time.Time, rawEpexPrice float64, settings models.SiteSettings) float64 {
+func CalculateEffectivePrice(timestamp time.Time, rawEpexPrice float64, settings models.SiteSettings, isInjection bool) float64 {
 	switch settings.ContractType {
 	case "fixed":
+		if isInjection {
+			return settings.FixedInjectPriceKwh
+		}
 		// Assume peak is Monday-Friday 07:00-22:00
 		weekday := timestamp.Weekday()
 		hour := timestamp.Hour()
@@ -27,6 +30,9 @@ func CalculateEffectivePrice(timestamp time.Time, rawEpexPrice float64, settings
 		return settings.FixedPriceOffPeakKwh
 
 	case "dynamic":
+		if isInjection {
+			return rawEpexPrice * settings.DynamicInjectMultiplier
+		}
 		return rawEpexPrice + settings.DynamicMarkupKwh
 
 	case "engie_flextime":
@@ -59,22 +65,40 @@ func CalculateEffectivePrice(timestamp time.Time, rawEpexPrice float64, settings
 			markup = settings.EngieMarkupOffPeak
 		}
 
+		if isInjection {
+			return rawEpexPrice * settings.EngieInjectMultiplier
+		}
 		return settings.EngieBaseFee + (rawEpexPrice * settings.EngieMultiplier) + markup
 
 	case "luminus_dynamic":
+		if isInjection {
+			return rawEpexPrice * settings.LuminusInjectMultiplier
+		}
 		return settings.LuminusBaseFee + (rawEpexPrice * settings.LuminusMultiplier) + settings.LuminusMarkup
 
 	case "eneco_dynamic":
+		if isInjection {
+			return rawEpexPrice * settings.EnecoInjectMultiplier
+		}
 		return settings.EnecoBaseFee + (rawEpexPrice * settings.EnecoMultiplier) + settings.EnecoMarkup
 
 	case "frank_energie_dynamic":
+		if isInjection {
+			return rawEpexPrice * settings.FrankInjectMultiplier
+		}
 		return settings.FrankBaseFee + (rawEpexPrice * settings.FrankMultiplier) + settings.FrankMarkup
 
 	case "ecopower_dynamic":
+		if isInjection {
+			return rawEpexPrice * settings.EcopowerInjectMultiplier
+		}
 		return settings.EcopowerBaseFee + (rawEpexPrice * settings.EcopowerMultiplier) + settings.EcopowerMarkup
 
 	default:
 		// Fallback to dynamic if unknown
+		if isInjection {
+			return rawEpexPrice * settings.DynamicInjectMultiplier
+		}
 		return rawEpexPrice + settings.DynamicMarkupKwh
 	}
 }

@@ -370,26 +370,32 @@ func main() {
 	ensureColumnExists(db, "site_settings", "fixed_price_off_peak_kwh", "REAL DEFAULT 0.0")
 	ensureColumnExists(db, "site_settings", "fixed_inject_price_kwh", "REAL DEFAULT 0.0")
 	ensureColumnExists(db, "site_settings", "dynamic_markup_kwh", "REAL DEFAULT 0.0")
+	ensureColumnExists(db, "site_settings", "dynamic_inject_multiplier", "REAL DEFAULT 1.0")
 	ensureColumnExists(db, "site_settings", "engie_markup_peak", "REAL DEFAULT 0.0")
 	ensureColumnExists(db, "site_settings", "engie_markup_off_peak", "REAL DEFAULT 0.0")
 	ensureColumnExists(db, "site_settings", "engie_markup_super_off_peak", "REAL DEFAULT 0.0")
 	ensureColumnExists(db, "site_settings", "engie_multiplier", "REAL DEFAULT 1.0")
+	ensureColumnExists(db, "site_settings", "engie_inject_multiplier", "REAL DEFAULT 1.0")
 	ensureColumnExists(db, "site_settings", "engie_base_fee", "REAL DEFAULT 0.0")
 
 	ensureColumnExists(db, "site_settings", "luminus_markup", "REAL DEFAULT 0.0")
 	ensureColumnExists(db, "site_settings", "luminus_multiplier", "REAL DEFAULT 1.0")
+	ensureColumnExists(db, "site_settings", "luminus_inject_multiplier", "REAL DEFAULT 1.0")
 	ensureColumnExists(db, "site_settings", "luminus_base_fee", "REAL DEFAULT 0.0")
 
 	ensureColumnExists(db, "site_settings", "eneco_markup", "REAL DEFAULT 0.0")
 	ensureColumnExists(db, "site_settings", "eneco_multiplier", "REAL DEFAULT 1.0")
+	ensureColumnExists(db, "site_settings", "eneco_inject_multiplier", "REAL DEFAULT 1.0")
 	ensureColumnExists(db, "site_settings", "eneco_base_fee", "REAL DEFAULT 0.0")
 
 	ensureColumnExists(db, "site_settings", "frank_markup", "REAL DEFAULT 0.0")
 	ensureColumnExists(db, "site_settings", "frank_multiplier", "REAL DEFAULT 1.0")
+	ensureColumnExists(db, "site_settings", "frank_inject_multiplier", "REAL DEFAULT 1.0")
 	ensureColumnExists(db, "site_settings", "frank_base_fee", "REAL DEFAULT 0.0")
 
 	ensureColumnExists(db, "site_settings", "ecopower_markup", "REAL DEFAULT 0.0")
 	ensureColumnExists(db, "site_settings", "ecopower_multiplier", "REAL DEFAULT 1.0")
+	ensureColumnExists(db, "site_settings", "ecopower_inject_multiplier", "REAL DEFAULT 1.0")
 	ensureColumnExists(db, "site_settings", "ecopower_base_fee", "REAL DEFAULT 0.0")
 
 	ensureColumnExists(db, "site_settings", "custom_charge_schedule", "TEXT DEFAULT '[]'")

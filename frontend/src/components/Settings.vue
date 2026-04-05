@@ -365,10 +365,16 @@
 
                   <!-- Standard Dynamic -->
                   <template v-if="siteSettings.contract_type === 'dynamic'">
-                    <div class="sm:col-span-6">
-                      <label for="dynamic_markup_kwh" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Markup / Taxes on top of EPEX (€/kWh)</label>
+                    <div class="sm:col-span-3">
+                      <label for="dynamic_markup_kwh" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Consumption Markup / Taxes (€/kWh)</label>
                       <div class="mt-1">
                         <input type="number" step="0.0001" id="dynamic_markup_kwh" v-model="siteSettings.dynamic_markup_kwh" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                      </div>
+                    </div>
+                    <div class="sm:col-span-3">
+                      <label for="dynamic_inject_multiplier" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Injection Multiplier</label>
+                      <div class="mt-1">
+                        <input type="number" step="0.0001" id="dynamic_inject_multiplier" v-model="siteSettings.dynamic_inject_multiplier" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
                       </div>
                     </div>
                   </template>
@@ -380,7 +386,7 @@
                       <p class="text-xs text-gray-500 dark:text-gray-400"><em>Hint:</em> Look for your contract's scaling factor (often 1.06 to include 6% VAT) and any fixed costs per kWh (transport, taxes).</p>
                     </div>
                     <div class="sm:col-span-2">
-                      <label for="luminus_multiplier" class="block text-sm font-medium text-gray-700 dark:text-gray-300">EPEX Multiplier</label>
+                      <label for="luminus_multiplier" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Consumption Multiplier</label>
                       <div class="mt-1">
                         <input type="number" step="0.0001" id="luminus_multiplier" v-model="siteSettings.luminus_multiplier" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
                       </div>
@@ -397,6 +403,12 @@
                         <input type="number" step="0.0001" id="luminus_markup" v-model="siteSettings.luminus_markup" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
                       </div>
                     </div>
+                    <div class="sm:col-span-2">
+                      <label for="luminus_inject_multiplier" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Injection Multiplier</label>
+                      <div class="mt-1">
+                        <input type="number" step="0.0001" id="luminus_inject_multiplier" v-model="siteSettings.luminus_inject_multiplier" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                      </div>
+                    </div>
                   </template>
 
                   <!-- Eneco Dynamic -->
@@ -406,7 +418,7 @@
                       <p class="text-xs text-gray-500 dark:text-gray-400"><em>Hint:</em> Eneco dynamic formulas might include specific index parameters. Convert them into this standard structure.</p>
                     </div>
                     <div class="sm:col-span-2">
-                      <label for="eneco_multiplier" class="block text-sm font-medium text-gray-700 dark:text-gray-300">EPEX Multiplier</label>
+                      <label for="eneco_multiplier" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Consumption Multiplier</label>
                       <div class="mt-1">
                         <input type="number" step="0.0001" id="eneco_multiplier" v-model="siteSettings.eneco_multiplier" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
                       </div>
@@ -423,6 +435,12 @@
                         <input type="number" step="0.0001" id="eneco_markup" v-model="siteSettings.eneco_markup" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
                       </div>
                     </div>
+                    <div class="sm:col-span-2">
+                      <label for="eneco_inject_multiplier" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Injection Multiplier</label>
+                      <div class="mt-1">
+                        <input type="number" step="0.0001" id="eneco_inject_multiplier" v-model="siteSettings.eneco_inject_multiplier" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                      </div>
+                    </div>
                   </template>
 
                   <!-- Frank Energie Dynamic -->
@@ -432,7 +450,7 @@
                       <p class="text-xs text-gray-500 dark:text-gray-400"><em>Hint:</em> Frank Energie often calculates prices dynamically per hour using an index multiplier.</p>
                     </div>
                     <div class="sm:col-span-2">
-                      <label for="frank_multiplier" class="block text-sm font-medium text-gray-700 dark:text-gray-300">EPEX Multiplier</label>
+                      <label for="frank_multiplier" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Consumption Multiplier</label>
                       <div class="mt-1">
                         <input type="number" step="0.0001" id="frank_multiplier" v-model="siteSettings.frank_multiplier" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
                       </div>
@@ -449,6 +467,12 @@
                         <input type="number" step="0.0001" id="frank_markup" v-model="siteSettings.frank_markup" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
                       </div>
                     </div>
+                    <div class="sm:col-span-2">
+                      <label for="frank_inject_multiplier" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Injection Multiplier</label>
+                      <div class="mt-1">
+                        <input type="number" step="0.0001" id="frank_inject_multiplier" v-model="siteSettings.frank_inject_multiplier" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                      </div>
+                    </div>
                   </template>
 
                   <!-- Ecopower Dynamic -->
@@ -458,7 +482,7 @@
                       <p class="text-xs text-gray-500 dark:text-gray-400"><em>Hint:</em> Enter Ecopower's specific transparent margins and grid fees here.</p>
                     </div>
                     <div class="sm:col-span-2">
-                      <label for="ecopower_multiplier" class="block text-sm font-medium text-gray-700 dark:text-gray-300">EPEX Multiplier</label>
+                      <label for="ecopower_multiplier" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Consumption Multiplier</label>
                       <div class="mt-1">
                         <input type="number" step="0.0001" id="ecopower_multiplier" v-model="siteSettings.ecopower_multiplier" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
                       </div>
@@ -473,6 +497,12 @@
                       <label for="ecopower_markup" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Additional Markup (€/kWh)</label>
                       <div class="mt-1">
                         <input type="number" step="0.0001" id="ecopower_markup" v-model="siteSettings.ecopower_markup" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                      </div>
+                    </div>
+                    <div class="sm:col-span-2">
+                      <label for="ecopower_inject_multiplier" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Injection Multiplier</label>
+                      <div class="mt-1">
+                        <input type="number" step="0.0001" id="ecopower_inject_multiplier" v-model="siteSettings.ecopower_inject_multiplier" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
                       </div>
                     </div>
                   </template>
@@ -501,16 +531,22 @@
                         </div>
                       </div>
                     </div>
-                    <div class="sm:col-span-3">
-                      <label for="engie_multiplier" class="block text-sm font-medium text-gray-700 dark:text-gray-300">EPEX Multiplier</label>
+                    <div class="sm:col-span-2">
+                      <label for="engie_multiplier" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Consumption Multiplier</label>
                       <div class="mt-1">
                         <input type="number" step="0.0001" id="engie_multiplier" v-model="siteSettings.engie_multiplier" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
                       </div>
                     </div>
-                    <div class="sm:col-span-3">
+                    <div class="sm:col-span-2">
                       <label for="engie_base_fee" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Base Fee (€/kWh)</label>
                       <div class="mt-1">
                         <input type="number" step="0.0001" id="engie_base_fee" v-model="siteSettings.engie_base_fee" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                      </div>
+                    </div>
+                    <div class="sm:col-span-2">
+                      <label for="engie_inject_multiplier" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Injection Multiplier</label>
+                      <div class="mt-1">
+                        <input type="number" step="0.0001" id="engie_inject_multiplier" v-model="siteSettings.engie_inject_multiplier" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
                       </div>
                     </div>
                     <div class="sm:col-span-2">
@@ -1153,22 +1189,28 @@ const siteSettings = ref<SiteSettings>({
   fixed_price_off_peak_kwh: 0.30,
   fixed_inject_price_kwh: 0.05,
   dynamic_markup_kwh: 0.15,
+  dynamic_inject_multiplier: 1.0,
   engie_markup_peak: 0.15,
   engie_markup_off_peak: 0.15,
   engie_markup_super_off_peak: 0.15,
   engie_multiplier: 0.1448,
+  engie_inject_multiplier: 1.0,
   engie_base_fee: 0.0,
   luminus_markup: 0.0,
   luminus_multiplier: 1.0,
+  luminus_inject_multiplier: 1.0,
   luminus_base_fee: 0.0,
   eneco_markup: 0.0,
   eneco_multiplier: 1.0,
+  eneco_inject_multiplier: 1.0,
   eneco_base_fee: 0.0,
   frank_markup: 0.0,
   frank_multiplier: 1.0,
+  frank_inject_multiplier: 1.0,
   frank_base_fee: 0.0,
   ecopower_markup: 0.0,
   ecopower_multiplier: 1.0,
+  ecopower_inject_multiplier: 1.0,
   ecopower_base_fee: 0.0,
   custom_charge_schedule: '[]',
   superdal_optimization_enabled: false,

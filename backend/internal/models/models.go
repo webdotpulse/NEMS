@@ -27,22 +27,28 @@ type SiteSettings struct {
 	FixedPriceOffPeakKwh    float64 `json:"fixed_price_off_peak_kwh"`
 	FixedInjectPriceKwh     float64 `json:"fixed_inject_price_kwh"`
 	DynamicMarkupKwh        float64 `json:"dynamic_markup_kwh"`
+	DynamicInjectMultiplier float64 `json:"dynamic_inject_multiplier"`
 	EngieMarkupPeak         float64 `json:"engie_markup_peak"`
 	EngieMarkupOffPeak      float64 `json:"engie_markup_off_peak"`
 	EngieMarkupSuperOffPeak float64 `json:"engie_markup_super_off_peak"`
 	EngieMultiplier         float64 `json:"engie_multiplier"`
+	EngieInjectMultiplier   float64 `json:"engie_inject_multiplier"`
 	EngieBaseFee            float64 `json:"engie_base_fee"`
 	LuminusMarkup           float64 `json:"luminus_markup"`
 	LuminusMultiplier       float64 `json:"luminus_multiplier"`
+	LuminusInjectMultiplier float64 `json:"luminus_inject_multiplier"`
 	LuminusBaseFee          float64 `json:"luminus_base_fee"`
 	EnecoMarkup             float64 `json:"eneco_markup"`
 	EnecoMultiplier         float64 `json:"eneco_multiplier"`
+	EnecoInjectMultiplier   float64 `json:"eneco_inject_multiplier"`
 	EnecoBaseFee            float64 `json:"eneco_base_fee"`
 	FrankMarkup             float64 `json:"frank_markup"`
 	FrankMultiplier         float64 `json:"frank_multiplier"`
+	FrankInjectMultiplier   float64 `json:"frank_inject_multiplier"`
 	FrankBaseFee            float64 `json:"frank_base_fee"`
 	EcopowerMarkup          float64 `json:"ecopower_markup"`
 	EcopowerMultiplier      float64 `json:"ecopower_multiplier"`
+	EcopowerInjectMultiplier float64 `json:"ecopower_inject_multiplier"`
 	EcopowerBaseFee         float64 `json:"ecopower_base_fee"`
 
 	// Custom Schedules & Optimization
