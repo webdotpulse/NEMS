@@ -32,10 +32,9 @@ graph TD
   - **Standard Ticker (5s):** Polls heavier devices (like inverters and EV chargers).
 - Polled data is immediately cached in memory (`deviceCache`) to decouple hardware IO from UI responsiveness.
 
-### 2. Native OCPP Server & Proxy
+### 2. Native OCPP Server
 - A built-in WebSocket server at `/api/ocpp/` handles incoming connections from EV Chargers.
 - The `OcppState` struct receives live telemetry (e.g., `MeterValues`, `Heartbeat`, `BootNotification`) directly from the charger.
-- If configured, an optional bi-directional proxy acts as a man-in-the-middle, transparently forwarding standard messages to an Upstream CSMS (like a corporate backend) while intercepting necessary data to update local metrics for strategy execution without issuing conflicting `CallResult` responses.
 
 ### 3. Live Site State (SSE)
 - When new data is polled, the `PollerManager` aggregates the data (total grid, total solar, etc.) into a `SiteState` struct.

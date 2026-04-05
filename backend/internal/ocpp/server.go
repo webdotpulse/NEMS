@@ -19,9 +19,6 @@ var upgrader = websocket.Upgrader{
 	Subprotocols: []string{"ocpp1.6", "ocpp2.0.1"},
 }
 
-// GetDeviceProxyUrl is injected from main/poller to retrieve proxy url by host
-var GetDeviceProxyUrl func(chargePointId string) string
-
 // OcppState holds the current known state of an OCPP charger
 type OcppState struct {
 	ChargePointId string
@@ -32,9 +29,6 @@ type OcppState struct {
 	writeMu       sync.Mutex // Protects concurrent writes to Conn
 	LastSeen      time.Time
 
-	ProxyConn     *websocket.Conn
-	proxyWriteMu  sync.Mutex // Protects concurrent writes to ProxyConn
-	OcppProxyUrl  string
 }
 
 var (
@@ -106,60 +100,10 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("[INFO] OCPP CP %s connected via %s", chargePointId, conn.Subprotocol())
 
-	var proxyUrl string
-	if GetDeviceProxyUrl != nil {
-		proxyUrl = GetDeviceProxyUrl(chargePointId)
-	}
-
 	state := &OcppState{
 		ChargePointId: chargePointId,
 		Conn:          conn,
 		LastSeen:      time.Now(),
-		OcppProxyUrl:  proxyUrl,
-	}
-
-	if proxyUrl != "" {
-		log.Printf("[INFO] OCPP CP %s attempting to proxy to %s", chargePointId, proxyUrl)
-
-		dialer := websocket.DefaultDialer
-		header := http.Header{}
-		if conn.Subprotocol() != "" {
-			header.Add("Sec-WebSocket-Protocol", conn.Subprotocol())
-		}
-
-		proxyConn, _, err := dialer.Dial(proxyUrl, header)
-		if err != nil {
-			log.Printf("[WARN] OCPP CP %s proxy connection failed: %v", chargePointId, err)
-			state.OcppProxyUrl = "" // Disable proxying for this session
-		} else {
-			state.ProxyConn = proxyConn
-			log.Printf("[INFO] OCPP CP %s proxy connected successfully", chargePointId)
-
-			// Start proxy -> charger forwarder
-			go func() {
-				defer proxyConn.Close()
-				for {
-					msgType, msg, err := proxyConn.ReadMessage()
-					if err != nil {
-						log.Printf("[WARN] OCPP proxy read error for %s: %v", chargePointId, err)
-						break
-					}
-					if msgType == websocket.TextMessage {
-						state.writeMu.Lock()
-						err = state.Conn.WriteMessage(websocket.TextMessage, msg)
-						state.writeMu.Unlock()
-						if err != nil {
-							log.Printf("[WARN] OCPP write error to charger %s from proxy: %v", chargePointId, err)
-							break
-						}
-					}
-				}
-				// If proxy disconnects, we might want to close the local connection too,
-				// but requirements say "allow the local connection to remain (optionally configurable)".
-				// Actually requirement 5: "Ensure both connections close if either side terminates."
-				conn.Close()
-			}()
-		}
 	}
 
 	chargersMu.Lock()
@@ -169,15 +113,11 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		log.Printf("[INFO] OCPP CP %s disconnected", chargePointId)
 		conn.Close()
-		if state.ProxyConn != nil {
-			state.ProxyConn.Close()
-		}
 		chargersMu.Lock()
 		if chargers[chargePointId] == state {
 			// Only remove if it hasn't reconnected and overwritten the map
 			state.mu.Lock()
 			state.Conn = nil
-			state.ProxyConn = nil
 			state.mu.Unlock()
 		}
 		chargersMu.Unlock()
@@ -195,27 +135,15 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 			state.mu.Unlock()
 
 			// Always parse to keep local NEMS state up to date
-			handleOcppMessage(conn, state, message, state.ProxyConn != nil)
+			handleOcppMessage(conn, state, message)
 
-			// If proxied, forward the raw message to the upstream CSMS
-			if state.ProxyConn != nil {
-				state.proxyWriteMu.Lock()
-				err = state.ProxyConn.WriteMessage(websocket.TextMessage, message)
-				state.proxyWriteMu.Unlock()
-				if err != nil {
-					log.Printf("[WARN] OCPP proxy write error for %s: %v", chargePointId, err)
-					// Requirement 5: Ensure both connections close if either side terminates
-					conn.Close()
-					break
-				}
-			}
 		}
 	}
 }
 
 // handleOcppMessage parses basic OCPP JSON RPC messages.
 // Format: [MessageTypeId, "UniqueId", "Action", {Payload}]
-func handleOcppMessage(conn *websocket.Conn, state *OcppState, message []byte, isProxied bool) {
+func handleOcppMessage(conn *websocket.Conn, state *OcppState, message []byte) {
 	var raw []interface{}
 	if err := json.Unmarshal(message, &raw); err != nil {
 		log.Printf("[WARN] OCPP CP %s invalid JSON: %v", state.ChargePointId, err)
@@ -247,31 +175,27 @@ func handleOcppMessage(conn *websocket.Conn, state *OcppState, message []byte, i
 
 		switch action {
 		case "BootNotification":
-			if !isProxied {
-				// Simple CallResult (Type 3)
-				response := []interface{}{
-					3,
-					uniqueId,
-					map[string]interface{}{
-						"status":      "Accepted",
-						"currentTime": time.Now().Format(time.RFC3339),
-						"interval":    300,
-					},
-				}
-				state.SendMessage(response)
+			// Simple CallResult (Type 3)
+			response := []interface{}{
+				3,
+				uniqueId,
+				map[string]interface{}{
+					"status":      "Accepted",
+					"currentTime": time.Now().Format(time.RFC3339),
+					"interval":    300,
+				},
 			}
+			state.SendMessage(response)
 
 		case "Heartbeat":
-			if !isProxied {
-				response := []interface{}{
-					3,
-					uniqueId,
-					map[string]interface{}{
-						"currentTime": time.Now().Format(time.RFC3339),
-					},
-				}
-				state.SendMessage(response)
+			response := []interface{}{
+				3,
+				uniqueId,
+				map[string]interface{}{
+					"currentTime": time.Now().Format(time.RFC3339),
+				},
 			}
+			state.SendMessage(response)
 
 		case "MeterValues":
 			// Parse MeterValues payload to update state
@@ -302,67 +226,57 @@ func handleOcppMessage(conn *websocket.Conn, state *OcppState, message []byte, i
 					}
 				}
 			}
-			if !isProxied {
-				response := []interface{}{
-					3,
-					uniqueId,
-					map[string]interface{}{},
-				}
-				state.SendMessage(response)
+			response := []interface{}{
+				3,
+				uniqueId,
+				map[string]interface{}{},
 			}
+			state.SendMessage(response)
 
 		case "StatusNotification":
-			if !isProxied {
-				response := []interface{}{
-					3,
-					uniqueId,
-					map[string]interface{}{},
-				}
-				state.SendMessage(response)
+			response := []interface{}{
+				3,
+				uniqueId,
+				map[string]interface{}{},
 			}
+			state.SendMessage(response)
 
 		case "Authorize":
-			if !isProxied {
-				response := []interface{}{
-					3,
-					uniqueId,
-					map[string]interface{}{
-						"idTagInfo": map[string]interface{}{
-							"status": "Accepted",
-						},
+			response := []interface{}{
+				3,
+				uniqueId,
+				map[string]interface{}{
+					"idTagInfo": map[string]interface{}{
+						"status": "Accepted",
 					},
-				}
-				state.SendMessage(response)
+				},
 			}
+			state.SendMessage(response)
 
 		case "StartTransaction":
-			if !isProxied {
-				response := []interface{}{
-					3,
-					uniqueId,
-					map[string]interface{}{
-						"idTagInfo": map[string]interface{}{
-							"status": "Accepted",
-						},
-						"transactionId": int(time.Now().Unix()),
+			response := []interface{}{
+				3,
+				uniqueId,
+				map[string]interface{}{
+					"idTagInfo": map[string]interface{}{
+						"status": "Accepted",
 					},
-				}
-				state.SendMessage(response)
+					"transactionId": int(time.Now().Unix()),
+				},
 			}
+			state.SendMessage(response)
 
 		case "StopTransaction":
-			if !isProxied {
-				response := []interface{}{
-					3,
-					uniqueId,
-					map[string]interface{}{
-						"idTagInfo": map[string]interface{}{
-							"status": "Accepted",
-						},
+			response := []interface{}{
+				3,
+				uniqueId,
+				map[string]interface{}{
+					"idTagInfo": map[string]interface{}{
+						"status": "Accepted",
 					},
-				}
-				state.SendMessage(response)
+				},
 			}
+			state.SendMessage(response)
 
 			// Reset power when transaction stops
 			state.mu.Lock()
@@ -371,15 +285,13 @@ func handleOcppMessage(conn *websocket.Conn, state *OcppState, message []byte, i
 
 		default:
 			log.Printf("[DEBUG] OCPP CP %s Action unhandled: %s", state.ChargePointId, action)
-			if !isProxied {
-				// Return a generic empty response to prevent charger timeouts
-				response := []interface{}{
-					3,
-					uniqueId,
-					map[string]interface{}{},
-				}
-				state.SendMessage(response)
+			// Return a generic empty response to prevent charger timeouts
+			response := []interface{}{
+				3,
+				uniqueId,
+				map[string]interface{}{},
 			}
+			state.SendMessage(response)
 		}
 	}
 }

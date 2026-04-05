@@ -80,7 +80,6 @@ type Device struct {
 	HasBattery           bool    `json:"has_battery"`
 	BatteryCapacity      float64 `json:"battery_capacity"`
 	InverterRatedPowerKw float64 `json:"inverter_rated_power_kw,omitempty"`
-	OcppProxyUrl         string  `json:"ocpp_proxy_url,omitempty"`
 	PollInterval         int     `json:"poll_interval"`
 }
 
