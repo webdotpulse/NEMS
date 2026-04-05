@@ -321,6 +321,8 @@ func main() {
 	ensureColumnExists(db, "devices", "inverter_rated_power_kw", "REAL DEFAULT 0")
 	ensureColumnExists(db, "devices", "poll_interval", "INTEGER DEFAULT 5")
 	ensureColumnExists(db, "devices", "ocpp_proxy_url", "TEXT DEFAULT ''")
+	ensureColumnExists(db, "devices", "thermostat_normal_temp", "REAL DEFAULT 0.0")
+	ensureColumnExists(db, "devices", "thermostat_boost_temp", "REAL DEFAULT 0.0")
 
 	createEpexPricesSQL := `
 	CREATE TABLE IF NOT EXISTS epex_prices (
@@ -357,6 +359,10 @@ func main() {
 	ensureColumnExists(db, "site_settings", "allowed_grid_import_kw", "REAL DEFAULT 0.0")
 	ensureColumnExists(db, "site_settings", "allowed_grid_export_kw", "REAL DEFAULT 0.0")
 	ensureColumnExists(db, "site_settings", "appliance_turn_on_excess_w", "REAL DEFAULT 0.0")
+	ensureColumnExists(db, "site_settings", "smart_thermostat_cheapest_hours", "INTEGER DEFAULT 0")
+	ensureColumnExists(db, "site_settings", "thermostat_turn_on_excess_w", "REAL DEFAULT 0.0")
+	ensureColumnExists(db, "site_settings", "thermostat_normal_temp", "REAL DEFAULT 20.0")
+	ensureColumnExists(db, "site_settings", "thermostat_boost_temp", "REAL DEFAULT 22.0")
 	ensureColumnExists(db, "site_settings", "peak_shaving_buffer_w", "REAL DEFAULT 200.0")
 	ensureColumnExists(db, "site_settings", "peak_shaving_rampup_w", "REAL DEFAULT 500.0")
 	ensureColumnExists(db, "site_settings", "timezone", "TEXT DEFAULT 'Europe/Brussels'")

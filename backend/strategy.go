@@ -26,6 +26,9 @@ var chargerCurrentSetpoints = make(map[int]float64)
 var batteryForceChargeW = make(map[int]float64)
 var evSmartChargeActive = make(map[int]bool)
 var relayCurrentState = make(map[int]bool)
+var thermostatCurrentTemp = make(map[int]float64)
+var thermostatBoostUntil = make(map[int]time.Time)
+var isCachedThermostatCheapestHour bool = false
 var batteryDischargeW = make(map[int]float64)
 var inverterPowerLimitW = make(map[int]float64)
 
@@ -106,6 +109,29 @@ func (sc *StrategyController) updatePricingCache(settings models.SiteSettings) {
 
 	currentCachedPrice = newPrice
 	isCachedCheapestHour = newIsCheapest
+
+	// Also evaluate thermostat cheapest hour based on its specific hours setting
+	newThermostatIsCheapest := false
+	if settings.SmartThermostatCheapestHours > 0 {
+		startOfToday := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc).UTC()
+		endOfToday := startOfToday.AddDate(0, 0, 1)
+
+		rows, err := db.Query("SELECT timestamp FROM epex_prices WHERE timestamp >= ? AND timestamp < ? ORDER BY price_per_kwh ASC LIMIT ?", startOfToday, endOfToday, settings.SmartThermostatCheapestHours)
+		if err == nil {
+			for rows.Next() {
+				var ts time.Time
+				if err := rows.Scan(&ts); err == nil {
+					if ts.Equal(startOfHour) {
+						newThermostatIsCheapest = true
+						break
+					}
+				}
+			}
+			rows.Close()
+		}
+	}
+	isCachedThermostatCheapestHour = newThermostatIsCheapest
+
 	lastPricingCacheUpdate = now
 	lastSettingsForPricing = settings
 
@@ -699,6 +725,64 @@ func (sc *StrategyController) executeControlLoop(settings models.SiteSettings) {
 					strategyMapsMu.Unlock()
 				} else {
 					log.Printf("[ERROR] Control Loop: Failed to execute relay command for %d: %v", id, err)
+				}
+			}
+		}
+	}
+
+	// Issue Thermostat Commands
+	nowTime := time.Now()
+	for id, poller := range pollers {
+		if thermostat, ok := poller.(models.ThermostatController); ok {
+			dev := poller.GetDevice()
+
+			// Determine multi-zone target temperatures
+			normalTemp := dev.ThermostatNormalTemp
+			if normalTemp <= 0 {
+				normalTemp = settings.ThermostatNormalTemp
+			}
+
+			boostTemp := dev.ThermostatBoostTemp
+			if boostTemp <= 0 {
+				boostTemp = settings.ThermostatBoostTemp
+			}
+
+			desiredTemp := normalTemp
+
+			strategyMapsMu.Lock()
+			boostUntil := thermostatBoostUntil[id]
+			strategyMapsMu.Unlock()
+
+			// Check cheapest hour first
+			if isCachedThermostatCheapestHour {
+				desiredTemp = boostTemp
+			} else if settings.ThermostatTurnOnExcessW > 0 {
+				// Evaluate solar excess hysteresis
+				if totalGridExport > settings.ThermostatTurnOnExcessW {
+					desiredTemp = boostTemp
+					// Reset 15 minute hysteresis timer
+					strategyMapsMu.Lock()
+					thermostatBoostUntil[id] = nowTime.Add(15 * time.Minute)
+					strategyMapsMu.Unlock()
+				} else if nowTime.Before(boostUntil) {
+					// Continue boosting if within hysteresis period
+					desiredTemp = boostTemp
+				}
+			}
+
+			strategyMapsMu.Lock()
+			currentTemp, exists := thermostatCurrentTemp[id]
+			strategyMapsMu.Unlock()
+
+			if !exists || currentTemp != desiredTemp {
+				log.Printf("[INFO] Control Loop: Changing Thermostat %d temp to %.1f", id, desiredTemp)
+				err := thermostat.SetTargetTemperature(desiredTemp)
+				if err == nil {
+					strategyMapsMu.Lock()
+					thermostatCurrentTemp[id] = desiredTemp
+					strategyMapsMu.Unlock()
+				} else {
+					log.Printf("[ERROR] Control Loop: Failed to execute thermostat command for %d: %v", id, err)
 				}
 			}
 		}
