@@ -302,6 +302,23 @@
                 </div>
 
                 <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+
+                  <div class="sm:col-span-6 border-b border-gray-200 dark:border-gray-700 pb-4 mb-2">
+                    <h4 class="text-md font-medium text-gray-900 dark:text-gray-100 mb-2">Day-Ahead Pricing API (ENTSO-E)</h4>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">By default, prices are fetched for NL via EnergyZero. Enter an ENTSO-E API token and Area Code to fetch day-ahead prices for your specific country.</p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label for="entsoe_api_key" class="block text-sm font-medium text-gray-700 dark:text-gray-300">ENTSO-E Security Token</label>
+                        <input type="text" id="entsoe_api_key" v-model="siteSettings.entsoe_api_key" class="mt-1 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" placeholder="e.g. xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" />
+                      </div>
+                      <div>
+                        <label for="entsoe_area_code" class="block text-sm font-medium text-gray-700 dark:text-gray-300">ENTSO-E Area Code (Domain)</label>
+                        <input type="text" id="entsoe_area_code" v-model="siteSettings.entsoe_area_code" class="mt-1 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" placeholder="e.g. 10YBE----------2 (Belgium)" />
+                      </div>
+                    </div>
+                  </div>
+
                   <div class="sm:col-span-6">
                     <label for="appliance_turn_on_excess_w" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Turn on Relays above Solar Excess (W)</label>
                     <div class="mt-1">
@@ -362,6 +379,25 @@
                       </div>
                     </div>
                   </template>
+
+                  <div class="sm:col-span-6 border-t border-gray-200 dark:border-gray-700 mt-4 pt-4">
+                    <h4 class="text-md font-medium text-gray-900 dark:text-gray-100 mb-2">Real-Time Imbalance Pricing (Elia)</h4>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">React to grid frequency deviations or negative pricing events not captured in day-ahead forecasts.</p>
+                  </div>
+
+                  <div class="sm:col-span-6">
+                    <label for="imbalance_force_charge_below_euro" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Force Charge Battery if 1-min imbalance drops below (€/MWh)</label>
+                    <div class="mt-1">
+                      <input type="number" step="1" id="imbalance_force_charge_below_euro" v-model="siteSettings.imbalance_force_charge_below_euro" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                    </div>
+                  </div>
+
+                  <div class="sm:col-span-6">
+                    <label for="imbalance_force_discharge_above_euro" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Force Discharge Battery if 1-min imbalance rises above (€/MWh)</label>
+                    <div class="mt-1">
+                      <input type="number" step="1" id="imbalance_force_discharge_above_euro" v-model="siteSettings.imbalance_force_discharge_above_euro" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                    </div>
+                  </div>
 
                   <!-- Standard Dynamic -->
                   <template v-if="siteSettings.contract_type === 'dynamic'">
@@ -1192,6 +1228,8 @@ const siteSettings = ref<SiteSettings>({
   battery_grid_charge_strategy: 'price_only',
   force_charge_below_euro: 0.0,
   force_discharge_above_euro: 999.0,
+  imbalance_force_charge_below_euro: -999.0,
+  imbalance_force_discharge_above_euro: 999.0,
   smart_ev_cheapest_hours: 0,
       battery_arbitrage_cheapest_hours: 0,
       battery_arbitrage_expensive_hours: 0,
@@ -1241,7 +1279,9 @@ const siteSettings = ref<SiteSettings>({
   superdal_optimization_enabled: false,
   superdal_target_soc: 100.0,
   home_base_load_w: 300.0,
-  github_token: ''
+  github_token: '',
+  entsoe_api_key: '',
+  entsoe_area_code: '10YBE----------2'
 })
 
 const parsedChargeSchedule = ref<Array<{start: string, end: string, target_soc: number}>>([])
