@@ -13,6 +13,10 @@ type SiteSettings struct {
 	AllowedGridImportKw       float64 `json:"allowed_grid_import_kw"`
 	AllowedGridExportKw       float64 `json:"allowed_grid_export_kw"`
 	ApplianceTurnOnExcessW    float64 `json:"appliance_turn_on_excess_w"`
+	SmartThermostatCheapestHours int     `json:"smart_thermostat_cheapest_hours"`
+	ThermostatTurnOnExcessW      float64 `json:"thermostat_turn_on_excess_w"`
+	ThermostatNormalTemp         float64 `json:"thermostat_normal_temp"`
+	ThermostatBoostTemp          float64 `json:"thermostat_boost_temp"`
 	PeakShavingBufferW        float64 `json:"peak_shaving_buffer_w"`
 	PeakShavingRampupW        float64 `json:"peak_shaving_rampup_w"`
 	Timezone                  string  `json:"timezone"`
@@ -90,6 +94,8 @@ type Device struct {
 	InverterRatedPowerKw float64 `json:"inverter_rated_power_kw,omitempty"`
 	OcppProxyUrl         string  `json:"ocpp_proxy_url,omitempty"`
 	PollInterval         int     `json:"poll_interval"`
+	ThermostatNormalTemp float64 `json:"thermostat_normal_temp,omitempty"`
+	ThermostatBoostTemp  float64 `json:"thermostat_boost_temp,omitempty"`
 }
 
 type DevicePoller interface {
@@ -115,4 +121,8 @@ type InverterController interface {
 
 type RelayController interface {
 	SetState(on bool) error
+}
+
+type ThermostatController interface {
+	SetTargetTemperature(temp float64) error
 }
