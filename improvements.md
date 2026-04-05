@@ -1,9 +1,8 @@
 # Proposed Improvements for Pulse EMS
 
 ## 1. Real-time Tariff Integration and Automation
-Currently, the system relies on day-ahead prices stored in the local SQLite `epex_prices` table. While effective for basic planning, this could be enhanced by:
-*   Integrating live APIs (e.g., ENTSO-E or local provider APIs) to automatically fetch next-day Day-Ahead prices, eliminating the need for external systems to populate the database.
-*   Adding support for real-time imbalance pricing, allowing the system to react dynamically to grid frequency deviations or negative pricing events not captured in day-ahead forecasts.
+Currently, the system automatically fetches Day-Ahead prices using a local provider API (EnergyZero). This could be further enhanced by:
+*   Supporting additional local providers natively for better geographical coverage or failovers.
 
 ## 2. Enhanced Battery Health and Wear Management
 The current arbitrage logic forces charging and discharging based on price spreads. To maximize the lifespan of the home battery, the EMS should track and manage battery wear:

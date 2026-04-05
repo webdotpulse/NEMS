@@ -463,6 +463,12 @@ func main() {
 		TariffMgr.Start()
 	}
 
+	// Example: Call Elia API for general system load (not imbalance)
+	go func() {
+		// Fetch once on startup to verify API connectivity
+		FetchEliaSystemLoad()
+	}()
+
 
 	handler := enableCORS(mux)
 
