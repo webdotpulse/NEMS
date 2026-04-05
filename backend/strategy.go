@@ -56,6 +56,8 @@ var isCachedCheapestHour bool = false
 var lastPricingCacheUpdate time.Time
 var lastSettingsForPricing models.SiteSettings
 
+var activeDynamicForecast DynamicBatteryForecast
+
 // InitStrategyController initializes the global StrategyCtrl instance.
 func InitStrategyController() {
 	StrategyCtrl = &StrategyController{
@@ -106,6 +108,10 @@ func (sc *StrategyController) updatePricingCache(settings models.SiteSettings) {
 	isCachedCheapestHour = newIsCheapest
 	lastPricingCacheUpdate = now
 	lastSettingsForPricing = settings
+
+	if settings.BatteryGridChargeStrategy == "dynamic_forecast" {
+		activeDynamicForecast = CalculateDynamicBatteryForecast(settings)
+	}
 }
 
 // Start kicks off a background goroutine that polls the site settings
@@ -119,8 +125,8 @@ func (sc *StrategyController) Start() {
 			select {
 			case <-ticker.C:
 				var settings models.SiteSettings
-				row := db.QueryRow("SELECT strategy_mode, capacity_peak_limit_kw, active_inverter_curtailment, battery_grid_charge_strategy, force_charge_below_euro, force_discharge_above_euro, smart_ev_cheapest_hours, appliance_turn_on_excess_w, peak_shaving_buffer_w, peak_shaving_rampup_w, timezone, contract_type, fixed_price_peak_kwh, fixed_price_off_peak_kwh, fixed_inject_price_kwh, dynamic_markup_kwh, dynamic_inject_multiplier, engie_markup_peak, engie_markup_off_peak, engie_markup_super_off_peak, engie_multiplier, engie_inject_multiplier, engie_base_fee, luminus_markup, luminus_multiplier, luminus_inject_multiplier, luminus_base_fee, eneco_markup, eneco_multiplier, eneco_inject_multiplier, eneco_base_fee, frank_markup, frank_multiplier, frank_inject_multiplier, frank_base_fee, ecopower_markup, ecopower_multiplier, ecopower_inject_multiplier, ecopower_base_fee, custom_charge_schedule, superdal_optimization_enabled, superdal_target_soc FROM site_settings WHERE id = 1")
-				err := row.Scan(&settings.StrategyMode, &settings.CapacityPeakLimitKw, &settings.ActiveInverterCurtailment, &settings.BatteryGridChargeStrategy, &settings.ForceChargeBelowEuro, &settings.ForceDischargeAboveEuro, &settings.SmartEvCheapestHours, &settings.ApplianceTurnOnExcessW, &settings.PeakShavingBufferW, &settings.PeakShavingRampupW, &settings.Timezone, &settings.ContractType, &settings.FixedPricePeakKwh, &settings.FixedPriceOffPeakKwh, &settings.FixedInjectPriceKwh, &settings.DynamicMarkupKwh, &settings.DynamicInjectMultiplier, &settings.EngieMarkupPeak, &settings.EngieMarkupOffPeak, &settings.EngieMarkupSuperOffPeak, &settings.EngieMultiplier, &settings.EngieInjectMultiplier, &settings.EngieBaseFee, &settings.LuminusMarkup, &settings.LuminusMultiplier, &settings.LuminusInjectMultiplier, &settings.LuminusBaseFee, &settings.EnecoMarkup, &settings.EnecoMultiplier, &settings.EnecoInjectMultiplier, &settings.EnecoBaseFee, &settings.FrankMarkup, &settings.FrankMultiplier, &settings.FrankInjectMultiplier, &settings.FrankBaseFee, &settings.EcopowerMarkup, &settings.EcopowerMultiplier, &settings.EcopowerInjectMultiplier, &settings.EcopowerBaseFee, &settings.CustomChargeSchedule, &settings.SuperdalOptimizationEnabled, &settings.SuperdalTargetSoc)
+				row := db.QueryRow("SELECT strategy_mode, capacity_peak_limit_kw, active_inverter_curtailment, battery_grid_charge_strategy, force_charge_below_euro, force_discharge_above_euro, smart_ev_cheapest_hours, appliance_turn_on_excess_w, peak_shaving_buffer_w, peak_shaving_rampup_w, timezone, contract_type, fixed_price_peak_kwh, fixed_price_off_peak_kwh, fixed_inject_price_kwh, dynamic_markup_kwh, dynamic_inject_multiplier, engie_markup_peak, engie_markup_off_peak, engie_markup_super_off_peak, engie_multiplier, engie_inject_multiplier, engie_base_fee, luminus_markup, luminus_multiplier, luminus_inject_multiplier, luminus_base_fee, eneco_markup, eneco_multiplier, eneco_inject_multiplier, eneco_base_fee, frank_markup, frank_multiplier, frank_inject_multiplier, frank_base_fee, ecopower_markup, ecopower_multiplier, ecopower_inject_multiplier, ecopower_base_fee, custom_charge_schedule, superdal_optimization_enabled, superdal_target_soc, home_base_load_w FROM site_settings WHERE id = 1")
+				err := row.Scan(&settings.StrategyMode, &settings.CapacityPeakLimitKw, &settings.ActiveInverterCurtailment, &settings.BatteryGridChargeStrategy, &settings.ForceChargeBelowEuro, &settings.ForceDischargeAboveEuro, &settings.SmartEvCheapestHours, &settings.ApplianceTurnOnExcessW, &settings.PeakShavingBufferW, &settings.PeakShavingRampupW, &settings.Timezone, &settings.ContractType, &settings.FixedPricePeakKwh, &settings.FixedPriceOffPeakKwh, &settings.FixedInjectPriceKwh, &settings.DynamicMarkupKwh, &settings.DynamicInjectMultiplier, &settings.EngieMarkupPeak, &settings.EngieMarkupOffPeak, &settings.EngieMarkupSuperOffPeak, &settings.EngieMultiplier, &settings.EngieInjectMultiplier, &settings.EngieBaseFee, &settings.LuminusMarkup, &settings.LuminusMultiplier, &settings.LuminusInjectMultiplier, &settings.LuminusBaseFee, &settings.EnecoMarkup, &settings.EnecoMultiplier, &settings.EnecoInjectMultiplier, &settings.EnecoBaseFee, &settings.FrankMarkup, &settings.FrankMultiplier, &settings.FrankInjectMultiplier, &settings.FrankBaseFee, &settings.EcopowerMarkup, &settings.EcopowerMultiplier, &settings.EcopowerInjectMultiplier, &settings.EcopowerBaseFee, &settings.CustomChargeSchedule, &settings.SuperdalOptimizationEnabled, &settings.SuperdalTargetSoc, &settings.HomeBaseLoadW)
 				if err != nil {
 					if err == sql.ErrNoRows {
 						settings = models.SiteSettings{
@@ -284,6 +290,21 @@ func (sc *StrategyController) executeControlLoop(settings models.SiteSettings) {
 		allowGridCharge = isSuperDal
 	} else if settings.BatteryGridChargeStrategy == "hybrid" {
 		allowGridCharge = isSuperDal || currentCachedPrice < settings.ForceChargeBelowEuro
+	} else if settings.BatteryGridChargeStrategy == "dynamic_forecast" {
+		startOfCurrentHour := time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day(), currentTime.Hour(), 0, 0, 0, loc).UTC().Unix()
+		action := activeDynamicForecast.HourlyActions[startOfCurrentHour]
+		if action == "charge" {
+			allowGridCharge = true
+		} else if action == "discharge" {
+			for id, poller := range pollers {
+				if _, ok := poller.(models.BatteryController); ok {
+					dev := poller.GetDevice()
+					if dev.HasBattery && dev.BatteryMode != "hold" && dev.BatteryMode != "force_charge" {
+						desiredBatteryDischargeW[id] = 100000.0
+					}
+				}
+			}
+		}
 	} else {
 		// "price_only" or default
 		allowGridCharge = currentCachedPrice < settings.ForceChargeBelowEuro
