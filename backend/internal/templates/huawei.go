@@ -45,7 +45,7 @@ func (p *HuaweiInverterPoller) Connect() error {
 
 	client, err := modbus.NewClient(&modbus.ClientConfiguration{
 		URL:     addr,
-		Timeout: 2 * time.Second,
+		Timeout: 5 * time.Second,
 	})
 	if err != nil {
 		log.Printf("[ERROR] HuaweiInverterPoller: Client setup failed (%v)", err)
@@ -73,7 +73,15 @@ func (p *HuaweiInverterPoller) Status() string {
 }
 
 func (p *HuaweiInverterPoller) Poll() (float64, float64, float64, float64, float64, error) {
-	if time.Since(p.lastPollTime) < 15*time.Second {
+	// Huawei inverters can be slow and restrictive with polling.
+	// We'll enforce a strict minimum of 10s or user configured poll_interval, whichever is larger,
+	// to prevent overwhelming the device and causing 'request timed out'.
+	minInterval := 10 * time.Second
+	if p.Device.PollInterval > 10 {
+		minInterval = time.Duration(p.Device.PollInterval) * time.Second
+	}
+
+	if p.lastPollTime.IsZero() == false && time.Since(p.lastPollTime) < minInterval {
 		return p.cachedPowerW, p.cachedBatteryPowerW, p.cachedGridPowerW, p.cachedEnergyKwh, p.cachedSoc, p.cachedError
 	}
 

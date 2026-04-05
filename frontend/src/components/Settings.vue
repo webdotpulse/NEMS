@@ -20,6 +20,37 @@
       <!-- TAB: SYSTEM INFO -->
       <div v-if="activeTab === 'info'">
         <!-- System Info Section -->
+        <!-- Logging Settings Card -->
+        <div class="mb-8">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:text-3xl sm:truncate">
+              System Logging
+            </h2>
+          </div>
+          <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg mb-6">
+            <div class="px-4 py-5 sm:p-6">
+              <div class="mb-4">
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                  Enable debugging to show raw logic that triggered faults and other detailed system information in the logger view.
+                </p>
+              </div>
+              <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                <div class="sm:col-span-3">
+                  <label for="log_level" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Debugging</label>
+                  <div class="mt-1">
+                    <select id="log_level" v-model="siteSettings.log_level" @change="saveSiteSettings"
+                            class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
+                      <option value="INFO">Off</option>
+                      <option value="DEBUG">On</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Software Update Section -->
         <div v-if="sysInfo" class="mb-8">
           <div class="flex items-center justify-between mb-4">
             <h2 class="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:text-3xl sm:truncate">
@@ -140,14 +171,20 @@
                 </div>
                 <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-4">
                   <div class="sm:col-span-1">
-                    <label for="grid_nominal_current_a" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nominal Current (A)</label>
+                    <label for="grid_nominal_current_a" class="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Nominal Current (A)
+                      <Tooltip>The rated current capacity of your main grid connection per phase (e.g. 25, 32, 40). Check your breaker panel.</Tooltip>
+                    </label>
                     <div class="mt-1">
                       <input type="number" step="0.1" id="grid_nominal_current_a" v-model="siteSettings.grid_nominal_current_a" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
                     </div>
                   </div>
 
                   <div class="sm:col-span-1">
-                    <label for="grid_system" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Grid System</label>
+                    <label for="grid_system" class="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Grid System
+                      <Tooltip>Select the type of grid connection your house has. If unsure, 'Single Phase 230V' or 'Three Phase 400V' are most common.</Tooltip>
+                    </label>
                     <div class="mt-1">
                       <select id="grid_system" v-model="siteSettings.grid_system"
                               class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
@@ -159,7 +196,10 @@
                   </div>
 
                   <div class="sm:col-span-1">
-                    <label for="allowed_grid_import_kw" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Allowed Grid Import (kW)</label>
+                    <label for="allowed_grid_import_kw" class="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Allowed Grid Import (kW)
+                      <Tooltip>The absolute maximum power in kW you are allowed to pull from the grid. Used for dynamic load balancing your EV.</Tooltip>
+                    </label>
                     <div class="mt-1">
                       <input type="number" step="0.1" id="allowed_grid_import_kw" v-model="siteSettings.allowed_grid_import_kw" :placeholder="maxGridPowerKw" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
                     </div>
@@ -167,7 +207,10 @@
                   </div>
 
                   <div class="sm:col-span-1">
-                    <label for="allowed_grid_export_kw" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Allowed Grid Export (kW)</label>
+                    <label for="allowed_grid_export_kw" class="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Allowed Grid Export (kW)
+                      <Tooltip>The absolute maximum power in kW you are allowed to inject back into the grid.</Tooltip>
+                    </label>
                     <div class="mt-1">
                       <input type="number" step="0.1" id="allowed_grid_export_kw" v-model="siteSettings.allowed_grid_export_kw" :placeholder="maxGridPowerKw" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
                     </div>
@@ -242,7 +285,10 @@
                   <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
 
                     <div class="sm:col-span-3">
-                      <label for="strategy_mode" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Optimization Strategy</label>
+                      <label for="strategy_mode" class="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Optimization Strategy
+                        <Tooltip>Controls the primary goal of the EMS: maximizing solar usage, capping peak grid import, or preventing grid export.</Tooltip>
+                      </label>
                       <div class="mt-1">
                         <select id="strategy_mode" v-model="siteSettings.strategy_mode"
                                 class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
@@ -326,7 +372,10 @@
 
                 <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
                   <div class="sm:col-span-6">
-                    <label for="contract_type" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Contract Type</label>
+                    <label for="contract_type" class="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Contract Type
+                      <Tooltip>Select the kind of energy contract you have. Used to estimate actual costs.</Tooltip>
+                    </label>
                     <div class="mt-1">
                       <select id="contract_type" v-model="siteSettings.contract_type"
                               class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
@@ -586,7 +635,10 @@
 
                 <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
                   <div class="sm:col-span-6">
-                    <label for="battery_grid_charge_strategy" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Battery Grid Charge Strategy</label>
+                    <label for="battery_grid_charge_strategy" class="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Battery Grid Charge Strategy
+                      <Tooltip>How the battery makes decisions to charge from the grid when energy prices are favorable.</Tooltip>
+                    </label>
                     <div class="mt-1">
                       <select id="battery_grid_charge_strategy" v-model="siteSettings.battery_grid_charge_strategy"
                               class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
@@ -600,8 +652,10 @@
 
                   <template v-if="siteSettings.battery_grid_charge_strategy === 'dynamic_forecast'">
                     <div class="sm:col-span-6">
-                      <label for="home_base_load_w" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Estimated Home Base Load (W)</label>
-                      <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Used to calculate net load against solar forecast for dynamic battery arbitration sizing.</p>
+                      <label for="home_base_load_w" class="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Estimated Home Base Load (W)
+                        <Tooltip>Used to calculate net load against solar forecast for dynamic battery arbitration sizing.</Tooltip>
+                      </label>
                       <div class="mt-1">
                         <input type="number" step="1" id="home_base_load_w" v-model="siteSettings.home_base_load_w" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
                       </div>
@@ -674,36 +728,6 @@
                   </div>
                 </div>
 
-              </div>
-            </div>
-
-            <!-- Logging Settings Card -->
-            <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg mb-6">
-              <div class="px-4 py-5 sm:p-6">
-                <div class="mb-4 border-b border-gray-200 dark:border-gray-700 pb-4">
-                  <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-gray-100">
-                    System Logging
-                  </h3>
-                  <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                    Configure the detail level of system logs.
-                  </p>
-                </div>
-                <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-                  <div class="sm:col-span-3">
-                    <label for="log_level" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Log Level</label>
-                    <div class="mt-1">
-                      <select id="log_level" v-model="siteSettings.log_level"
-                              class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
-                        <option value="TRACE">Trace</option>
-                        <option value="DEBUG">Debug</option>
-                        <option value="INFO">Info</option>
-                        <option value="WARN">Warn</option>
-                        <option value="ERROR">Error</option>
-                        <option value="FATAL">Fatal</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
 
@@ -1084,6 +1108,7 @@ import CloudRestTemplate from './templates/CloudRestTemplate.vue'
 import OcppTemplate from './templates/OcppTemplate.vue'
 import P1SerialTemplate from './templates/P1SerialTemplate.vue'
 import P1NetworkTemplate from './templates/P1NetworkTemplate.vue'
+import Tooltip from './Tooltip.vue'
 
 const activeTab = ref('strategy')
 
