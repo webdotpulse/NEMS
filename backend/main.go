@@ -426,6 +426,8 @@ func main() {
 	mux.HandleFunc("/api/daily", handleDailyAggregates)
 	mux.HandleFunc("/api/energy", handleEnergy)
 	mux.HandleFunc("/api/logs", handleLogs)
+	mux.HandleFunc("/api/logs/export", handleLogsExport)
+	mux.HandleFunc("/api/report/export", handleReportExport)
 	mux.HandleFunc("/api/system/info", handleSystemInfo)
 	mux.HandleFunc("/api/system/update/check", handleSystemUpdateCheck)
 	mux.HandleFunc("/api/system/update/install", handleSystemUpdateInstall)

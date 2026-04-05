@@ -9,6 +9,7 @@ import (
 	"image/color"
 	"log"
 	"net/smtp"
+	"strings"
 	"time"
 
 	"github.com/jung-kurt/gofpdf"
@@ -68,11 +69,29 @@ func (r *Reporter) Stop() {
 	close(r.stopCh)
 }
 
-func GenerateAndSendWeeklyReport() {
+// GeneratePDFReport creates a PDF report for a given period: "daily", "weekly", "monthly", "yearly".
+func GeneratePDFReport(period string) ([]byte, error) {
 	loc, _ := time.LoadLocation("Europe/Amsterdam")
 	now := time.Now().In(loc)
-	endDate := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc).UTC()
-	startDate := endDate.AddDate(0, 0, -7)
+	var startDate, endDate time.Time
+
+	switch period {
+	case "daily":
+		endDate = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc).UTC()
+		startDate = endDate.AddDate(0, 0, -1)
+	case "weekly":
+		endDate = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc).UTC()
+		startDate = endDate.AddDate(0, 0, -7)
+	case "monthly":
+		endDate = time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, loc).UTC()
+		startDate = endDate.AddDate(0, -1, 0)
+	case "yearly":
+		endDate = time.Date(now.Year(), 1, 1, 0, 0, 0, 0, loc).UTC()
+		startDate = endDate.AddDate(-1, 0, 0)
+	default: // fallback to weekly
+		endDate = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc).UTC()
+		startDate = endDate.AddDate(0, 0, -7)
+	}
 
 	query := `
 		WITH minute_aggs AS (
@@ -113,7 +132,7 @@ func GenerateAndSendWeeklyReport() {
 	rows, err := db.Query(query, startDate.Format("2006-01-02 15:04:05"), endDate.Format("2006-01-02 15:04:05"))
 	if err != nil {
 		log.Printf("[ERROR] Reporter: Query failed: %v", err)
-		return
+		return nil, err
 	}
 	defer rows.Close()
 
@@ -181,7 +200,7 @@ func GenerateAndSendWeeklyReport() {
 
 	// Generate Chart
 	p := plot.New()
-	p.Title.Text = "Weekly Energy Overview"
+	p.Title.Text = fmt.Sprintf("%s Energy Overview", strings.Title(period))
 	p.X.Label.Text = "Date"
 	p.Y.Label.Text = "Energy (kWh)"
 
@@ -212,7 +231,7 @@ func GenerateAndSendWeeklyReport() {
 	wt, err := p.WriterTo(6*vg.Inch, 4*vg.Inch, "png")
 	if err != nil {
 		log.Printf("[ERROR] Reporter: Plot error: %v", err)
-		return
+		return nil, err
 	}
 	wt.WriteTo(&imgBuf)
 
@@ -220,7 +239,7 @@ func GenerateAndSendWeeklyReport() {
 	pdf := gofpdf.New("P", "mm", "A4", "")
 	pdf.AddPage()
 	pdf.SetFont("Arial", "B", 16)
-	pdf.Cell(40, 10, "Pulse EMS - Weekly Energy Report")
+	pdf.Cell(40, 10, fmt.Sprintf("Pulse EMS - %s Energy Report", strings.Title(period)))
 	pdf.Ln(12)
 
 	pdf.SetFont("Arial", "", 12)
@@ -241,6 +260,16 @@ func GenerateAndSendWeeklyReport() {
 	err = pdf.Output(&pdfBuf)
 	if err != nil {
 		log.Printf("[ERROR] Reporter: PDF Output error: %v", err)
+		return nil, err
+	}
+
+	return pdfBuf.Bytes(), nil
+}
+
+func GenerateAndSendWeeklyReport() {
+	pdfBytes, err := GeneratePDFReport("weekly")
+	if err != nil {
+		log.Printf("[ERROR] Reporter: Could not generate weekly report PDF: %v", err)
 		return
 	}
 
@@ -273,7 +302,7 @@ func GenerateAndSendWeeklyReport() {
 		"Content-Disposition: attachment; filename=\"weekly-report.pdf\"\r\n" +
 		"Content-Transfer-Encoding: base64\r\n\r\n"
 
-	encoder := bytes.NewBuffer(pdfBuf.Bytes())
+	encoder := bytes.NewBuffer(pdfBytes)
 
 	// Implement base64 encoding (simplest way is encoding/base64, let's use standard package)
 
