@@ -77,8 +77,17 @@ export interface SiteSettings {
   custom_charge_schedule: string;
   superdal_optimization_enabled: boolean;
   superdal_target_soc: number;
+
+  // Imbalance Pricing
+  imbalance_force_charge_below_euro: number;
+  imbalance_force_discharge_above_euro: number;
+
   home_base_load_w: number;
   github_token: string;
+
+  // ENTSO-E
+  entsoe_api_key: string;
+  entsoe_area_code: string;
 }
 
 export interface SiteState {
