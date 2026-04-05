@@ -16,6 +16,7 @@ Pulse EMS is a lightweight, highly responsive, fully UI-driven Energy Management
 - **Native OCPP Server**: A built-in OCPP 1.6 / 2.0.1 WebSocket server allows EV chargers to connect directly to the EMS.
 - **Network Scanner**: A zero-dependency network discovery tool leveraging localized MAC OUI maps to instantly find and identify supported hardware on your local network.
 - **Supported Device Integrations**: OCPP 1.6 / 2.0.1, Modbus TCP, and REST API support for various manufacturers, including Huawei, Raedian, Solis, SMA, Easee, Enerlution, HomeWizard, and P1 meters.
+- **Reporting & Exporting**: Export structured system logs (.txt) and beautifully rendered PDF energy reports (Daily, Weekly, Monthly, Yearly) from the dashboard.
 
 ## Prerequisites & Installation
 

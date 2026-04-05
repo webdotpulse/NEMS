@@ -33,6 +33,54 @@ func handleLogs(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(logs)
 }
 
+// handleReportExport is the HTTP handler for the /api/report/export endpoint.
+func handleReportExport(w http.ResponseWriter, r *http.Request) {
+	period := r.URL.Query().Get("period")
+	if period == "" {
+		period = "weekly"
+	}
+
+	pdfBytes, err := GeneratePDFReport(period)
+	if err != nil {
+		log.Printf("[ERROR] API: Failed to generate %s PDF report: %v", period, err)
+		http.Error(w, "Failed to generate PDF report", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/pdf")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"nems-%s-report.pdf\"", period))
+	w.Header().Set("Content-Length", strconv.Itoa(len(pdfBytes)))
+
+	w.Write(pdfBytes)
+}
+
+// handleLogsExport is the HTTP handler for the /api/logs/export endpoint.
+func handleLogsExport(w http.ResponseWriter, r *http.Request) {
+	period := r.URL.Query().Get("period")
+	if period == "" {
+		period = "24h" // Default to last 24 hours
+	}
+
+	w.Header().Set("Content-Type", "text/plain")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"nems-logs-%s.txt\"", time.Now().Format("2006-01-02-150405")))
+
+	// Try journalctl first
+	cmd := exec.Command("journalctl", "-u", "nems", "--since", fmt.Sprintf("%s ago", period), "--no-pager")
+	output, err := cmd.Output()
+
+	if err == nil && len(output) > 0 {
+		w.Write(output)
+		return
+	}
+
+	// Fallback to in-memory buffer if journalctl fails or returns empty
+	log.Printf("[WARN] API: journalctl export failed or empty (err=%v), falling back to in-memory buffer", err)
+	logs := logBuffer.GetLogs()
+	for _, l := range logs {
+		w.Write([]byte(l + "\n"))
+	}
+}
+
 // handleSystemInfo is the HTTP handler for the /api/system/info endpoint.
 func handleSystemInfo(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")

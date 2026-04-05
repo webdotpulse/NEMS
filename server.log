@@ -1,0 +1,12 @@
+2026/04/05 22:36:29 [INFO] Connected to SQLite database
+2026/04/05 22:36:29 [INFO] SQLite WAL mode, synchronous=NORMAL, and temp_store=MEMORY enabled for SD card optimization
+2026/04/05 22:36:29 [INFO] Database schema initialized
+2026/04/05 22:36:29 [INFO] PollerManager: Syncing devices...
+2026/04/05 22:36:29 [WARN] Failed to bind to optional port :80: listen tcp :80: bind: permission denied
+2026/04/05 22:36:29 [WARN] Failed to bind to optional port :443: listen tcp :443: bind: permission denied
+2026/04/05 22:36:29 [INFO] Starting multiplexed HTTP/HTTPS server on :8080
+2026/04/05 22:36:30 [INFO] EliaAPI: Current National System Load at 2025-09-26T10:30:00Z is 0.0 MW
+2026/04/05 22:36:47 [INFO] SSE client disconnected
+2026/04/05 22:37:31 [INFO] SSE client disconnected
+2026/04/05 22:39:32 [INFO] SSE client disconnected
+2026/04/05 22:40:36 [INFO] SSE client disconnected

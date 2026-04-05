@@ -204,19 +204,40 @@
            <Bar :data="chartData" :options="chartOptions" />
         </div>
 
+        <div v-else class="border-4 border-dashed border-gray-200 dark:border-gray-700 rounded-lg h-96 flex flex-col items-center justify-center mt-6">
+          <div class="text-center">
+            <svg class="mx-auto h-12 w-12 text-gray-400 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">No Chart Data</h3>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              Energy history will appear here once recorded.
+            </p>
+          </div>
+        </div>
+
       </div>
 
-      <div v-else class="border-4 border-dashed border-gray-200 dark:border-gray-700 rounded-lg h-96 flex flex-col items-center justify-center mt-6">
-        <div class="text-center">
-          <svg class="mx-auto h-12 w-12 text-gray-400 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-          </svg>
-          <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">Loading Energy Data...</h3>
-          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Fetching historical aggregates...
-          </p>
+      <div class="mt-8 flex justify-center">
+        <div class="relative group">
+          <button class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+            <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
+            Export PDF Report
+          </button>
+
+          <div class="absolute bottom-full left-0 mb-2 w-48 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 hidden group-hover:block transition-all z-10 overflow-hidden">
+            <div class="py-1" role="menu" aria-orientation="vertical">
+              <a href="#" @click.prevent="exportReport('daily')" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700" role="menuitem">Daily Report</a>
+              <a href="#" @click.prevent="exportReport('weekly')" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700" role="menuitem">Weekly Report</a>
+              <a href="#" @click.prevent="exportReport('monthly')" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700" role="menuitem">Monthly Report</a>
+              <a href="#" @click.prevent="exportReport('yearly')" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700" role="menuitem">Yearly Report</a>
+            </div>
+          </div>
         </div>
       </div>
+
 
     </div>
   </main>
@@ -369,6 +390,10 @@ const fetchEnergyData = async () => {
   } catch (e) {
     console.error("Failed to fetch energy data:", e)
   }
+}
+
+const exportReport = (period: string) => {
+  window.open(`${getApiBase()}/api/report/export?period=${period}`, '_blank')
 }
 
 onMounted(async () => {
