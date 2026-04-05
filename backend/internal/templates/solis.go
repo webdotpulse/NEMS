@@ -100,7 +100,7 @@ func (p *SolisInverterPoller) GetDevice() models.Device {
 }
 
 func (p *SolisInverterPoller) SetActivePowerLimit(powerW float64) error {
-	log.Printf("[INFO] SolisInverterPoller: Setting active power limit to %.2f W (Simulated)", powerW)
+	log.Printf("[INFO] SolisInverterPoller: Modbus power limit control is currently unsupported. Simulated active power limit: %.2f W", powerW)
 	return nil
 }
 

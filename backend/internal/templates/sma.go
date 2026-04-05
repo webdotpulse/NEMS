@@ -100,7 +100,7 @@ func (p *SmaInverterPoller) GetDevice() models.Device {
 }
 
 func (p *SmaInverterPoller) SetActivePowerLimit(powerW float64) error {
-	log.Printf("[INFO] SmaInverterPoller: Setting active power limit to %.2f W (Simulated)", powerW)
+	log.Printf("[INFO] SmaInverterPoller: Modbus power limit control is currently unsupported. Simulated active power limit: %.2f W", powerW)
 	return nil
 }
 
