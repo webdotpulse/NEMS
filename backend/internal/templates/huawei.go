@@ -162,7 +162,40 @@ func (p *HuaweiInverterPoller) ChargeBattery(powerW float64) error {
 }
 
 func (p *HuaweiInverterPoller) SetActivePowerLimit(powerW float64) error {
-	log.Printf("[INFO] HuaweiInverterPoller: Setting active power limit to %.2f W (Simulated)", powerW)
+	if p.client == nil || p.status != "online" {
+		log.Printf("[INFO] HuaweiInverterPoller: Cannot set active power limit, device offline")
+		return nil
+	}
+
+	if powerW >= 100000.0 {
+		// Release curtailment (No limit)
+		err := p.client.WriteRegister(40118, 0)
+		if err != nil {
+			log.Printf("[ERROR] HuaweiInverterPoller: Failed to release active power limit (%v)", err)
+			return err
+		}
+		log.Printf("[INFO] HuaweiInverterPoller: Released active power limit")
+		return nil
+	}
+
+	// 40118 Active Power Control Mode -> 2
+	err := p.client.WriteRegister(40118, 2)
+	if err != nil {
+		log.Printf("[ERROR] HuaweiInverterPoller: Failed to set Active Power Control Mode (%v)", err)
+		return err
+	}
+
+	// 40120 Fixed active power derating. Unit: 0.1 kW
+	val := uint32(powerW / 100.0)
+	highWord := uint16(val >> 16)
+	lowWord := uint16(val & 0xFFFF)
+	err = p.client.WriteRegisters(40120, []uint16{highWord, lowWord})
+	if err != nil {
+		log.Printf("[ERROR] HuaweiInverterPoller: Failed to write Fixed active power derating (%v)", err)
+		return err
+	}
+
+	log.Printf("[INFO] HuaweiInverterPoller: Setting active power limit to %.2f W", powerW)
 	return nil
 }
 
