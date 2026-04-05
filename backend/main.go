@@ -297,7 +297,6 @@ func main() {
 		has_battery BOOLEAN DEFAULT 0,
 		battery_capacity REAL DEFAULT 0,
 		inverter_rated_power_kw REAL DEFAULT 0,
-		ocpp_proxy_url TEXT DEFAULT '',
 		poll_interval INTEGER DEFAULT 5
 	);
 	`
@@ -320,7 +319,6 @@ func main() {
 	ensureColumnExists(db, "devices", "battery_mode", "TEXT DEFAULT 'auto'")
 	ensureColumnExists(db, "devices", "inverter_rated_power_kw", "REAL DEFAULT 0")
 	ensureColumnExists(db, "devices", "poll_interval", "INTEGER DEFAULT 5")
-	ensureColumnExists(db, "devices", "ocpp_proxy_url", "TEXT DEFAULT ''")
 
 	createEpexPricesSQL := `
 	CREATE TABLE IF NOT EXISTS epex_prices (
@@ -432,22 +430,6 @@ func main() {
 	mux.HandleFunc("/api/devices/", handleDevice)
 
 	// OCPP WebSocket endpoint
-	ocpp.GetDeviceProxyUrl = func(chargePointId string) string {
-		if PollerMgr == nil {
-			return ""
-		}
-		for _, data := range PollerMgr.GetDeviceCache() {
-			// Find the device matching this host (ChargePoint ID) and return its Proxy URL
-			if data.Category == "charger" {
-				for _, p := range PollerMgr.GetPollers() {
-					if p.GetDevice().Host == chargePointId {
-						return p.GetDevice().OcppProxyUrl
-					}
-				}
-			}
-		}
-		return ""
-	}
 	mux.HandleFunc("/api/ocpp/", ocpp.HandleWebSocket)
 
 	// Serve frontend SPA

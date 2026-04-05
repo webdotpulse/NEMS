@@ -13,7 +13,7 @@ Pulse EMS is a lightweight, highly responsive, fully UI-driven Energy Management
   - *Flanders Mode (Predictive Peak Shaving)*: Uses predictive instantaneous power limit calculations based on elapsed time within a synchronized 15-minute window to actively throttle EV chargers and batteries, safely capping the `ProjectedQuarterPeakW` and avoiding high capacity tariffs.
   - *Netherlands Mode*: Zero-export constraint logic to limit solar feed-in to the grid.
 - **Dynamic Battery Arbitrage**: Integrates Day-Ahead EPEX spot prices to allow users to force charge batteries during the $N$ cheapest hours and force discharge during the $M$ most expensive hours, rather than relying strictly on static threshold values.
-- **Native OCPP Server & Proxy**: A built-in OCPP 1.6 / 2.0.1 WebSocket server allows EV chargers to connect directly to the EMS. Includes an optional bi-directional proxy to seamlessly forward telemetry to an upstream CSMS (like a corporate backend) while intercepting data for local EMS optimization.
+- **Native OCPP Server**: A built-in OCPP 1.6 / 2.0.1 WebSocket server allows EV chargers to connect directly to the EMS.
 - **Network Scanner**: A zero-dependency network discovery tool leveraging localized MAC OUI maps to instantly find and identify supported hardware on your local network.
 - **Supported Device Integrations**: OCPP 1.6 / 2.0.1, Modbus TCP, and REST API support for various manufacturers, including Huawei, Raedian, Solis, SMA, Easee, Enerlution, HomeWizard, and P1 meters.
 
