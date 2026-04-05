@@ -16,8 +16,6 @@ export interface Device {
   inverter_rated_power_kw?: number;
   ocpp_proxy_url?: string;
   poll_interval?: number;
-  thermostat_normal_temp?: number;
-  thermostat_boost_temp?: number;
 }
 
 export interface SiteSettings {
@@ -38,10 +36,6 @@ export interface SiteSettings {
   allowed_grid_import_kw: number;
   allowed_grid_export_kw: number;
   appliance_turn_on_excess_w: number;
-  smart_thermostat_cheapest_hours: number;
-  thermostat_turn_on_excess_w: number;
-  thermostat_normal_temp: number;
-  thermostat_boost_temp: number;
   peak_shaving_buffer_w: number;
   peak_shaving_rampup_w: number;
   timezone: string;
