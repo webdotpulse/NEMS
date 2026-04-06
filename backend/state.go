@@ -27,26 +27,26 @@ type SiteState struct {
 // StateDispatcher manages Server-Sent Events (SSE) connections for clients
 // listening to real-time site state updates.
 type StateDispatcher struct {
-	clients map[chan SiteState]bool
-	mu      sync.Mutex
+	clients map[chan []byte]bool
+	mu      sync.RWMutex
 }
 
 // GlobalStateDispatcher is the singleton instance handling all active SSE clients.
 var GlobalStateDispatcher = &StateDispatcher{
-	clients: make(map[chan SiteState]bool),
+	clients: make(map[chan []byte]bool),
 }
 
 // AddClient creates a new buffered channel for a client and registers it with the dispatcher.
-func (d *StateDispatcher) AddClient() chan SiteState {
+func (d *StateDispatcher) AddClient() chan []byte {
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	ch := make(chan SiteState, 1) // Buffer to avoid blocking the broadcaster
+	ch := make(chan []byte, 1) // Buffer to avoid blocking the broadcaster
 	d.clients[ch] = true
 	return ch
 }
 
 // RemoveClient unregisters a client's channel and closes it.
-func (d *StateDispatcher) RemoveClient(ch chan SiteState) {
+func (d *StateDispatcher) RemoveClient(ch chan []byte) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	if _, ok := d.clients[ch]; ok {
@@ -58,11 +58,28 @@ func (d *StateDispatcher) RemoveClient(ch chan SiteState) {
 // Broadcast sends the current SiteState to all registered SSE clients.
 // If a client's channel is full, the message is dropped to prevent blocking the polling loop.
 func (d *StateDispatcher) Broadcast(state SiteState) {
-	d.mu.Lock()
-	defer d.mu.Unlock()
+	// ⚡ Bolt Optimization: Marshal the state to JSON once before broadcasting,
+	// and pre-allocate the SSE format bytes (`data: {...}\n\n`).
+	// This prevents redundant JSON marshaling and string formatting (fmt.Fprintf) for each connected client.
+	data, err := json.Marshal(state)
+	if err != nil {
+		log.Printf("[ERROR] Failed to marshal state for broadcast: %v", err)
+		return
+	}
+
+	// Pre-build the exact SSE payload bytes to avoid string allocations
+	msg := make([]byte, 0, len("data: ")+len(data)+len("\n\n"))
+	msg = append(msg, "data: "...)
+	msg = append(msg, data...)
+	msg = append(msg, "\n\n"...)
+
+	// Use RLock so multiple concurrent readers could technically broadcast (though usually it's one poller loop),
+	// but mostly to not block readers while iterating. Wait, Add/Remove use Lock.
+	d.mu.RLock()
+	defer d.mu.RUnlock()
 	for ch := range d.clients {
 		select {
-		case ch <- state:
+		case ch <- msg:
 		default:
 			// Client channel full, skip to avoid blocking the broadcaster
 		}
@@ -91,12 +108,9 @@ func handleLiveStream(w http.ResponseWriter, r *http.Request) {
 		case <-notify:
 			log.Println("[INFO] SSE client disconnected")
 			return
-		case state := <-clientChan:
-			data, err := json.Marshal(state)
-			if err != nil {
-				continue
-			}
-			fmt.Fprintf(w, "data: %s\n\n", string(data))
+		case rawBytes := <-clientChan:
+			// ⚡ Bolt Optimization: Write the pre-formatted bytes directly without JSON marshaling or fmt.Fprintf
+			w.Write(rawBytes)
 			if f, ok := w.(http.Flusher); ok {
 				f.Flush()
 			}
