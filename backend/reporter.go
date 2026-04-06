@@ -88,6 +88,9 @@ func GeneratePDFReport(period string) ([]byte, error) {
 	case "yearly":
 		endDate = time.Date(now.Year(), 1, 1, 0, 0, 0, 0, loc).UTC()
 		startDate = endDate.AddDate(-1, 0, 0)
+	case "all":
+		endDate = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc).UTC()
+		startDate = time.Date(2000, 1, 1, 0, 0, 0, 0, loc).UTC()
 	default: // fallback to weekly
 		endDate = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc).UTC()
 		startDate = endDate.AddDate(0, 0, -7)

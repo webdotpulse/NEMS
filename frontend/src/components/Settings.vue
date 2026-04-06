@@ -1277,8 +1277,9 @@ const pollUpdateStatus = async () => {
           updatePollInterval = null
         }
         if (data.status === 'done') {
+          alert("Update installed successfully. The system will now reboot.")
           setTimeout(() => {
-            window.location.reload()
+            window.location.href = '/'
           }, 10000)
         } else {
           updateStatus.value = 'error'
