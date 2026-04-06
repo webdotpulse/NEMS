@@ -429,7 +429,9 @@ func (pm *PollerManager) flushBuffer() {
 	// Make a copy and clear buffer
 	currentBuffer := make([]BufferedMeasurement, len(pm.buffer))
 	copy(currentBuffer, pm.buffer)
-	pm.buffer = make([]BufferedMeasurement, 0)
+	// ⚡ Bolt Optimization: Reuse the existing slice capacity instead of allocating a new slice every minute
+	// This reduces GC pressure and heap allocations, especially when many devices are polled frequently.
+	pm.buffer = pm.buffer[:0]
 	pm.bufferMu.Unlock()
 
 	// Aggregate averages by device ID
