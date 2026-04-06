@@ -125,6 +125,13 @@ func (sc *StrategyController) Start() {
 		ticker := time.NewTicker(2 * time.Second)
 		defer ticker.Stop()
 
+		// ⚡ Bolt Optimization: Pre-allocate maps outside the ticker loop.
+		// Instead of repeatedly calling `GetDeviceCache()` or `GetPollers()`
+		// (which allocates new maps every 2 seconds causing GC pressure),
+		// we pass these locally scoped, thread-safe maps into the loop.
+		localCache := make(map[int]DeviceData)
+		localPollers := make(map[int]models.DevicePoller)
+
 		for {
 			select {
 			case <-ticker.C:
@@ -178,7 +185,12 @@ func (sc *StrategyController) Start() {
 					sc.updatePricingCache(settings)
 				}
 
-				sc.executeControlLoop(settings)
+				clear(localCache)
+				clear(localPollers)
+				PollerMgr.CopyDeviceCache(localCache)
+				PollerMgr.CopyPollers(localPollers)
+
+				sc.executeControlLoop(settings, localCache, localPollers)
 
 			case <-sc.stopCh:
 				log.Println("[INFO] StrategyController stopped")
@@ -192,10 +204,7 @@ func (sc *StrategyController) Start() {
 // It evaluates priority logic (Smart EV Charging, Arbitrage, Excess Solar Routing, Flanders Peak Shaving)
 // and issues commands to controllable hardware (Chargers, Batteries, Inverters, Relays).
 // Modifications to the `strategyMaps` are protected via `strategyMapsMu` to ensure thread safety.
-func (sc *StrategyController) executeControlLoop(settings models.SiteSettings) {
-	cache := PollerMgr.GetDeviceCache()
-	pollers := PollerMgr.GetPollers()
-
+func (sc *StrategyController) executeControlLoop(settings models.SiteSettings, cache map[int]DeviceData, pollers map[int]models.DevicePoller) {
 	// 1. Calculate base state
 	var totalGridImport float64
 	var totalGridExport float64
@@ -775,10 +784,8 @@ func (sc *StrategyController) executeControlLoop(settings models.SiteSettings) {
 // applyNetherlandsMode evaluates zero-export constraints.
 // It attempts to sink any excess solar back into home storage or EV chargers.
 // If storage is full and EVs are not charging, it will curtail inverter production to exactly match house load.
-func (sc *StrategyController) applyNetherlandsMode(activeCurtailment bool) {
-	cache := PollerMgr.GetDeviceCache()
-	pollers := PollerMgr.GetPollers()
-
+// Note: This method is currently unused, but updated to accept maps for consistency.
+func (sc *StrategyController) applyNetherlandsMode(activeCurtailment bool, cache map[int]DeviceData, pollers map[int]models.DevicePoller) {
 	totalGrid := 0.0
 	totalSolar := 0.0
 	totalBattery := 0.0

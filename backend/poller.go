@@ -71,6 +71,22 @@ func (pm *PollerManager) GetPollers() map[int]models.DevicePoller {
 	return copyPollers
 }
 
+func (pm *PollerManager) CopyDeviceCache(dest map[int]DeviceData) {
+	pm.cacheMu.Lock()
+	defer pm.cacheMu.Unlock()
+	for k, v := range pm.deviceCache {
+		dest[k] = v
+	}
+}
+
+func (pm *PollerManager) CopyPollers(dest map[int]models.DevicePoller) {
+	pm.mu.Lock()
+	defer pm.mu.Unlock()
+	for k, v := range pm.pollers {
+		dest[k] = v
+	}
+}
+
 // InitPollerManager initializes the global PollerMgr instance.
 func InitPollerManager() {
 	PollerMgr = &PollerManager{
@@ -159,17 +175,35 @@ func (pm *PollerManager) Start() {
 		lastPolled := make(map[int]time.Time)
 		consecutiveErrors := make(map[int]int)
 
+		type activePollerData struct {
+			id     int
+			poller models.DevicePoller
+		}
+		var activePollers []activePollerData
+
 		for {
 			select {
 			case <-fastTicker.C:
 				now := time.Now()
-				pollersCopy := pm.GetPollers()
+
+				// ⚡ Bolt Optimization: Reuse the existing capacity of `activePollers` slice
+				// instead of allocating a new map via `GetPollers()` every single second.
+				// We lock the mutex only long enough to safely append references to our local slice.
+				activePollers = activePollers[:0]
+				pm.mu.Lock()
+				for id, poller := range pm.pollers {
+					activePollers = append(activePollers, activePollerData{id, poller})
+				}
+				pm.mu.Unlock()
+
 				var polledAny atomic.Bool
 				var wg sync.WaitGroup
 
 				staggerDelay := time.Duration(0)
 
-				for id, poller := range pollersCopy {
+				for _, ap := range activePollers {
+					id := ap.id
+					poller := ap.poller
 					device := poller.GetDevice()
 					category := templates.GetCategory(device.Template)
 

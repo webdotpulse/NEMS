@@ -9,3 +9,9 @@
 **Learning:** In the `broadcastState()` function in `backend/poller.go`, which is called continuously by the 1-second polling loop, pointers were being reallocated inside the loop (e.g. `v := 0.0; totalGrid = &v`). Every iteration dynamically allocates a new pointer on the heap, leading to a build-up of unnecessary GC pressure.
 
 **Action:** When tracking optional states or aggregating totals in hot loops, use simple local primitives (like `float64` and `bool`) to track values and state. Only allocate pointers at the very end of the function when assembling the final struct. This eliminates intermediate heap allocations.
+
+## 2024-05-22 - Go Map Allocations in Ticker Loops
+
+**Learning:** Returning a newly allocated map (`make(map[int]T)`) every 1 or 2 seconds in hot polling loops (like `GetPollers()` and `GetDeviceCache()`) creates immense garbage collection pressure over time. By moving map or slice allocations outside of continuous `for/select` ticker loops and reusing them, GC pauses and heap allocations are dramatically reduced.
+
+**Action:** In high-frequency loops, pre-allocate slices/maps locally outside the loop. Use `clear(map)` (Go 1.21+) or `slice[:0]` to reset their length/keys without discarding their backing capacity, allowing for safe, zero-allocation reuse across ticks. Never use shared global variables to reuse maps, as that introduces data race panics.
