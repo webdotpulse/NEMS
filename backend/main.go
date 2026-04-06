@@ -284,6 +284,16 @@ func main() {
 		log.Fatal("[FATAL] Failed to create measurements table:", err)
 	}
 
+	// ⚡ Bolt Optimization: Add an index on the `timestamp` column of the `measurements` table.
+	// Several high-frequency endpoints (`/api/energy`, `/api/history`, `/api/daily-aggregates`) perform
+	// complex aggregate queries over the `measurements` table using `WHERE m.timestamp >= ?`.
+	// Creating this index changes O(N) full table scans into O(log N) indexed lookups,
+	// drastically improving query performance and reducing CPU/Disk I/O as the dataset grows over time.
+	_, err = db.Exec("CREATE INDEX IF NOT EXISTS idx_measurements_timestamp ON measurements(timestamp);")
+	if err != nil {
+		log.Printf("[ERROR] Failed to create index on measurements(timestamp): %v", err)
+	}
+
 	createDevicesSQL := `
 	CREATE TABLE IF NOT EXISTS devices (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
