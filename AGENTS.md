@@ -27,6 +27,7 @@ Implement a modular plugin system for devices. The system MUST include templates
 1. **Interactive Energy Flow Chart:** The hero element of the dashboard. Show elements (Grid, Solar, Battery, Charger) ONLY if configured and active.
 2. **Click-to-Reveal History:** Clicking any node on the flow chart opens a dedicated view/modal showing historical charts and detailed metrics for *that specific element*.
 3. **Data Exportation:** The system allows exporting of both technical logs (via the Logger UI) and user-friendly visual energy reports (via the Dashboard UI in PDF format).
+4. **Notifications & Alerts:** Provide a UI configuration tab for webhook alerting logic for system errors and capacity thresholds.
 
 ## Tech Stack
 - **Backend:** Go (Golang), chosen to ensure the lowest memory footprint on a Raspberry Pi.

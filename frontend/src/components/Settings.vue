@@ -75,69 +75,6 @@
           </div>
         </div>
 
-        <!-- Location Card -->
-        <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg mb-6">
-          <div class="px-4 py-5 sm:p-6">
-            <div class="mb-4 border-b border-gray-200 dark:border-gray-700 pb-4">
-              <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-gray-100">
-                Location
-              </h3>
-            </div>
-            <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-4">
-              <div class="sm:col-span-1">
-                <label for="timezone" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Time Zone</label>
-                <div class="mt-1">
-                  <select id="timezone" v-model="siteSettings.timezone"
-                          class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
-                    <option value="UTC">UTC</option>
-                    <option value="Europe/Brussels">Europe/Brussels</option>
-                    <option value="Europe/London">Europe/London</option>
-                    <option value="America/New_York">America/New_York</option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="sm:col-span-1">
-                <label for="language" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Language</label>
-                <div class="mt-1">
-                  <select id="language" v-model="siteSettings.language"
-                          class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
-                    <option value="EN">EN</option>
-                    <option value="NL">NL</option>
-                    <option value="FR">FR</option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="sm:col-span-1">
-                <label for="latitude" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Latitude</label>
-                <div class="mt-1">
-                  <input type="number" step="0.0001" id="latitude" v-model="siteSettings.latitude" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
-                </div>
-              </div>
-
-              <div class="sm:col-span-1">
-                <label for="longitude" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Longitude</label>
-                <div class="mt-1">
-                  <input type="number" step="0.0001" id="longitude" v-model="siteSettings.longitude" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
-                </div>
-              </div>
-
-              <div class="sm:col-span-4">
-                <label for="address" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Address</label>
-                <div class="mt-1 flex gap-2">
-                  <input type="text" id="address" v-model="siteSettings.address" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
-                  <button type="button" @click="lookupLatLon" :disabled="isGeocoding" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors disabled:opacity-50 whitespace-nowrap">
-                    {{ isGeocoding ? 'Looking up...' : 'Lookup Lat/Lon' }}
-                  </button>
-                </div>
-                <p v-if="geocodeError" class="mt-1 text-sm text-red-600">{{ geocodeError }}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-
         <!-- Software Update Section -->
         <div v-if="sysInfo" class="mb-8">
           <div class="flex items-center justify-between mb-4">
@@ -221,6 +158,68 @@
 
       <!-- TAB: STRATEGY -->
       <div v-if="activeTab === 'strategy'">
+        <!-- Location Card -->
+        <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg mb-6">
+          <div class="px-4 py-5 sm:p-6">
+            <div class="mb-4 border-b border-gray-200 dark:border-gray-700 pb-4">
+              <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-gray-100">
+                Location
+              </h3>
+            </div>
+            <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-4">
+              <div class="sm:col-span-1">
+                <label for="timezone" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Time Zone</label>
+                <div class="mt-1">
+                  <select id="timezone" v-model="siteSettings.timezone"
+                          class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
+                    <option value="UTC">UTC</option>
+                    <option value="Europe/Brussels">Europe/Brussels</option>
+                    <option value="Europe/London">Europe/London</option>
+                    <option value="America/New_York">America/New_York</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="sm:col-span-1">
+                <label for="language" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Language</label>
+                <div class="mt-1">
+                  <select id="language" v-model="siteSettings.language"
+                          class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200">
+                    <option value="EN">EN</option>
+                    <option value="NL">NL</option>
+                    <option value="FR">FR</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="sm:col-span-1">
+                <label for="latitude" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Latitude</label>
+                <div class="mt-1">
+                  <input type="number" step="0.0001" id="latitude" v-model="siteSettings.latitude" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                </div>
+              </div>
+
+              <div class="sm:col-span-1">
+                <label for="longitude" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Longitude</label>
+                <div class="mt-1">
+                  <input type="number" step="0.0001" id="longitude" v-model="siteSettings.longitude" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                </div>
+              </div>
+
+              <div class="sm:col-span-4">
+                <label for="address" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Address</label>
+                <div class="mt-1 flex gap-2">
+                  <input type="text" id="address" v-model="siteSettings.address" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full  border-gray-300 rounded-md bg-gray-50 hover:bg-white dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-white transition-all duration-200" />
+                  <button type="button" @click="lookupLatLon" :disabled="isGeocoding" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors disabled:opacity-50 whitespace-nowrap">
+                    {{ isGeocoding ? 'Looking up...' : 'Lookup Lat/Lon' }}
+                  </button>
+                </div>
+                <p v-if="geocodeError" class="mt-1 text-sm text-red-600">{{ geocodeError }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Site Optimization Section -->
         <div class="mb-8">
           <h2 class="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:text-3xl sm:truncate mb-4">
