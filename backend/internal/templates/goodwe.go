@@ -84,7 +84,7 @@ func (p *GoodWeInverterPoller) Poll() (float64, float64, float64, float64, float
 	// Total Energy (35191, 2)
 	energyRegs, err := p.client.ReadRegisters(35191, 2, modbus.HOLDING_REGISTER)
 	if err == nil {
-		energyKwh = float64(uint32(energyRegs[0])<<16 | uint32(energyRegs[1])) * 0.1
+		energyKwh = float64(uint32(energyRegs[0])<<16|uint32(energyRegs[1])) * 0.1
 	}
 
 	if p.Device.HasBattery {

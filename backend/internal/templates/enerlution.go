@@ -212,40 +212,40 @@ type EnerlutionTelemetry struct {
 	SerialNumber string
 
 	// AC / Grid Statistics
-	InverterState    uint16
-	OutputActivePowerW float64
-	GridRVoltageV    float64
-	GridRCurrentA    float64
-	GridFrequencyHz  float64
+	InverterState       uint16
+	OutputActivePowerW  float64
+	GridRVoltageV       float64
+	GridRCurrentA       float64
+	GridFrequencyHz     float64
 	TotalEnergyYieldKwh float64
 
 	// PV (DC)
-	PV1VoltageV     float64
-	PV1CurrentA     float64
-	PV2VoltageV     float64
-	PV2CurrentA     float64
-	TotalPVPowerW   float64
+	PV1VoltageV      float64
+	PV1CurrentA      float64
+	PV2VoltageV      float64
+	PV2CurrentA      float64
+	TotalPVPowerW    float64
 	TotalPVEnergyKwh float64
 
 	// Battery
-	BatteryState       uint16
-	BatteryPowerW      float64
-	BatteryVoltageV    float64
-	BatteryCurrentA    float64
-	BatterySOC         float64
-	BatterySOH         float64
+	BatteryState    uint16
+	BatteryPowerW   float64
+	BatteryVoltageV float64
+	BatteryCurrentA float64
+	BatterySOC      float64
+	BatterySOH      float64
 
 	// Meter
-	ThirdPartyMeterPowerW float64
+	ThirdPartyMeterPowerW    float64
 	ThirdPartyMeterEnergyKwh float64
-	ImportEnergyKwh       float64
-	ExportEnergyKwh       float64
+	ImportEnergyKwh          float64
+	ExportEnergyKwh          float64
 
 	// Writeable Settings & Controls
-	EMSMode                   uint16
-	ActivePowerControlMode    uint16
-	FixedActivePowerPercent   uint16
-	FixedActivePowerValueW    float64
+	EMSMode                 uint16
+	ActivePowerControlMode  uint16
+	FixedActivePowerPercent uint16
+	FixedActivePowerValueW  float64
 }
 
 // isNetworkErr returns true if the error is related to connection dropping
@@ -289,36 +289,74 @@ func (p *EnerlutionPoller) FetchTelemetry() (*EnerlutionTelemetry, error) {
 	var err error
 
 	// A. Device Information
-	if regs, err = read(30010, 8); err != nil { return nil, err }
-	if len(regs) == 8 { t.Manufacturer = decodeASCII(regs) }
+	if regs, err = read(30010, 8); err != nil {
+		return nil, err
+	}
+	if len(regs) == 8 {
+		t.Manufacturer = decodeASCII(regs)
+	}
 
-	if regs, err = read(30018, 8); err != nil { return nil, err }
-	if len(regs) == 8 { t.Model = decodeASCII(regs) }
+	if regs, err = read(30018, 8); err != nil {
+		return nil, err
+	}
+	if len(regs) == 8 {
+		t.Model = decodeASCII(regs)
+	}
 
-	if regs, err = read(30026, 8); err != nil { return nil, err }
-	if len(regs) == 8 { t.SerialNumber = decodeASCII(regs) }
+	if regs, err = read(30026, 8); err != nil {
+		return nil, err
+	}
+	if len(regs) == 8 {
+		t.SerialNumber = decodeASCII(regs)
+	}
 
 	// B. Inverter & Grid Statistics (AC)
-	if regs, err = read(30115, 1); err != nil { return nil, err }
-	if len(regs) == 1 { t.InverterState = regs[0] }
+	if regs, err = read(30115, 1); err != nil {
+		return nil, err
+	}
+	if len(regs) == 1 {
+		t.InverterState = regs[0]
+	}
 
-	if regs, err = read(30100, 2); err != nil { return nil, err }
-	if len(regs) == 2 { t.OutputActivePowerW = float64(decodeS32(regs)) }
+	if regs, err = read(30100, 2); err != nil {
+		return nil, err
+	}
+	if len(regs) == 2 {
+		t.OutputActivePowerW = float64(decodeS32(regs))
+	}
 
-	if regs, err = read(30131, 1); err != nil { return nil, err }
-	if len(regs) == 1 { t.GridRVoltageV = float64(regs[0]) * 0.1 }
+	if regs, err = read(30131, 1); err != nil {
+		return nil, err
+	}
+	if len(regs) == 1 {
+		t.GridRVoltageV = float64(regs[0]) * 0.1
+	}
 
-	if regs, err = read(30132, 1); err != nil { return nil, err }
-	if len(regs) == 1 { t.GridRCurrentA = float64(regs[0]) * 0.1 }
+	if regs, err = read(30132, 1); err != nil {
+		return nil, err
+	}
+	if len(regs) == 1 {
+		t.GridRCurrentA = float64(regs[0]) * 0.1
+	}
 
-	if regs, err = read(30140, 1); err != nil { return nil, err }
-	if len(regs) == 1 { t.GridFrequencyHz = float64(regs[0]) * 0.01 }
+	if regs, err = read(30140, 1); err != nil {
+		return nil, err
+	}
+	if len(regs) == 1 {
+		t.GridFrequencyHz = float64(regs[0]) * 0.01
+	}
 
-	if regs, err = read(30154, 2); err != nil { return nil, err }
-	if len(regs) == 2 { t.TotalEnergyYieldKwh = float64(decodeFloat32(regs)) }
+	if regs, err = read(30154, 2); err != nil {
+		return nil, err
+	}
+	if len(regs) == 2 {
+		t.TotalEnergyYieldKwh = float64(decodeFloat32(regs))
+	}
 
 	// C. PV / Solar Panels (DC)
-	if regs, err = read(30119, 4); err != nil { return nil, err }
+	if regs, err = read(30119, 4); err != nil {
+		return nil, err
+	}
 	if len(regs) == 4 {
 		t.PV1VoltageV = float64(regs[0]) * 0.1
 		t.PV1CurrentA = float64(regs[1]) * 0.1
@@ -326,42 +364,78 @@ func (p *EnerlutionPoller) FetchTelemetry() (*EnerlutionTelemetry, error) {
 		t.PV2CurrentA = float64(regs[3]) * 0.1
 	}
 
-	if regs, err = read(30127, 2); err != nil { return nil, err }
-	if len(regs) == 2 { t.TotalPVPowerW = float64(decodeS32(regs)) }
+	if regs, err = read(30127, 2); err != nil {
+		return nil, err
+	}
+	if len(regs) == 2 {
+		t.TotalPVPowerW = float64(decodeS32(regs))
+	}
 
-	if regs, err = read(30129, 2); err != nil { return nil, err }
-	if len(regs) == 2 { t.TotalPVEnergyKwh = float64(decodeFloat32(regs)) }
+	if regs, err = read(30129, 2); err != nil {
+		return nil, err
+	}
+	if len(regs) == 2 {
+		t.TotalPVEnergyKwh = float64(decodeFloat32(regs))
+	}
 
 	// D. Battery Integration
 	if p.Device.HasBattery {
-		if regs, err = read(30161, 1); err != nil { return nil, err }
-		if len(regs) == 1 { t.BatteryState = regs[0] }
+		if regs, err = read(30161, 1); err != nil {
+			return nil, err
+		}
+		if len(regs) == 1 {
+			t.BatteryState = regs[0]
+		}
 
-		if regs, err = read(30162, 2); err != nil { return nil, err }
-		if len(regs) == 2 { t.BatteryPowerW = float64(decodeS32(regs)) }
+		if regs, err = read(30162, 2); err != nil {
+			return nil, err
+		}
+		if len(regs) == 2 {
+			t.BatteryPowerW = float64(decodeS32(regs))
+		}
 
-		if regs, err = read(30164, 2); err != nil { return nil, err }
+		if regs, err = read(30164, 2); err != nil {
+			return nil, err
+		}
 		if len(regs) == 2 {
 			t.BatteryVoltageV = float64(regs[0]) * 0.1
 			t.BatteryCurrentA = float64(decodeS16(regs[1])) * 0.1
 		}
 
-		if regs, err = read(30182, 1); err != nil { return nil, err }
-		if len(regs) == 1 { t.BatterySOC = float64(regs[0]) }
+		if regs, err = read(30182, 1); err != nil {
+			return nil, err
+		}
+		if len(regs) == 1 {
+			t.BatterySOC = float64(regs[0])
+		}
 
-		if regs, err = read(30249, 1); err != nil { return nil, err }
-		if len(regs) == 1 { t.BatterySOH = float64(regs[0]) }
+		if regs, err = read(30249, 1); err != nil {
+			return nil, err
+		}
+		if len(regs) == 1 {
+			t.BatterySOH = float64(regs[0])
+		}
 	}
 
 	// E. Grid Metering
 	if p.Device.HasGridMeter {
-		if regs, err = read(30110, 2); err != nil { return nil, err }
-		if len(regs) == 2 { t.ThirdPartyMeterPowerW = float64(decodeS32(regs)) }
+		if regs, err = read(30110, 2); err != nil {
+			return nil, err
+		}
+		if len(regs) == 2 {
+			t.ThirdPartyMeterPowerW = float64(decodeS32(regs))
+		}
 
-		if regs, err = read(30112, 2); err != nil { return nil, err }
-		if len(regs) == 2 { t.ThirdPartyMeterEnergyKwh = float64(decodeFloat32(regs)) }
+		if regs, err = read(30112, 2); err != nil {
+			return nil, err
+		}
+		if len(regs) == 2 {
+			t.ThirdPartyMeterEnergyKwh = float64(decodeFloat32(regs))
+		}
 
-		if regs, err = read(30156, 4); err != nil { return nil, err }
+		if regs, err = read(30156, 4); err != nil {
+			return nil, err
+		}
 		if len(regs) == 4 {
 			t.ImportEnergyKwh = float64(decodeFloat32(regs[0:2]))
 			t.ExportEnergyKwh = float64(decodeFloat32(regs[2:4]))
@@ -369,17 +443,33 @@ func (p *EnerlutionPoller) FetchTelemetry() (*EnerlutionTelemetry, error) {
 	}
 
 	// F. Writeable Settings & Controls
-	if regs, err = read(40907, 1); err != nil { return nil, err }
-	if len(regs) == 1 { t.EMSMode = regs[0] }
+	if regs, err = read(40907, 1); err != nil {
+		return nil, err
+	}
+	if len(regs) == 1 {
+		t.EMSMode = regs[0]
+	}
 
-	if regs, err = read(40400, 1); err != nil { return nil, err }
-	if len(regs) == 1 { t.ActivePowerControlMode = regs[0] }
+	if regs, err = read(40400, 1); err != nil {
+		return nil, err
+	}
+	if len(regs) == 1 {
+		t.ActivePowerControlMode = regs[0]
+	}
 
-	if regs, err = read(40410, 1); err != nil { return nil, err }
-	if len(regs) == 1 { t.FixedActivePowerPercent = regs[0] }
+	if regs, err = read(40410, 1); err != nil {
+		return nil, err
+	}
+	if len(regs) == 1 {
+		t.FixedActivePowerPercent = regs[0]
+	}
 
-	if regs, err = read(40441, 2); err != nil { return nil, err }
-	if len(regs) == 2 { t.FixedActivePowerValueW = float64(decodeS32(regs)) }
+	if regs, err = read(40441, 2); err != nil {
+		return nil, err
+	}
+	if len(regs) == 2 {
+		t.FixedActivePowerValueW = float64(decodeS32(regs))
+	}
 
 	return t, nil
 }

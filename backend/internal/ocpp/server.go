@@ -28,7 +28,6 @@ type OcppState struct {
 	mu            sync.RWMutex
 	writeMu       sync.Mutex // Protects concurrent writes to Conn
 	LastSeen      time.Time
-
 }
 
 var (

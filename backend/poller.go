@@ -16,7 +16,6 @@ import (
 // Poller Manager
 // ---------------------------------------------------------
 
-
 type DeviceData struct {
 	PowerW        float64
 	BatteryPowerW float64
@@ -75,9 +74,9 @@ func (pm *PollerManager) GetPollers() map[int]models.DevicePoller {
 // InitPollerManager initializes the global PollerMgr instance.
 func InitPollerManager() {
 	PollerMgr = &PollerManager{
-		pollers: make(map[int]models.DevicePoller),
-		stopCh:  make(chan struct{}),
-		buffer:  make([]BufferedMeasurement, 0),
+		pollers:     make(map[int]models.DevicePoller),
+		stopCh:      make(chan struct{}),
+		buffer:      make([]BufferedMeasurement, 0),
 		deviceCache: make(map[int]DeviceData),
 	}
 }
@@ -325,11 +324,11 @@ func (pm *PollerManager) broadcastState() {
 	pm.cacheMu.Lock()
 	defer pm.cacheMu.Unlock()
 
-	var totalGrid *float64
-	var totalSolar *float64
-	var totalBattery *float64
-	var totalBatterySoc *float64
-	var totalEvCharger *float64
+	// ⚡ Bolt Optimization: Use local float64 accumulators and boolean flags instead of repeatedly
+	// allocating pointers (`v := 0.0; ptr = &v`) inside the loop. This significantly reduces
+	// heap allocations and GC pressure in a high-frequency polling path (1s ticker).
+	var valGrid, valSolar, valBattery, valBatterySoc, valEvCharger float64
+	var hasGrid, hasSolar, hasBattery, hasBatterySoc, hasEvCharger bool
 
 	deviceHealth := make(map[int]string)
 
@@ -338,66 +337,69 @@ func (pm *PollerManager) broadcastState() {
 
 		switch data.Category {
 		case "battery":
-			if totalBattery == nil {
-				v := 0.0
-				totalBattery = &v
-			}
-			*totalBattery += data.BatteryPowerW
+			hasBattery = true
+			valBattery += data.BatteryPowerW
 
-			if totalBatterySoc == nil || *totalBatterySoc == 0 {
-				soc := data.Soc
-				totalBatterySoc = &soc
+			if !hasBatterySoc || valBatterySoc == 0 {
+				hasBatterySoc = true
+				valBatterySoc = data.Soc
 			}
 		case "inverter":
-			if totalSolar == nil {
-				v := 0.0
-				totalSolar = &v
-			}
-			*totalSolar += data.PowerW
+			hasSolar = true
+			valSolar += data.PowerW
 
-			if totalBattery == nil {
-				v := 0.0
-				totalBattery = &v
-			}
-			*totalBattery += data.BatteryPowerW
+			hasBattery = true
+			valBattery += data.BatteryPowerW
 
 			// For simplicity, take the first battery's SOC or average it if multiple exist
 			// Let's just take the most recent / highest non-zero one for now or first found
 			if data.HasBattery {
-				if totalBatterySoc == nil || *totalBatterySoc == 0 {
-					soc := data.Soc
-					totalBatterySoc = &soc
+				if !hasBatterySoc || valBatterySoc == 0 {
+					hasBatterySoc = true
+					valBatterySoc = data.Soc
 				}
 			}
 
 			if data.HasGridMeter {
-				if totalGrid == nil {
-					v := 0.0
-					totalGrid = &v
-				}
-				*totalGrid += data.GridPowerW
+				hasGrid = true
+				valGrid += data.GridPowerW
 			}
 		case "meter":
-			if totalGrid == nil {
-				v := 0.0
-				totalGrid = &v
-			}
-			*totalGrid += data.GridPowerW
+			hasGrid = true
+			valGrid += data.GridPowerW
 		case "charger":
-			if totalEvCharger == nil {
-				v := 0.0
-				totalEvCharger = &v
-			}
-			*totalEvCharger += data.PowerW
+			hasEvCharger = true
+			valEvCharger += data.PowerW
 		}
 	}
 
-	var totalLoad *float64
-	if totalGrid != nil {
-		v := *totalGrid
-		if totalSolar != nil { v += *totalSolar }
-		if totalBattery != nil { v += *totalBattery }
-		totalLoad = &v
+	var totalGrid, totalSolar, totalBattery, totalBatterySoc, totalEvCharger, totalLoad *float64
+
+	if hasGrid {
+		totalGrid = &valGrid
+	}
+	if hasSolar {
+		totalSolar = &valSolar
+	}
+	if hasBattery {
+		totalBattery = &valBattery
+	}
+	if hasBatterySoc {
+		totalBatterySoc = &valBatterySoc
+	}
+	if hasEvCharger {
+		totalEvCharger = &valEvCharger
+	}
+
+	if hasGrid {
+		load := valGrid
+		if hasSolar {
+			load += valSolar
+		}
+		if hasBattery {
+			load += valBattery
+		}
+		totalLoad = &load
 	}
 
 	peak := GetProjectedQuarterPeakW()

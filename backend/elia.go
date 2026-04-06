@@ -26,8 +26,8 @@ func FetchEliaSystemLoad() {
 
 	var result struct {
 		Results []struct {
-			Datetime   time.Time `json:"datetime"`
-			EliaLoad   float64   `json:"elia_load"`
+			Datetime time.Time `json:"datetime"`
+			EliaLoad float64   `json:"elia_load"`
 		} `json:"results"`
 	}
 

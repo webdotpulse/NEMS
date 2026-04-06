@@ -20,10 +20,10 @@ type HomeWizardMeterPoller struct {
 func init() {
 	Register(Template{
 		Metadata: TemplateMetadata{
-			ID:   "homewizard_meter",
-			Name: "HomeWizard Meter",
-			Vendor: "HomeWizard",
-			Type: "rest",
+			ID:       "homewizard_meter",
+			Name:     "HomeWizard Meter",
+			Vendor:   "HomeWizard",
+			Type:     "rest",
 			Category: "meter",
 		},
 		NewPoller: func(device models.Device) models.DevicePoller {

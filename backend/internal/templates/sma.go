@@ -20,10 +20,10 @@ type SmaInverterPoller struct {
 func init() {
 	Register(Template{
 		Metadata: TemplateMetadata{
-			ID:   "sma_inverter",
-			Name: "SMA Inverter",
-			Vendor: "SMA",
-			Type: "modbus",
+			ID:       "sma_inverter",
+			Name:     "SMA Inverter",
+			Vendor:   "SMA",
+			Type:     "modbus",
 			Category: "inverter",
 		},
 		NewPoller: func(device models.Device) models.DevicePoller {

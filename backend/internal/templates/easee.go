@@ -16,10 +16,10 @@ type EaseeChargerPoller struct {
 func init() {
 	Register(Template{
 		Metadata: TemplateMetadata{
-			ID:   "easee_charger",
-			Name: "Easee Charger",
+			ID:     "easee_charger",
+			Name:   "Easee Charger",
 			Vendor: "Easee",
-			Type: "cloud",
+			Type:   "cloud",
 		},
 		NewPoller: func(device models.Device) models.DevicePoller {
 			return &EaseeChargerPoller{Device: device}

@@ -79,20 +79,20 @@ func (p *GrowattInverterPoller) Poll() (float64, float64, float64, float64, floa
 	// We'll use Input Register 35, 2 words for Growatt MIN/MIC
 	powerRegs, err := p.client.ReadRegisters(35, 2, modbus.INPUT_REGISTER)
 	if err == nil {
-		powerW = float64(uint32(powerRegs[0])<<16 | uint32(powerRegs[1])) * 0.1
+		powerW = float64(uint32(powerRegs[0])<<16|uint32(powerRegs[1])) * 0.1
 	}
 
 	// Energy Today (Eac_today) Input Reg 53, 2 words
 	energyRegs, err := p.client.ReadRegisters(53, 2, modbus.INPUT_REGISTER)
 	if err == nil {
-		energyKwh = float64(uint32(energyRegs[0])<<16 | uint32(energyRegs[1])) * 0.1
+		energyKwh = float64(uint32(energyRegs[0])<<16|uint32(energyRegs[1])) * 0.1
 	}
 
 	if p.Device.HasBattery {
 		// Pbat Input Reg 1009, 2 words
 		batRegs, err := p.client.ReadRegisters(1009, 2, modbus.INPUT_REGISTER)
 		if err == nil {
-			batteryPowerW = float64(int32(uint32(batRegs[0])<<16 | uint32(batRegs[1]))) * 0.1
+			batteryPowerW = float64(int32(uint32(batRegs[0])<<16|uint32(batRegs[1]))) * 0.1
 		}
 		// SOC Input Reg 1014
 		socRegs, err := p.client.ReadRegisters(1014, 1, modbus.INPUT_REGISTER)
@@ -105,7 +105,7 @@ func (p *GrowattInverterPoller) Poll() (float64, float64, float64, float64, floa
 		// Pgrid Input Reg 1012, 2 words
 		gridRegs, err := p.client.ReadRegisters(1012, 2, modbus.INPUT_REGISTER)
 		if err == nil {
-			gridPowerW = float64(int32(uint32(gridRegs[0])<<16 | uint32(gridRegs[1]))) * 0.1
+			gridPowerW = float64(int32(uint32(gridRegs[0])<<16|uint32(gridRegs[1]))) * 0.1
 		}
 	}
 

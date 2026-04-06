@@ -87,14 +87,14 @@ func (p *VetonChargerPoller) Poll() (float64, float64, float64, float64, float64
 	powerRegs, err := p.client.ReadRegisters(1244, 2, modbus.HOLDING_REGISTER)
 	powerW := 0.0
 	if err == nil {
-		powerW = float64(int32(uint32(powerRegs[0])<<16 | uint32(powerRegs[1]))) / 1000.0
+		powerW = float64(int32(uint32(powerRegs[0])<<16|uint32(powerRegs[1]))) / 1000.0
 	}
 
 	// 250 (Energy, Wh)
 	energyRegs, err := p.client.ReadRegisters(1250, 4, modbus.HOLDING_REGISTER)
 	energyKwh := 0.0
 	if err == nil {
-		energyKwh = float64(int64(uint64(energyRegs[0])<<48 | uint64(energyRegs[1])<<32 | uint64(energyRegs[2])<<16 | uint64(energyRegs[3]))) / 1000.0 / 1000.0
+		energyKwh = float64(int64(uint64(energyRegs[0])<<48|uint64(energyRegs[1])<<32|uint64(energyRegs[2])<<16|uint64(energyRegs[3]))) / 1000.0 / 1000.0
 	}
 
 	return powerW, 0, 0, energyKwh, 0, nil
