@@ -244,7 +244,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, shallowRef, onMounted, onUnmounted, computed } from 'vue'
 import PowerFlow from './PowerFlow.vue'
 import { getApiBase } from '../api'
 import type { SiteState, DailyAggregates } from '../types'
@@ -275,7 +275,12 @@ const state = ref<SiteState | null>(null)
 const dailyAggregates = ref<DailyAggregates | null>(null)
 const selectedDate = ref<string>(new Date().toISOString().split('T')[0])
 const selectedPeriod = ref<string>('day')
-const energySeries = ref<any[]>([])
+// ⚡ Bolt Optimization: Use shallowRef instead of ref for large datasets like time-series chart data.
+// Vue's standard ref() creates a deep reactive Proxy, meaning every property of every object in the array
+// is tracked for changes. This causes significant reactivity overhead and CPU usage when the array has many items.
+// With shallowRef(), Vue only triggers reactivity when the entire array reference is reassigned (energySeries.value = newData),
+// avoiding the deep proxy overhead while maintaining UI updates.
+const energySeries = shallowRef<any[]>([])
 let eventSource: EventSource | null = null
 
 const setPeriod = (period: string) => {
