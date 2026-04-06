@@ -8,6 +8,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -1013,4 +1014,62 @@ func handleSolarForecast(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(forecast)
+}
+
+// handleGeocode is the HTTP handler for the /api/geocode endpoint.
+// It calls the Nominatim API to convert an address into latitude and longitude.
+func handleGeocode(w http.ResponseWriter, r *http.Request) {
+	address := r.URL.Query().Get("address")
+	if address == "" {
+		http.Error(w, "address query parameter is required", http.StatusBadRequest)
+		return
+	}
+
+	url := fmt.Sprintf("https://nominatim.openstreetmap.org/search?q=%s&format=json&limit=1", url.QueryEscape(address))
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Nominatim requires a User-Agent
+	req.Header.Set("User-Agent", "PulseEMS/1.0")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		http.Error(w, fmt.Sprintf("Nominatim API returned status: %s", resp.Status), http.StatusBadGateway)
+		return
+	}
+
+	var results []struct {
+		Lat string `json:"lat"`
+		Lon string `json:"lon"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&results); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if len(results) == 0 {
+		http.Error(w, "No results found", http.StatusNotFound)
+		return
+	}
+
+	lat, _ := strconv.ParseFloat(results[0].Lat, 64)
+	lon, _ := strconv.ParseFloat(results[0].Lon, 64)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]float64{
+		"lat": lat,
+		"lon": lon,
+	})
 }
