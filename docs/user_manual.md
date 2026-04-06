@@ -12,7 +12,7 @@ Pulse EMS serves as the brain of your home energy ecosystem, integrating Grid, S
 * **Fully UI-Driven:** No YAML or configuration file editing is required. Every hardware device and optimization rule is configured straight from the frontend interface.
 * **Responsive Architecture:** A highly optimized Go backend paired with an embedded SQLite database and a modern Vue 3 SPA guarantees snappy updates using Server-Sent Events (SSE).
 * **Minimal Wear:** Database writes are batched and buffered to maximize the lifespan of your device's SD Card.
-* **Privacy First:** Your data never leaves your home unless you use external proxy or API configurations.
+* **Privacy First:** Your data never leaves your home.
 
 ---
 
@@ -68,6 +68,7 @@ Located under Site Optimization, these parameters dictate how the EMS prioritize
 * **`allowed_grid_export_kw`**: Hard limit on solar feed-in. If this is zero, zero-export logic applies.
 * **`active_inverter_curtailment`**: Allows the system to actively throttle solar inverters to respect the allowed grid export limits.
 * **`appliance_turn_on_excess_w`**: Amount of continuous solar export required before triggering smart appliances or relays.
+* **`Thermal Load Control`**: Support for smart thermostats with normal and boost temperature overrides. Uses time-based hysteresis to prevent short-cycling.
 
 ### 4.2 Battery Arbitrage & Schedules
 Take advantage of variable electricity pricing to charge from the grid when cheap and use the battery when expensive.
@@ -109,7 +110,7 @@ To integrate hardware, use the **Add Device** feature.
 
 * **Templates**: NEMS supports hardware from Huawei, SMA, Solis, Raedian, Easee, Enerlution, and more. Select the template that matches your hardware type.
 * **Network Scanner**: A zero-dependency network discovery tool is available in the UI. It scans your local subnet and matches MAC Organizationally Unique Identifiers (OUIs) to known hardware, assisting you in finding device IPs instantly.
-* **Host & Port**: The IP address of the device on your local network (e.g., `192.168.1.50`) and communication port (usually `502` for Modbus).
+* **Host & Port**: The IP address of the device on your local network (e.g., `192.168.1.50`) and communication port (usually `502` for Modbus). Note: For OCPP EV chargers, the host field exclusively stores the ChargePoint ID, eliminating the need for IP and port inputs.
 * **`modbus_id`**: The Modbus Slave ID of the device (often `1` or `2`).
 * **`poll_interval`**: How often (in seconds) the system queries the device. The default is `5` seconds. High-priority devices like grid meters can be set lower for faster reaction times.
 * **`charge_mode` (EV Chargers)**: Defines how the charger should act: e.g., `eco` (solar only) vs `fast` (grid + solar).
@@ -121,8 +122,8 @@ To integrate hardware, use the **Add Device** feature.
 
 Pulse EMS features a built-in Native OCPP (Open Charge Point Protocol) server for seamless communication with standard EV Chargers (1.6 / 2.0.1).
 
-* **Configuration**: In your EV Charger's dedicated app or web interface, configure the CSMS / Backend URL to point to the EMS IP address.
-* **URL Format**: The endpoint usually resembles `ws://<EMS-IP>:8080/api/ocpp/<Charger-ID>`. Check the dedicated OCPP setup interface in the EMS for your exact customized URL.
+* **Configuration**: In your EV Charger's dedicated app or web interface, configure the CSMS / Backend URL to point to the EMS IP address. Proxying to a third-party CSMS is unsupported.
+* **URL Format**: The endpoint usually resembles `ws://{IP Address ems}:8080/api/ocpp/<Charger-ID>`. Check the dedicated OCPP setup interface in the EMS for your exact customized URL.
 * Once connected, the charger acts as any other local device, reporting power, receiving setpoints, and integrating into the EMS ecosystem without external cloud dependency.
 
 ---
@@ -134,3 +135,10 @@ Pulse EMS supports simple, single-click over-the-air updates.
 * **Update Check:** Navigating to the System Info panel will automatically query GitHub for new releases.
 * **Token Configuration (`github_token`)**: A GitHub token can be configured in settings to avoid IP rate limiting from GitHub's API during update checks.
 * **Process**: Clicking "Install Update" downloads the latest `.deb` package to the system and executes it transparently. The UI will show realtime installation logs. Once completed, the backend service restarts automatically, and the UI will reconnect.
+
+---
+
+## 8. Reports & Alerts
+
+* **Energy Reports:** Daily, weekly, monthly, and yearly PDF reports are generated and can be exported or delivered via SMTP scheduling.
+* **Webhook Alerting:** Proactive webhook alerts trigger on consecutive device polling failures, peak capacity nearing 90%, and tariff fetch errors.
