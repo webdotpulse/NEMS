@@ -24,10 +24,10 @@ type P1NetworkPoller struct {
 func init() {
 	Register(Template{
 		Metadata: TemplateMetadata{
-			ID:   "p1_network",
-			Name: "P1 Smart Meter (Network/TCP)",
-			Vendor: "Generic",
-			Type: "network",
+			ID:       "p1_network",
+			Name:     "P1 Smart Meter (Network/TCP)",
+			Vendor:   "Generic",
+			Type:     "network",
 			Category: "meter",
 		},
 		NewPoller: func(d models.Device) models.DevicePoller {

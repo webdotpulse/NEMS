@@ -10,7 +10,6 @@ import (
 	"github.com/simonvetter/modbus"
 )
 
-
 type SolarEdgeInverterPoller struct {
 	Device models.Device
 	client *modbus.ModbusClient

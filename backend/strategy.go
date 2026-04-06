@@ -34,6 +34,7 @@ type TimeValue struct {
 	Time  time.Time
 	Value float64
 }
+
 var gridImportSamples []TimeValue
 
 var projectedQuarterPeakWMu sync.RWMutex
@@ -133,34 +134,34 @@ func (sc *StrategyController) Start() {
 				if err != nil {
 					if err == sql.ErrNoRows {
 						settings = models.SiteSettings{
-							StrategyMode: "eco",
-							CapacityPeakLimitKw: 2.5,
-							ActiveInverterCurtailment: false,
-							BatteryGridChargeStrategy: "price_only",
-							ForceChargeBelowEuro: 0.0,
-							ForceDischargeAboveEuro: 999.0,
-							SmartEvCheapestHours: 0,
-							ApplianceTurnOnExcessW: 0.0,
-							PeakShavingBufferW: 200.0,
-							PeakShavingRampupW: 500.0,
-							Timezone: "Europe/Brussels",
-							ContractType: "dynamic",
-							FixedPricePeakKwh: 0.35,
-							FixedPriceOffPeakKwh: 0.30,
-							FixedInjectPriceKwh: 0.05,
-							DynamicMarkupKwh: 0.15,
-							EngieMarkupPeak: 0.15,
-							EngieMarkupOffPeak: 0.15,
-							EngieMarkupSuperOffPeak: 0.15,
-							EngieMultiplier: 0.1448,
-							EngieBaseFee: 0.0,
-							LuminusMultiplier: 1.0,
-							EnecoMultiplier: 1.0,
-							FrankMultiplier: 1.0,
-							EcopowerMultiplier: 1.0,
-							CustomChargeSchedule: "[]",
+							StrategyMode:                "eco",
+							CapacityPeakLimitKw:         2.5,
+							ActiveInverterCurtailment:   false,
+							BatteryGridChargeStrategy:   "price_only",
+							ForceChargeBelowEuro:        0.0,
+							ForceDischargeAboveEuro:     999.0,
+							SmartEvCheapestHours:        0,
+							ApplianceTurnOnExcessW:      0.0,
+							PeakShavingBufferW:          200.0,
+							PeakShavingRampupW:          500.0,
+							Timezone:                    "Europe/Brussels",
+							ContractType:                "dynamic",
+							FixedPricePeakKwh:           0.35,
+							FixedPriceOffPeakKwh:        0.30,
+							FixedInjectPriceKwh:         0.05,
+							DynamicMarkupKwh:            0.15,
+							EngieMarkupPeak:             0.15,
+							EngieMarkupOffPeak:          0.15,
+							EngieMarkupSuperOffPeak:     0.15,
+							EngieMultiplier:             0.1448,
+							EngieBaseFee:                0.0,
+							LuminusMultiplier:           1.0,
+							EnecoMultiplier:             1.0,
+							FrankMultiplier:             1.0,
+							EcopowerMultiplier:          1.0,
+							CustomChargeSchedule:        "[]",
 							SuperdalOptimizationEnabled: false,
-							SuperdalTargetSoc: 100.0,
+							SuperdalTargetSoc:           100.0,
 						}
 					} else {
 						log.Printf("[ERROR] StrategyController: Error fetching site settings: %v", err)
@@ -512,7 +513,7 @@ func (sc *StrategyController) executeControlLoop(settings models.SiteSettings) {
 
 		// Proactive Webhook Alert for near peak (e.g. > 90% of CapacityPeakLimitKw limit)
 		absoluteLimitW := settings.CapacityPeakLimitKw * 1000
-		if projectedPeak > absoluteLimitW * 0.90 {
+		if projectedPeak > absoluteLimitW*0.90 {
 			peakAlertMu.Lock()
 			if time.Since(lastPeakAlertTime) > 15*time.Minute {
 				msg := fmt.Sprintf("⚠️ Peak Capacity Warning: Projected 15-min peak is %.1f W, which is nearing your %.1f kW limit.", projectedPeak, settings.CapacityPeakLimitKw)
@@ -574,7 +575,7 @@ func (sc *StrategyController) executeControlLoop(settings models.SiteSettings) {
 					}
 				}
 			}
-		} else if projectedPeak < threshold - rampup {
+		} else if projectedPeak < threshold-rampup {
 			// When house load drops, slowly ramp EV chargers UP if they were throttled
 			// (If they are 0 because of SmartEV blocking, do not ramp up)
 			for id, currentSp := range desiredEvSetpoints {

@@ -20,10 +20,10 @@ type GenericRelayPoller struct {
 func init() {
 	Register(Template{
 		Metadata: TemplateMetadata{
-			ID:   "generic_relay",
-			Name: "Generic HTTP Relay",
-			Vendor: "Generic",
-			Type: "rest",
+			ID:       "generic_relay",
+			Name:     "Generic HTTP Relay",
+			Vendor:   "Generic",
+			Type:     "rest",
 			Category: "relay",
 		},
 		NewPoller: func(device models.Device) models.DevicePoller {

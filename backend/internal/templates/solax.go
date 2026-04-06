@@ -84,7 +84,7 @@ func (p *SolaxInverterPoller) Poll() (float64, float64, float64, float64, float6
 	// Energy (80)
 	energyRegs, err := p.client.ReadRegisters(80, 2, modbus.INPUT_REGISTER)
 	if err == nil {
-		energyKwh = float64(uint32(energyRegs[0])<<16 | uint32(energyRegs[1])) * 0.1
+		energyKwh = float64(uint32(energyRegs[0])<<16|uint32(energyRegs[1])) * 0.1
 	}
 
 	if p.Device.HasBattery {

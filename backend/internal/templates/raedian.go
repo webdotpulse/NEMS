@@ -140,13 +140,13 @@ func (p *RaedianChargerPoller) Poll() (float64, float64, float64, float64, float
 
 	p.SocketLockState = uint32(regs[0])<<16 | uint32(regs[1])
 	p.ChargingState = uint32(regs[2])<<16 | uint32(regs[3])
-	p.CurrentChargingLimit = float64(uint32(regs[4])<<16 | uint32(regs[5])) * 0.001
-	p.CurrentPhase1 = float64(uint32(regs[6])<<16 | uint32(regs[7])) * 0.001
-	p.CurrentPhase2 = float64(uint32(regs[8])<<16 | uint32(regs[9])) * 0.001
-	p.CurrentPhase3 = float64(uint32(regs[10])<<16 | uint32(regs[11])) * 0.001
-	p.VoltagePhase1 = float64(uint32(regs[12])<<16 | uint32(regs[13])) * 0.1
-	p.VoltagePhase2 = float64(uint32(regs[14])<<16 | uint32(regs[15])) * 0.1
-	p.VoltagePhase3 = float64(uint32(regs[16])<<16 | uint32(regs[17])) * 0.1
+	p.CurrentChargingLimit = float64(uint32(regs[4])<<16|uint32(regs[5])) * 0.001
+	p.CurrentPhase1 = float64(uint32(regs[6])<<16|uint32(regs[7])) * 0.001
+	p.CurrentPhase2 = float64(uint32(regs[8])<<16|uint32(regs[9])) * 0.001
+	p.CurrentPhase3 = float64(uint32(regs[10])<<16|uint32(regs[11])) * 0.001
+	p.VoltagePhase1 = float64(uint32(regs[12])<<16|uint32(regs[13])) * 0.1
+	p.VoltagePhase2 = float64(uint32(regs[14])<<16|uint32(regs[15])) * 0.1
+	p.VoltagePhase3 = float64(uint32(regs[16])<<16|uint32(regs[17])) * 0.1
 
 	// Active Power is at offset 18 (32796 - 32778 = 18)
 	// Energy Delivered is at offset 20 (32798 - 32778 = 20)

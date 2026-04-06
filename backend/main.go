@@ -1,22 +1,22 @@
 package main
 
 import (
-	"database/sql"
-	"fmt"
-	"log"
-	"net/http"
-	"time"
-	"os"
-	"sync"
-	"io"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"database/sql"
 	"encoding/pem"
+	"fmt"
+	"io"
+	"log"
 	"math/big"
 	"net"
+	"net/http"
+	"os"
+	"sync"
+	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 
@@ -24,7 +24,6 @@ import (
 
 	"github.com/soheilhy/cmux"
 )
-
 
 // RingBuffer for logs
 type LogRingBuffer struct {
@@ -487,7 +486,6 @@ func main() {
 		// Fetch once on startup to verify API connectivity
 		FetchEliaSystemLoad()
 	}()
-
 
 	handler := enableCORS(mux)
 

@@ -83,7 +83,7 @@ func (p *WebastoChargerPoller) Poll() (float64, float64, float64, float64, float
 	energyRegs, err := p.client.ReadRegisters(1036, 2, modbus.HOLDING_REGISTER)
 	energyKwh := 0.0
 	if err == nil {
-		energyKwh = float64(uint32(energyRegs[0])<<16 | uint32(energyRegs[1])) / 1000.0
+		energyKwh = float64(uint32(energyRegs[0])<<16|uint32(energyRegs[1])) / 1000.0
 	}
 
 	return powerW, 0, 0, energyKwh, 0, nil

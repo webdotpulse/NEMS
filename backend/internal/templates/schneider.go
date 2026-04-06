@@ -79,7 +79,7 @@ func (p *SchneiderChargerPoller) Poll() (float64, float64, float64, float64, flo
 	energyKwh := 0.0
 	if err == nil {
 		// EVCC schneider iem3000 uses int64 for 4 registers
-		energyKwh = float64(uint64(energyRegs[0])<<48 | uint64(energyRegs[1])<<32 | uint64(energyRegs[2])<<16 | uint64(energyRegs[3])) / 1000.0
+		energyKwh = float64(uint64(energyRegs[0])<<48|uint64(energyRegs[1])<<32|uint64(energyRegs[2])<<16|uint64(energyRegs[3])) / 1000.0
 	}
 
 	return powerW, 0, 0, energyKwh, 0, nil

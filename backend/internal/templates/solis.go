@@ -20,10 +20,10 @@ type SolisInverterPoller struct {
 func init() {
 	Register(Template{
 		Metadata: TemplateMetadata{
-			ID:   "solis_inverter",
-			Name: "Solis Inverter",
-			Vendor: "Solis",
-			Type: "modbus",
+			ID:       "solis_inverter",
+			Name:     "Solis Inverter",
+			Vendor:   "Solis",
+			Type:     "modbus",
 			Category: "inverter",
 		},
 		NewPoller: func(device models.Device) models.DevicePoller {
@@ -83,7 +83,7 @@ func (p *SolisInverterPoller) Poll() (float64, float64, float64, float64, float6
 	if err != nil {
 		return powerW, 0, 0, 0, 0, err
 	}
-	energyKwh := float64(uint32(energyRegs[0])<<16 | uint32(energyRegs[1])) / 10.0
+	energyKwh := float64(uint32(energyRegs[0])<<16|uint32(energyRegs[1])) / 10.0
 
 	batRegs, err := p.client.ReadRegisters(33149, 2, modbus.INPUT_REGISTER)
 	batteryPowerW := 0.0

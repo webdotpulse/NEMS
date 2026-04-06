@@ -84,7 +84,7 @@ func (p *SungrowInverterPoller) Poll() (float64, float64, float64, float64, floa
 	// Energy Yield Today (13001)
 	energyRegs, err := p.client.ReadRegisters(13001, 2, modbus.INPUT_REGISTER)
 	if err == nil {
-		energyKwh = float64(uint32(energyRegs[0])<<16 | uint32(energyRegs[1])) * 0.1
+		energyKwh = float64(uint32(energyRegs[0])<<16|uint32(energyRegs[1])) * 0.1
 	}
 
 	if p.Device.HasBattery {

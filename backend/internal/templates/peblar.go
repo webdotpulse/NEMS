@@ -20,10 +20,10 @@ type PeblarChargerPoller struct {
 func init() {
 	Register(Template{
 		Metadata: TemplateMetadata{
-			ID:   "peblar_charger",
-			Name: "Peblar Charger",
-			Vendor: "Peblar",
-			Type: "rest",
+			ID:       "peblar_charger",
+			Name:     "Peblar Charger",
+			Vendor:   "Peblar",
+			Type:     "rest",
 			Category: "charger",
 		},
 		NewPoller: func(device models.Device) models.DevicePoller {
