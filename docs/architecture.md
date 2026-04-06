@@ -5,7 +5,7 @@ NEMS (Pulse EMS) is designed as a lightweight, embedded Energy Management System
 ## High-Level Architecture
 
 The system follows a monolith architecture composed of two main parts:
-1. **Go Backend:** A statically compiled binary that serves both the JSON API, handles hardware device polling (Modbus/REST), executes energy control strategies, and serves the static frontend assets. The build number is injected as a release tag at compile time via `-ldflags` using `git describe --tags --always`, and CPU data is explicitly omitted from system info endpoints.
+1. **Go Backend:** A statically compiled binary that serves both the JSON API, handles hardware device polling (Modbus/REST), executes energy control strategies, and serves the static frontend assets. The build number is injected as a release tag at compile time via `-ldflags="-X main.BuildNumber=${GITHUB_REF_NAME}"`, and CPU data is explicitly omitted from system info endpoints.
 2. **Vue 3 Frontend:** A Single Page Application (SPA) that provides a fully UI-driven interface for monitoring and configuring the EMS.
 
 Both parts are combined during the CI/CD release process into a single Debian (`.deb`) package, encapsulating the frontend assets and the backend binary. This package sets up the restricted `nems` system user and manages the `nems.service` systemd unit. For seamless onboarding, the project also generates a custom Raspberry Pi OS Lite image that pre-installs the `.deb` package, `nginx` as a reverse proxy, a minimal Wayland desktop (`wayfire`), and `rpi-connect` to enable out-of-the-box remote screen sharing (host set to `ems`).
@@ -20,7 +20,6 @@ graph TD
     SC -->|Hardware Limits| Devices
     API <-->|WebSocket| OCPP[Native OCPP Server]
     OCPP <-->|OCPP 1.6/2.0.1| EVCharger[EV Chargers]
-    OCPP -.->|Optional Forwarding| CSMS[Upstream CSMS]
 ```
 
 ## Data Flow
@@ -55,6 +54,7 @@ graph TD
 
 ## Design Decisions
 
+- **Scope Directives:** Car integration, billing, RFID, and ENTSO-E/imbalance APIs are strictly forbidden.
 - **Network Scanner Heuristics:** To achieve zero-dependency network discovery across multiple manufacturer hardware types, NEMS implements localized mapping of MAC Organizationally Unique Identifiers (OUIs). This avoids runtime third-party API dependencies and ensures rapid scanning performance.
 - **No YAML:** NEMS strictly uses a UI-driven database approach. Device configurations are stored in SQLite. This lowers the barrier to entry for non-technical users.
 - **Null Safety in JSON:** The `SiteState` struct uses pointers for float values (`*float64`). If a device type (e.g., a Battery) is not configured, the pointer remains `nil`, resulting in `null` in the JSON payload. The Vue frontend uses this `null` state to completely hide the relevant UI cards, rather than displaying `0 W`.
