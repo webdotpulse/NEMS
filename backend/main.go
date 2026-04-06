@@ -448,6 +448,7 @@ func main() {
 	mux.HandleFunc("/api/tariffs/today", handleTariffsToday)
 	mux.HandleFunc("/api/tariffs/forecast", handleTariffForecast)
 	mux.HandleFunc("/api/solar/forecast", handleSolarForecast)
+	mux.HandleFunc("/api/geocode", handleGeocode)
 	mux.HandleFunc("/api/settings", handleSettings)
 	mux.HandleFunc("/api/templates", handleTemplates)
 	mux.HandleFunc("/api/devices", handleDevices)

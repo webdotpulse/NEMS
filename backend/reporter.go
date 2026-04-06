@@ -210,6 +210,12 @@ func GeneratePDFReport(period string) ([]byte, error) {
 
 	w := vg.Points(15)
 
+	if len(solarVals) == 0 {
+		solarVals = append(solarVals, 0)
+		importVals = append(importVals, 0)
+		consVals = append(consVals, 0)
+	}
+
 	barsSolar, _ := plotter.NewBarChart(solarVals, w)
 	barsSolar.Color = color.RGBA{R: 255, G: 200, B: 0, A: 255}
 	barsSolar.Offset = -w
