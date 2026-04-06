@@ -1,8 +1,5 @@
 @import "tailwindcss";
-
-@theme {
-  --color-primary-500: #3b82f6;
-}
+@config "../tailwind.config.ts";
 
 /* Enable manual dark mode via class */
 @custom-variant dark (&:is(.dark *));
@@ -14,94 +11,6 @@
   textarea {
     @apply h-auto;
   }
-}
-
-@theme {
-  --color-primary-10: #FFFBFE;
-  --color-primary-50: #F6EDFF;
-  --color-primary-100: #EADDFF;
-  --color-primary-200: #D0BCFF;
-  --color-primary-300: #B69DF8;
-  --color-primary-400: #9A82DB;
-  --color-primary-500: #7F67BE;
-  --color-primary-600: #6750A4;
-  --color-primary-700: #4F378B;
-  --color-primary-800: #381E72;
-  --color-primary-900: #21005D;
-
-  --color-secondary-10: #FFFBFE;
-  --color-secondary-50: #F6EDFF;
-  --color-secondary-100: #E8DEF8;
-  --color-secondary-200: #CCC2DC;
-  --color-secondary-300: #B0A7C0;
-  --color-secondary-400: #958DA5;
-  --color-secondary-500: #7A7289;
-  --color-secondary-600: #625B71;
-  --color-secondary-700: #4A4458;
-  --color-secondary-800: #332D41;
-  --color-secondary-900: #1D192B;
-
-  --color-tertiary-10: #FFFBFA;
-  --color-tertiary-50: #FFECF1;
-  --color-tertiary-100: #FFD8E4;
-  --color-tertiary-200: #EFB8C8;
-  --color-tertiary-300: #D29DAC;
-  --color-tertiary-400: #B58392;
-  --color-tertiary-500: #986977;
-  --color-tertiary-600: #7D5260;
-  --color-tertiary-700: #633B48;
-  --color-tertiary-800: #492532;
-  --color-tertiary-900: #31111D;
-
-  --color-error-10: #FFFBF9;
-  --color-error-50: #FCEEEE;
-  --color-error-100: #F9DEDC;
-  --color-error-200: #F2B8B5;
-  --color-error-300: #EC928E;
-  --color-error-400: #E46962;
-  --color-error-500: #DC362E;
-  --color-error-600: #B3261E;
-  --color-error-700: #8C1D18;
-  --color-error-800: #601410;
-  --color-error-900: #410E0B;
-
-  --color-neutral-10: #FFFBFE;
-  --color-neutral-50: #F4EFF4;
-  --color-neutral-100: #E6E1E5;
-  --color-neutral-200: #C9C5CA;
-  --color-neutral-300: #AEAAAE;
-  --color-neutral-400: #939094;
-  --color-neutral-500: #787579;
-  --color-neutral-600: #605D62;
-  --color-neutral-700: #484649;
-  --color-neutral-800: #313033;
-  --color-neutral-900: #1C1B1F;
-
-  --color-gray-10: #FFFBFE;
-  --color-gray-50: #F5EEFA;
-  --color-gray-100: #E7E0EC;
-  --color-gray-200: #CAC4D0;
-  --color-gray-300: #AEA9B4;
-  --color-gray-400: #938F99;
-  --color-gray-500: #79747E;
-  --color-gray-600: #605D66;
-  --color-gray-700: #49454F;
-  --color-gray-800: #322F37;
-  --color-gray-900: #1D1A22;
-
-  --color-surface-50: #FFFBFE;
-  --color-surface-100: #f8f3f9;
-  --color-surface-200: #f3eef7;
-  --color-surface-300: #eee8f3;
-  --color-surface-400: #ede6f2;
-  --color-surface-500: #eae3f1;
-
-  --color-surfacedark-50: #1c1b1f;
-  --color-surfacedark-100: #26242a;
-  --color-surfacedark-200: #2a2830;
-  --color-surfacedark-300: #302d37;
-  --color-surfacedark-400: #332f3a;
-  --color-surfacedark-500: #36323e;
 }
 
 /* button default */
@@ -227,7 +136,7 @@
   @apply hover:bg-secondary-100 bg-secondary-100 dark:hover:bg-secondary-700 dark:bg-secondary-700
 }
 .setCollapse.active, .setCollapse.hover-icon.active {
-  @apply bg-black/30 dark:bg-black/30;
+  @apply opacity-30 dark:opacity-30;
 }
 .icon-active {
   @apply transform transition duration-300;
@@ -291,7 +200,7 @@ input {
 /* checkbox  */
 input[type="checkbox"]:hover:before, input[type="radio"]:hover:before {
   content: "";
-  @apply absolute -translate-x-[.7rem] -translate-y-[.7rem] w-10 h-10 rounded-full bg-primary-500 opacity-[10] dark:opacity-[20]
+  @apply absolute -translate-x-[.7rem] -translate-y-[.7rem] w-10 h-10 rounded-full bg-primary-500 opacity-10 dark:opacity-20
 }
 label:hover > input[type="checkbox"][disabled]:before, label:hover > input[type="radio"][disabled]:before {
   @apply bg-transparent;
@@ -716,7 +625,7 @@ table {
   width: 100%;
 }
 td, th {
-  /* @apply border border-gray-200 dark:border-gray-700 text-left p-4; */
+  @apply border border-gray-200 dark:border-gray-700 text-left p-4;
 }
 
 /*Simple scrollbar*/
