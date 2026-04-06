@@ -460,14 +460,14 @@ func handleSystemUpdateInstall(w http.ResponseWriter, r *http.Request) {
 		updateState = "done"
 		updateMu.Unlock()
 
-		// Restart the service
-		logUpdate("Restarting nems service. The connection will be lost momentarily...")
-		cmd = exec.Command("sudo", "systemctl", "restart", "nems.service")
+		// Reboot the system
+		logUpdate("Rebooting system. The connection will be lost momentarily...")
+		cmd = exec.Command("sudo", "systemctl", "reboot")
 		if out, err := cmd.CombinedOutput(); err != nil {
-			logUpdate("Failed to restart service: %v\nOutput:\n%s", err, string(out))
+			logUpdate("Failed to reboot system: %v\nOutput:\n%s", err, string(out))
 			return
 		}
-		logUpdate("Update and restart completed successfully.")
+		logUpdate("Update and reboot completed successfully.")
 	}()
 }
 
