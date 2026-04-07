@@ -17,13 +17,13 @@
               </div>
               <div class="ml-5 w-0 flex-1">
                 <dl>
-                  <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Grid Power</dt>
+                  <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">{{ $t('dashboard.grid_power') }}</dt>
                   <dd>
                     <div class="text-lg font-medium text-gray-900 dark:text-gray-100">
                       {{ Math.abs(state.grid_power_w).toFixed(0) }} W
                     </div>
                     <div class="text-sm" :class="state.grid_power_w > 0 ? 'text-red-500' : 'text-green-500'">
-                      {{ state.grid_power_w > 0 ? 'Importing' : (state.grid_power_w < 0 ? 'Exporting' : 'Idle') }}
+                      {{ state.grid_power_w > 0 ? $t('dashboard.importing') : (state.grid_power_w < 0 ? $t('dashboard.exporting') : $t('dashboard.idle')) }}
                     </div>
                   </dd>
                 </dl>
@@ -41,12 +41,12 @@
               </div>
               <div class="ml-5 w-0 flex-1">
                 <dl>
-                  <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Solar Power</dt>
+                  <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">{{ $t('dashboard.solar_power') }}</dt>
                   <dd>
                     <div class="text-lg font-medium text-gray-900 dark:text-gray-100">
                       {{ state.solar_power_w.toFixed(0) }} W
                     </div>
-                    <div class="text-sm text-yellow-500">Producing</div>
+                    <div class="text-sm text-yellow-500">{{ $t('dashboard.producing') }}</div>
                   </dd>
                 </dl>
               </div>
@@ -63,13 +63,13 @@
               </div>
               <div class="ml-5 w-0 flex-1">
                 <dl>
-                  <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Battery Power</dt>
+                  <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">{{ $t('dashboard.battery_power') }}</dt>
                   <dd>
                     <div class="text-lg font-medium text-gray-900 dark:text-gray-100">
                       {{ Math.abs(state.battery_power_w).toFixed(0) }} W
                     </div>
                     <div class="text-sm" :class="state.battery_power_w > 0 ? 'text-blue-500' : 'text-green-500'">
-                      {{ state.battery_power_w > 0 ? 'Discharging' : (state.battery_power_w < 0 ? 'Charging' : 'Idle') }}
+                      {{ state.battery_power_w > 0 ? $t('dashboard.discharging') : (state.battery_power_w < 0 ? $t('dashboard.charging') : $t('dashboard.idle')) }}
                     </div>
                   </dd>
                 </dl>
@@ -87,12 +87,12 @@
               </div>
               <div class="ml-5 w-0 flex-1">
                 <dl>
-                  <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Total Load</dt>
+                  <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">{{ $t('dashboard.total_load') }}</dt>
                   <dd>
                     <div class="text-lg font-medium text-gray-900 dark:text-gray-100">
                       {{ state.total_load_w.toFixed(0) }} W
                     </div>
-                    <div class="text-sm text-purple-500">Consuming</div>
+                    <div class="text-sm text-purple-500">{{ $t('dashboard.consuming') }}</div>
                   </dd>
                 </dl>
               </div>
@@ -112,10 +112,10 @@
           <!-- Navigation -->
           <div class="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
             <div class="bg-gray-100 dark:bg-gray-700 p-1 rounded-full flex w-full sm:w-auto">
-    <button @click="setPeriod('day')" :class="['flex-1 sm:flex-none px-6 py-1.5 rounded-full text-sm font-medium', selectedPeriod === 'day' ? 'bg-white dark:bg-gray-600 shadow-sm text-gray-900 dark:text-white' : 'text-gray-500 hover:text-gray-700 dark:text-gray-300']">Day</button>
-    <button @click="setPeriod('month')" :class="['flex-1 sm:flex-none px-6 py-1.5 rounded-full text-sm font-medium', selectedPeriod === 'month' ? 'bg-white dark:bg-gray-600 shadow-sm text-gray-900 dark:text-white' : 'text-gray-500 hover:text-gray-700 dark:text-gray-300']">Month</button>
-    <button @click="setPeriod('year')" :class="['flex-1 sm:flex-none px-6 py-1.5 rounded-full text-sm font-medium', selectedPeriod === 'year' ? 'bg-white dark:bg-gray-600 shadow-sm text-gray-900 dark:text-white' : 'text-gray-500 hover:text-gray-700 dark:text-gray-300']">Year</button>
-    <button @click="setPeriod('lifetime')" :class="['flex-1 sm:flex-none px-6 py-1.5 rounded-full text-sm font-medium', selectedPeriod === 'lifetime' ? 'bg-white dark:bg-gray-600 shadow-sm text-gray-900 dark:text-white' : 'text-gray-500 hover:text-gray-700 dark:text-gray-300']">Lifetime</button>
+    <button @click="setPeriod('day')" :class="['flex-1 sm:flex-none px-6 py-1.5 rounded-full text-sm font-medium', selectedPeriod === 'day' ? 'bg-white dark:bg-gray-600 shadow-sm text-gray-900 dark:text-white' : 'text-gray-500 hover:text-gray-700 dark:text-gray-300']">{{ $t('dashboard.day') }}</button>
+    <button @click="setPeriod('month')" :class="['flex-1 sm:flex-none px-6 py-1.5 rounded-full text-sm font-medium', selectedPeriod === 'month' ? 'bg-white dark:bg-gray-600 shadow-sm text-gray-900 dark:text-white' : 'text-gray-500 hover:text-gray-700 dark:text-gray-300']">{{ $t('dashboard.month') }}</button>
+    <button @click="setPeriod('year')" :class="['flex-1 sm:flex-none px-6 py-1.5 rounded-full text-sm font-medium', selectedPeriod === 'year' ? 'bg-white dark:bg-gray-600 shadow-sm text-gray-900 dark:text-white' : 'text-gray-500 hover:text-gray-700 dark:text-gray-300']">{{ $t('dashboard.year') }}</button>
+    <button @click="setPeriod('lifetime')" :class="['flex-1 sm:flex-none px-6 py-1.5 rounded-full text-sm font-medium', selectedPeriod === 'lifetime' ? 'bg-white dark:bg-gray-600 shadow-sm text-gray-900 dark:text-white' : 'text-gray-500 hover:text-gray-700 dark:text-gray-300']">{{ $t('dashboard.lifetime') }}</button>
             </div>
 
   <div class="flex items-center space-x-4" v-if="selectedPeriod !== 'lifetime'">
@@ -134,13 +134,13 @@
           <!-- Production Block -->
           <div class="mb-8">
             <div class="flex items-center text-gray-500 dark:text-gray-400 mb-4">
-              <span class="mr-1">Production</span>
+              <span class="mr-1">{{ $t('dashboard.production') }}</span>
             </div>
 
             <div class="bg-gray-50 dark:bg-gray-900 rounded-xl p-4 flex items-center justify-between relative">
               <div class="flex-1 text-center pr-12">
                 <div class="text-lg font-semibold text-green-600"><span class="text-xl">{{ prodConsumed.toFixed(2) }}</span> <span class="text-sm font-normal">kWh</span></div>
-                <div class="text-xs text-gray-500">Consumed</div>
+                <div class="text-xs text-gray-500">{{ $t('dashboard.consumed') }}</div>
                 <div class="text-xs text-gray-400">({{ prodTotal > 0 ? ((prodConsumed / prodTotal) * 100).toFixed(2) : '0.00' }}%)</div>
               </div>
 
@@ -158,7 +158,7 @@
 
               <div class="flex-1 text-center pl-12">
                 <div class="text-lg font-semibold text-green-400"><span class="text-xl">{{ prodFedToGrid.toFixed(2) }}</span> <span class="text-sm font-normal">kWh</span></div>
-                <div class="text-xs text-gray-500">Fed to grid</div>
+                <div class="text-xs text-gray-500">{{ $t('dashboard.fed_to_grid') }}</div>
                 <div class="text-xs text-gray-400">({{ prodTotal > 0 ? ((prodFedToGrid / prodTotal) * 100).toFixed(2) : '0.00' }}%)</div>
               </div>
             </div>
@@ -167,13 +167,13 @@
           <!-- Consumption Block -->
           <div>
             <div class="flex items-center text-gray-500 dark:text-gray-400 mb-4">
-              <span class="mr-1">Consumption</span>
+              <span class="mr-1">{{ $t('dashboard.consumption') }}</span>
             </div>
 
             <div class="bg-gray-50 dark:bg-gray-900 rounded-xl p-4 flex items-center justify-between relative">
               <div class="flex-1 text-center pr-12">
                 <div class="text-lg font-semibold text-orange-500"><span class="text-xl">{{ consFromPV.toFixed(2) }}</span> <span class="text-sm font-normal">kWh</span></div>
-                <div class="text-xs text-gray-500">From PV</div>
+                <div class="text-xs text-gray-500">{{ $t('dashboard.from_pv') }}</div>
                 <div class="text-xs text-gray-400">({{ consTotal > 0 ? ((consFromPV / consTotal) * 100).toFixed(2) : '0.00' }}%)</div>
               </div>
 
@@ -191,7 +191,7 @@
 
               <div class="flex-1 text-center pl-12">
                 <div class="text-lg font-semibold text-yellow-500"><span class="text-xl">{{ consFromGrid.toFixed(2) }}</span> <span class="text-sm font-normal">kWh</span></div>
-                <div class="text-xs text-gray-500">From grid</div>
+                <div class="text-xs text-gray-500">{{ $t('dashboard.from_grid') }}</div>
                 <div class="text-xs text-gray-400">({{ consTotal > 0 ? ((consFromGrid / consTotal) * 100).toFixed(2) : '0.00' }}%)</div>
               </div>
             </div>
@@ -209,9 +209,9 @@
             <svg class="mx-auto h-12 w-12 text-gray-400 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
-            <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">No Chart Data</h3>
+            <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">{{ $t('dashboard.no_chart_data') }}</h3>
             <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Energy history will appear here once recorded.
+              {{ $t('dashboard.energy_history_will_appear') }}
             </p>
           </div>
         </div>
@@ -219,20 +219,17 @@
       </div>
 
       <div class="mt-8 flex justify-center flex-wrap gap-4">
-        <button @click.prevent="exportReport('daily')" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-          Yesterday
-        </button>
         <button @click.prevent="exportReport('weekly')" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-          Last week
+          {{ $t('dashboard.last_week') }}
         </button>
         <button @click.prevent="exportReport('monthly')" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-          Last month
+          {{ $t('dashboard.last_month') }}
         </button>
         <button @click.prevent="exportReport('yearly')" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-          Last 12 months
+          {{ $t('dashboard.last_12_months') }}
         </button>
         <button @click.prevent="exportReport('all')" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-          All time
+          {{ $t('dashboard.all_time') }}
         </button>
       </div>
 
@@ -243,6 +240,7 @@
 
 <script setup lang="ts">
 import { ref, shallowRef, onMounted, onUnmounted, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import PowerFlow from './PowerFlow.vue'
 import { getApiBase } from '../api'
 import type { SiteState, DailyAggregates } from '../types'
@@ -269,6 +267,7 @@ ChartJS.register(
   TimeScale
 )
 
+const { t } = useI18n()
 const state = ref<SiteState | null>(null)
 const dailyAggregates = ref<DailyAggregates | null>(null)
 const selectedDate = ref<string>(new Date().toISOString().split('T')[0])
@@ -315,25 +314,25 @@ const chartData = computed(() => {
   return {
     datasets: [
       {
-        label: 'Solar Yield',
+        label: t('dashboard.solar_yield'),
         data: series.map(d => ({ x: new Date(d.timestamp).getTime(), y: d.solar_yield_kwh || 0 })),
         backgroundColor: '#FBBF24',
         stack: 'Stack 0',
       },
       {
-        label: 'Grid Import',
+        label: t('dashboard.grid_import'),
         data: series.map(d => ({ x: new Date(d.timestamp).getTime(), y: d.grid_import_kwh || 0 })),
         backgroundColor: '#3B82F6',
         stack: 'Stack 1',
       },
       {
-        label: 'Battery Discharge',
+        label: t('dashboard.battery_discharge'),
         data: series.map(d => ({ x: new Date(d.timestamp).getTime(), y: d.battery_discharge_kwh || 0 })),
         backgroundColor: '#34D399',
         stack: 'Stack 1',
       },
       {
-        label: 'House Consumption',
+        label: t('dashboard.house_consumption'),
         data: series.map(d => ({ x: new Date(d.timestamp).getTime(), y: d.house_consumption_kwh || 0 })),
         backgroundColor: '#F97316',
         stack: 'Stack 2',
@@ -361,7 +360,7 @@ const chartOptions = computed(() => ({
     },
     y: {
       stacked: true,
-      title: { display: true, text: 'Energy (kWh)', color: '#9CA3AF' },
+      title: { display: true, text: t('dashboard.energy_kwh'), color: '#9CA3AF' },
       ticks: { color: '#9CA3AF' },
       grid: { color: '#374151' }
     }
