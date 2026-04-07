@@ -1,0 +1,10 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "settings": "Settings",
+    "logger": "Logger",
+    "scanner": "Scanner",
+    "connected": "Connected",
+    "disconnected": "Disconnected"
+  }
+}

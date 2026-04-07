@@ -1214,6 +1214,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { getApiBase } from '../api'
+import { useI18n } from 'vue-i18n'
 import type { Device, SiteSettings, Template, SystemInfo } from '../types'
 
 import ModbusTemplate from './templates/ModbusTemplate.vue'
@@ -1225,6 +1226,7 @@ import P1SerialTemplate from './templates/P1SerialTemplate.vue'
 import P1NetworkTemplate from './templates/P1NetworkTemplate.vue'
 import Tooltip from './Tooltip.vue'
 
+const { locale } = useI18n()
 const activeTab = ref('strategy')
 
 const sysInfo = ref<SystemInfo | null>(null)
@@ -1518,6 +1520,7 @@ const saveSiteSettings = async () => {
     })
 
     if (res.ok) {
+      locale.value = siteSettings.value.language;
       saveSettingsSuccess.value = true
       setTimeout(() => {
         saveSettingsSuccess.value = false

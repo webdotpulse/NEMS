@@ -1,0 +1,10 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "settings": "Instellingen",
+    "logger": "Logboek",
+    "scanner": "Scanner",
+    "connected": "Verbonden",
+    "disconnected": "Niet verbonden"
+  }
+}
