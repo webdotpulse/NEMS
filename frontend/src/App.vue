@@ -6,7 +6,9 @@ import Settings from './components/Settings.vue'
 import Logger from './components/Logger.vue'
 import Scanner from './components/Scanner.vue'
 import { getApiBase } from './api'
+import { useI18n } from 'vue-i18n'
 
+const { locale } = useI18n()
 const isConnected = ref(false)
 const currentView = ref('dashboard') // 'dashboard' | 'settings' | 'logger' | 'scanner'
 let pollingInterval: number | undefined
@@ -25,9 +27,24 @@ const checkConnection = async () => {
   }
 }
 
+const fetchLanguage = async () => {
+  try {
+    const res = await fetch(`${getApiBase()}/api/settings`)
+    if (res.ok) {
+      const data = await res.json()
+      if (data.language) {
+        locale.value = data.language
+      }
+    }
+  } catch (e) {
+    console.error("Failed to fetch settings for language:", e)
+  }
+}
+
 onMounted(() => {
   // Initial check
   checkConnection()
+  fetchLanguage()
   // Poll every 2 seconds
   pollingInterval = window.setInterval(checkConnection, 2000)
 })

@@ -22,22 +22,22 @@
             <a href="#"
                @click.prevent="navigate('dashboard')"
                :class="[currentView === 'dashboard' ? 'border-indigo-500 text-gray-900 dark:text-white' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300', 'inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium']">
-              Dashboard
+              {{ $t('nav.dashboard') }}
             </a>
             <a href="#"
                @click.prevent="navigate('settings')"
                :class="[currentView === 'settings' ? 'border-indigo-500 text-gray-900 dark:text-white' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300', 'inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium']">
-              Settings
+              {{ $t('nav.settings') }}
             </a>
             <a href="#"
                @click.prevent="navigate('logger')"
                :class="[currentView === 'logger' ? 'border-indigo-500 text-gray-900 dark:text-white' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300', 'inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium']">
-              Logger
+              {{ $t('nav.logger') }}
             </a>
             <a href="#"
                @click.prevent="navigate('scanner')"
                :class="[currentView === 'scanner' ? 'border-indigo-500 text-gray-900 dark:text-white' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300', 'inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium']">
-              Scanner
+              {{ $t('nav.scanner') }}
             </a>
           </div>
         </div>
@@ -49,7 +49,7 @@
               <span class="relative inline-flex rounded-full h-3 w-3" :class="connected ? 'bg-green-500' : 'bg-red-500'"></span>
             </span>
             <span class="text-gray-900 dark:text-white inline-flex items-center px-1 pt-1 text-sm font-medium">
-              {{ connected ? 'Connected' : 'Disconnected' }}
+              {{ connected ? $t('nav.connected') : $t('nav.disconnected') }}
             </span>
           </div>
 
@@ -73,22 +73,22 @@
         <a href="#"
            @click.prevent="navigate('dashboard')"
            :class="[currentView === 'dashboard' ? 'bg-indigo-50 border-indigo-500 text-indigo-700 dark:bg-gray-700 dark:border-indigo-500 dark:text-white' : 'border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-300', 'block pl-3 pr-4 py-2 border-l-4 text-base font-medium']">
-          Dashboard
+          {{ $t('nav.dashboard') }}
         </a>
         <a href="#"
            @click.prevent="navigate('settings')"
            :class="[currentView === 'settings' ? 'bg-indigo-50 border-indigo-500 text-indigo-700 dark:bg-gray-700 dark:border-indigo-500 dark:text-white' : 'border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-300', 'block pl-3 pr-4 py-2 border-l-4 text-base font-medium']">
-          Settings
+          {{ $t('nav.settings') }}
         </a>
         <a href="#"
            @click.prevent="navigate('logger')"
            :class="[currentView === 'logger' ? 'bg-indigo-50 border-indigo-500 text-indigo-700 dark:bg-gray-700 dark:border-indigo-500 dark:text-white' : 'border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-300', 'block pl-3 pr-4 py-2 border-l-4 text-base font-medium']">
-          Logger
+          {{ $t('nav.logger') }}
         </a>
         <a href="#"
            @click.prevent="navigate('scanner')"
            :class="[currentView === 'scanner' ? 'bg-indigo-50 border-indigo-500 text-indigo-700 dark:bg-gray-700 dark:border-indigo-500 dark:text-white' : 'border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-300', 'block pl-3 pr-4 py-2 border-l-4 text-base font-medium']">
-          Scanner
+          {{ $t('nav.scanner') }}
         </a>
       </div>
     </div>

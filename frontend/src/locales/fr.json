@@ -1,0 +1,10 @@
+{
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "settings": "Paramètres",
+    "logger": "Journal",
+    "scanner": "Scanner",
+    "connected": "Connecté",
+    "disconnected": "Déconnecté"
+  }
+}
