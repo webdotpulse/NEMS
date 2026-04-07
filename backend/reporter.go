@@ -76,9 +76,6 @@ func GeneratePDFReport(period string) ([]byte, error) {
 	var startDate, endDate time.Time
 
 	switch period {
-	case "daily":
-		endDate = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc).UTC()
-		startDate = endDate.AddDate(0, 0, -1)
 	case "weekly":
 		endDate = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc).UTC()
 		startDate = endDate.AddDate(0, 0, -7)
